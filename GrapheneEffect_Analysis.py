@@ -1,51 +1,30 @@
-"""
-=============================================================================
-GRAPHENE EFFECT ANALYSIS  |  SSY Raman Spectroscopy
-Book2.xlsx  |  Sheet: "4 - Normalised"  |  100 spectra  |  450-1800 cm-1
-
-SCIENTIFIC QUESTION
-  Does adding a graphene layer change the SSY Raman signal,
-  and is the effect consistent across both substrates (PDMS, SiO2/Si)?
-
-PREPROCESSING (on top of the already-normalised data)
-  1. Savitzky-Golay smoothing      (window=7, poly=2)
-  2. ALS baseline correction       (removes substrate fluorescence background)
-  3. SNV normalisation             (removes intensity scale differences between sessions)
-
-ANALYSES
-  A. Mean spectra + difference spectra  : mean(Gr-X) - mean(X) for X in {PDMS, SiO2/Si}
-  B. Graphene band intensities          : D-band (~1350) and G-band (~1580) box plots + stats
-  C. Binary PLS-DA : Gr (50) vs no-Gr (50)            - 3 LVs, 5-fold CV + LOO + perm (999)
-  D. PDMS-only binary  : Gr-PDMS (25) vs PDMS (25)    - 3 LVs, 5-fold CV + LOO + perm (999)
-  E. SiO2-only binary  : Gr-SiO2 (25) vs SiO2 (25)   - 3 LVs, 5-fold CV + LOO + perm (999)
-  F. VIP comparison    : all 3 binary models side by side
-  G. Accuracy summary  : all 3 models vs chance level (50%)
-
-OUTPUTS -> C:/Users/Hira Aman/Desktop/PROF_DOMENICO'S/GrapheneEffect_Analysis/
-  01_Mean_Spectra.png
-  02_Difference_Spectra.png
-  03_Graphene_Band_Boxplots.png
-  04_DG_Ratio.png
-  05_Binary_GrNoGr_Scores.png
-  06_Binary_GrNoGr_VIP.png
-  07_Binary_GrNoGr_Confusion.png
-  08_Binary_GrNoGr_Permutation.png
-  09_PDMS_Binary_Scores.png
-  10_PDMS_Binary_VIP.png
-  11_PDMS_Binary_Confusion.png
-  12_PDMS_Binary_Permutation.png
-  13_SiO2_Binary_Scores.png
-  14_SiO2_Binary_VIP.png
-  15_SiO2_Binary_Confusion.png
-  16_SiO2_Binary_Permutation.png
-  17_VIP_Comparison.png
-  18_Accuracy_Summary.png
-  GrapheneEffect_Results.xlsx
-
-HOW TO RUN (PyCharm Terminal):
-  pip install pandas openpyxl scikit-learn scipy matplotlib
-=============================================================================
-"""
+# =============================================================================
+# GRAPHENE EFFECT ANALYSIS  |  SSY Raman Spectroscopy
+# Book2.xlsx  |  Sheet: 4 - Normalised  |  100 spectra  |  450-1800 cm-1
+#
+# SCIENTIFIC QUESTION
+#   Does adding a graphene layer change the SSY Raman signal,
+#   and is the effect consistent across both substrates (PDMS, SiO2/Si)?
+#
+# PREPROCESSING (on top of the already-normalised data)
+#   1. Savitzky-Golay smoothing      (window=7, poly=2)
+#   2. ALS baseline correction       (removes substrate fluorescence background)
+#   3. SNV normalisation             (removes intensity scale differences between sessions)
+#
+# ANALYSES
+#   A. Mean spectra + difference spectra  : mean(Gr-X) - mean(X) per substrate
+#   B. Graphene band intensities          : D-band (~1350) and G-band (~1580) box plots + stats
+#   C. Binary PLS-DA : Gr (50) vs no-Gr (50)   - 3 LVs, 5-fold CV + LOO + perm (999)
+#   D. PDMS-only     : Gr-PDMS (25) vs PDMS (25)
+#   E. SiO2-only     : Gr-SiO2 (25) vs SiO2 (25)
+#   F. VIP comparison: all 3 binary models side by side
+#   G. Accuracy summary
+#
+# OUTPUTS -> GrapheneEffect_Analysis folder (see OUTPUT_DIR below)
+#
+# HOW TO RUN (PyCharm Terminal):
+#   pip install pandas openpyxl scikit-learn scipy matplotlib
+# =============================================================================
 
 import os
 import re

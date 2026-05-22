@@ -1,47 +1,24 @@
-"""
-=============================================================================
-PLS-DA + SVM-RBF  |  NO TRAIN/TEST SPLIT  |  ALL 100 SPECTRA
-SSY Raman Spectroscopy  |  Four Substrate Classes
-SPECTRAL WINDOW : 450 - 1800 cm-1
-
-DATASET
-  - Book2.xlsx  |  Sheet: "4 - Normalised"
-  - 100 spectra across four substrate classes (balanced, 25 each)
-      SSY-PDMS       : 25
-      SSY-SiO2/Si    : 25
-      SSY-Gr-SiO2/Si : 25
-      SSY-Gr-PDMS    : 25  (GrSL-PDMS label treated as SSY-Gr-PDMS)
-
-STRATEGY
-  - ALL 100 spectra used for model building and validation
-  - VIP selection  : 3-LV PLS-DA on all 100 -> top-1800 VIP
-  - PLS-DA (5 LVs) : 5-fold CV  +  LOO-CV  +  permutation test (999)
-  - SVM-RBF        : 5-fold CV  +  LOO-CV
-  - No data leakage : StandardScaler fitted inside CV pipeline each fold
-
-OUTPUTS -> C:/Users/Hira Aman/Desktop/PROF_DOMENICO'S/PLSDA_SVM_NoSplit_Book2/
-  01_PLSDA_Scores_LV1_LV2.png
-  02_PLSDA_Scores_LV1_LV3.png
-  03_PLSDA_Scores_LV2_LV3.png
-  04_PLSDA_Scores_3D.png
-  05_PLSDA_Confusion_5fold.png
-  06_PLSDA_Confusion_LOO.png
-  07_PLSDA_VIP_Scores.png
-  08_PLSDA_Loadings.png
-  09_PLSDA_Permutation.png
-  10_SVM_Cluster_5fold.png
-  11_SVM_Cluster_LOO.png
-  12_SVM_Confusion_5fold.png
-  13_SVM_Confusion_LOO.png
-  14_Accuracy_Comparison.png
-  15_Recall_Comparison.png
-  16_Mean_Spectra.png
-  Results_NoSplit_Book2.xlsx
-
-HOW TO RUN (PyCharm Terminal):
-  pip install pandas openpyxl scikit-learn scipy matplotlib
-=============================================================================
-"""
+# =============================================================================
+# PLS-DA + SVM-RBF  |  NO TRAIN/TEST SPLIT  |  ALL 100 SPECTRA
+# SSY Raman Spectroscopy  |  Four Substrate Classes
+# SPECTRAL WINDOW : 450 - 1800 cm-1
+#
+# DATASET
+#   Book2.xlsx  |  Sheet: 4 - Normalised
+#   100 spectra, balanced 25 per class:
+#     SSY-PDMS, SSY-SiO2/Si, SSY-Gr-SiO2/Si, SSY-Gr-PDMS
+#     (GrSL-PDMS columns are mapped to SSY-Gr-PDMS)
+#
+# STRATEGY
+#   ALL 100 spectra used for model building and validation
+#   VIP selection  : 3-LV PLS-DA on all 100 -> top-1800 VIP
+#   PLS-DA (5 LVs) : 5-fold CV + LOO-CV + permutation test (999)
+#   SVM-RBF        : 5-fold CV + LOO-CV
+#   No data leakage: StandardScaler fitted inside CV pipeline each fold
+#
+# HOW TO RUN (PyCharm Terminal):
+#   pip install pandas openpyxl scikit-learn scipy matplotlib
+# =============================================================================
 
 import os
 import re
