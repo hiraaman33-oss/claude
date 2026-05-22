@@ -6,11 +6,11 @@ SPECTRAL WINDOW : 450 - 1800 cm-1
 
 DATASET
   - Book2.xlsx  |  Sheet: "4 - Normalised"
-  - 100 spectra across four substrate classes (unbalanced)
-      SSY-PDMS       : 32
+  - 100 spectra across four substrate classes (balanced, 25 each)
+      SSY-PDMS       : 25
       SSY-SiO2/Si    : 25
       SSY-Gr-SiO2/Si : 25
-      SSY-Gr-PDMS    : 18
+      SSY-Gr-PDMS    : 25  (GrSL-PDMS label treated as SSY-Gr-PDMS)
 
 STRATEGY
   - ALL 100 spectra used for model building and validation
@@ -132,11 +132,11 @@ def load_xlsx(file_path, sheet):
 # =============================================================================
 def assign_class(col_name):
     s = col_name.lower()
-    if   re.search(r'gr[-_]?sio2|gr[-_]?si', s): return 'SSY-Gr-SiO2/Si'
-    elif re.search(r'gr[-_]?pdms',            s): return 'SSY-Gr-PDMS'
-    elif re.search(r'sio2[-_]?si',            s): return 'SSY-SiO2/Si'
-    elif re.search(r'pdms',                   s): return 'SSY-PDMS'
-    else:                                          return None
+    if   re.search(r'gr[-_]?sio2|gr[-_]?si',     s): return 'SSY-Gr-SiO2/Si'
+    elif re.search(r'gr\w*[-_]pdms|gr[-_]?pdms', s): return 'SSY-Gr-PDMS'   # covers GrSL-PDMS
+    elif re.search(r'sio2[-_]?si',                s): return 'SSY-SiO2/Si'
+    elif re.search(r'pdms',                       s): return 'SSY-PDMS'
+    else:                                              return None
 
 # =============================================================================
 # 3.  LOAD DATA
