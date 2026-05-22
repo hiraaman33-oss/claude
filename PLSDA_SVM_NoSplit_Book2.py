@@ -61,7 +61,7 @@ WAVENUMBER_MAX = 1800
 
 SG_WINDOW      = 7
 SG_POLY        = 2
-VIP_TOP_N      = 1800
+VIP_TOP_N      = 1500
 N_COMPONENTS   = 5
 N_PERM         = 999
 RANDOM_STATE   = 42
