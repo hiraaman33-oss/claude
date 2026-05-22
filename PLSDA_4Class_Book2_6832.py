@@ -2,7 +2,7 @@
 =============================================================================
 PLS-DA  –  4-CLASS  –  Book2.xlsx  –  68 / 32 STRATIFIED SPLIT
 =============================================================================
-File   : Book2.xlsx   (C:\Users\Hira Aman\Desktop\PROF_DOMENICO'S)
+File   : Book2.xlsx   (C:/Users/Hira Aman/Desktop/PROF_DOMENICO'S)
 Sheet  : 4 - Normalised
 Layout : Row 0 = header (sample names); Column 0 = Wavenumber_cm-1
          Each COLUMN is one spectrum  (100 spectra total)
