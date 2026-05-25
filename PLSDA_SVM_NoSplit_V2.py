@@ -11,7 +11,7 @@ STRATEGY
   - SVM-RBF        : 5-fold CV  +  LOO-CV
   - No data leakage : StandardScaler fitted inside CV pipeline each fold
 
-OUTPUTS -> C:/Users/Hira Aman/Desktop/PROF_DOMENICO'S/PLSDA_SVM_NoSplit/
+OUTPUTS -> C:/Users/Hira Aman/Desktop/PROF_DOMENICOS/PLSDA_SVM_NoSplit/
   01_PLSDA_Scores_LV1_LV2.png
   02_PLSDA_Scores_LV1_LV3.png
   03_PLSDA_Scores_LV2_LV3.png
