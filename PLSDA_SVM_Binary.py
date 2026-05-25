@@ -8,9 +8,10 @@ BINARY CLASSES
   Class 1  PDMS    : SSY-PDMS  +  SSY-Gr-PDMS     (40 spectra total)
   Class 2  SiO2/Si : SSY-SiO2/Si + SSY-Gr-SiO2/Si (40 spectra total)
 
-SPLIT  (stratified random — sessions ignored)
-  Training : 60 spectra  (30 PDMS + 30 SiO2/Si)
-  Test     :  20 spectra  (10 PDMS + 10 SiO2/Si)
+SPLIT  (Gr-only test set — sessions ignored)
+  Training : 60 spectra  (10 Gr-PDMS + 20 PDMS + 10 Gr-SiO2/Si + 20 SiO2/Si)
+  Test     : 20 spectra  — Gr ONLY  (10 Gr-PDMS + 10 Gr-SiO2/Si)
+             randomly selected from 20 Gr per class; remaining Gr go to train
 
 VALIDATION
   PLS-DA  :  5-fold CV on training  +  external test
@@ -61,7 +62,7 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import (
     StratifiedKFold, cross_val_predict,
-    permutation_test_score, train_test_split
+    permutation_test_score
 )
 from sklearn.metrics import (
     confusion_matrix, accuracy_score, ConfusionMatrixDisplay
@@ -160,7 +161,7 @@ def load_xls(file_path, sheet):
         "Run:  pip install xlrd   then re-run.")
 
 # =============================================================================
-# 2.  BINARY CLASS MAPPING
+# 2.  BINARY CLASS MAPPING  +  Gr / no-Gr FLAG
 #     PDMS    = SSY-PDMS  +  SSY-Gr-PDMS      (anything with 'pdms')
 #     SiO2/Si = SSY-SiO2/Si + SSY-Gr-SiO2/Si  (anything with 'sio2')
 # =============================================================================
@@ -174,13 +175,17 @@ def assign_class(col_name):
     elif re.search(r'pdms', s): return 'PDMS'
     else:                        return None
 
+def has_gr(col_name):
+    s = col_name.lower()
+    return bool(re.search(r'[-_]gr[-_]|[-_]gr$|grsl', s))
+
 # =============================================================================
 # 3.  LOAD DATA
 # =============================================================================
 print("\n" + "=" * 65)
-print("  PLS-DA + SVM-RBF  |  BINARY  |  SSY Raman  |  450-1800 cm-1")
-print("  Class 1: PDMS  (SSY-PDMS + SSY-Gr-PDMS)")
-print("  Class 2: SiO2/Si  (SSY-SiO2/Si + SSY-Gr-SiO2/Si)")
+print("  PLS-DA + SVM-RBF  |  BINARY  |  Raman  |  450-1800 cm-1")
+print("  Class 1: PDMS  (PDMS + Gr-PDMS)")
+print("  Class 2: SiO2/Si  (SiO2/Si + Gr-SiO2/Si)")
 print("=" * 65)
 
 file_path = os.path.join(DATA_PATH, FILE_NAME)
@@ -225,19 +230,43 @@ print("[INFO] Class encoding : %s" % str(
 assert len(le.classes_) == 2, "Expected exactly 2 classes, got %d" % len(le.classes_)
 
 # =============================================================================
-# 4.  STRATIFIED TRAIN / TEST SPLIT  (30+30 train / 10+10 test)
-#     Sessions IGNORED — pure random stratified split
+# 4.  SPLIT  — Gr-only test set
+#
+#   Data per class (40 each):  20 Gr  +  20 no-Gr
+#
+#   Step 1 — Exclude 5 no-Gr per class (10 total) — not used anywhere
+#   Step 2 — Test : 5 Gr per class (10 total, Gr spectra only)
+#   Step 3 — Train: remaining 30 per class (60 total)
+#             = 15 Gr + 15 no-Gr per class
 # =============================================================================
-print("\n[SPLIT] Stratified 60/20 split (sessions ignored) ...")
+print("\n[SPLIT] Gr-only test split ...")
 
-train_idx, test_idx = train_test_split(
-    np.arange(len(y)), test_size=20,
-    stratify=y, random_state=RANDOM_STATE)
-train_idx = np.sort(train_idx)
-test_idx  = np.sort(test_idx)
+gr_mask = np.array([has_gr(c) for c in col_names])
+
+pdms_gr_idx    = np.where((classes == 'PDMS')    &  gr_mask)[0]   # 20
+pdms_nogr_idx  = np.where((classes == 'PDMS')    & ~gr_mask)[0]   # 20
+sio2_gr_idx    = np.where((classes == 'SiO2/Si') &  gr_mask)[0]   # 20
+sio2_nogr_idx  = np.where((classes == 'SiO2/Si') & ~gr_mask)[0]   # 20
+
+rng = np.random.default_rng(RANDOM_STATE)
+
+# Test: 5 Gr per class  →  10 Gr-only test spectra
+pdms_gr_test  = rng.choice(pdms_gr_idx,   size=5, replace=False)
+sio2_gr_test  = rng.choice(sio2_gr_idx,   size=5, replace=False)
+test_idx      = np.sort(np.concatenate([pdms_gr_test, sio2_gr_test]))
+
+# Exclude: 5 no-Gr per class  →  10 spectra dropped entirely
+pdms_nogr_excl = rng.choice(pdms_nogr_idx, size=5, replace=False)
+sio2_nogr_excl = rng.choice(sio2_nogr_idx, size=5, replace=False)
+excl_idx       = np.concatenate([pdms_nogr_excl, sio2_nogr_excl])
+
+# Train: everything else  →  60 spectra
+all_idx   = np.arange(len(y))
+train_idx = np.sort(np.setdiff1d(all_idx, np.concatenate([test_idx, excl_idx])))
 
 assert len(train_idx) == 60, "Train size = %d (expected 60)" % len(train_idx)
-assert len(test_idx)  == 20, "Test size  = %d (expected 20)" % len(test_idx)
+assert len(test_idx)  == 10, "Test size  = %d (expected 10)"  % len(test_idx)
+assert len(excl_idx)  == 10, "Excl size  = %d (expected 10)"  % len(excl_idx)
 
 X_train     = X_crop[train_idx]
 X_test      = X_crop[test_idx]
@@ -248,12 +277,13 @@ cls_test    = classes[test_idx]
 names_train = [col_names[i] for i in train_idx]
 names_test  = [col_names[i] for i in test_idx]
 
-print("[SPLIT] Training : %d spectra" % len(y_train))
+print("[SPLIT] Training : %d spectra  (15 Gr + 15 no-Gr per class)" % len(y_train))
 for cls, cnt in zip(*np.unique(cls_train, return_counts=True)):
     print("           %-12s: %d" % (cls, cnt))
-print("[SPLIT] Test     : %d spectra" % len(y_test))
+print("[SPLIT] Test     : %d spectra  (Gr only: 5 per class)" % len(y_test))
 for cls, cnt in zip(*np.unique(cls_test, return_counts=True)):
     print("           %-12s: %d" % (cls, cnt))
+print("[SPLIT] Excluded : %d no-Gr spectra (5 per class, not used)" % len(excl_idx))
 
 # =============================================================================
 # 5.  PRE-PROCESSING  (Savitzky-Golay smooth)
@@ -576,7 +606,7 @@ plot_confusion_with_stats(
 
 plot_confusion_with_stats(
     cm_pls_test, CLASS_LABELS,
-    'PLS-DA  External Test  (n=20)',
+    'PLS-DA  External Test  (Gr only, n=10)',
     '05_PLSDA_Confusion_Test.png', 'Oranges', acc_pls_test)
 
 # =============================================================================
@@ -679,8 +709,8 @@ ax.set_ylabel('LV2 (%.1f%% var.)' % lv_var(1), fontsize=11)
 nw_tr = int((le.transform(cls_train) != y_pls_cv).sum())
 nw_te = int((le.transform(cls_test)  != y_pls_test).sum())
 ax.set_title(
-    'PLS-DA Binary Cluster  |  5-fold CV (train) + External Test\n'
-    'Train: %d wrong/60  CV acc=%.1f%%     Test: %d wrong/20  acc=%.1f%%' % (
+    'PLS-DA Binary Cluster  |  5-fold CV (train) + External Test (Gr only)\n'
+    'Train: %d wrong/60  CV acc=%.1f%%     Test: %d wrong/10  acc=%.1f%%' % (
         nw_tr, acc_pls_cv*100, nw_te, acc_pls_test*100),
     fontsize=10, fontweight='bold')
 ax.grid(True, alpha=0.25)
@@ -729,8 +759,8 @@ fig, ax = plt.subplots(figsize=(9, 7))
 nw_tr = int((le.transform(cls_train) != y_svm_cv).sum())
 nw_te = int((le.transform(cls_test)  != y_svm_test).sum())
 scatter_svm(ax, y_svm_cv, y_svm_test,
-    'SVM-RBF Binary Cluster  |  5-fold CV (train) + External Test\n'
-    'Train: %d wrong/60  CV acc=%.1f%%     Test: %d wrong/20  acc=%.1f%%' % (
+    'SVM-RBF Binary Cluster  |  5-fold CV (train) + External Test (Gr only)\n'
+    'Train: %d wrong/60  CV acc=%.1f%%     Test: %d wrong/10  acc=%.1f%%' % (
         nw_tr, acc_svm_cv*100, nw_te, acc_svm_test*100),
     cm_svm_cv, cm_svm_test)
 fig.suptitle(TITLE_SUF, fontsize=10)
@@ -741,8 +771,8 @@ save_fig(fig, '10_SVM_Cluster_5fold.png')
 fig, ax = plt.subplots(figsize=(9, 7))
 nw_te = int((le.transform(cls_test) != y_svm_test).sum())
 scatter_svm(ax, le.transform(cls_train), y_svm_test,
-    'SVM-RBF Binary Cluster  |  External Test focus  (n=20)\n'
-    'Test: %d wrong/20  |  Test accuracy = %.1f%%' % (nw_te, acc_svm_test*100),
+    'SVM-RBF Binary Cluster  |  External Test focus  (Gr only, n=10)\n'
+    'Test: %d wrong/10  |  Test accuracy = %.1f%%' % (nw_te, acc_svm_test*100),
     cm_svm_cv, cm_svm_test)
 fig.suptitle(TITLE_SUF, fontsize=10)
 fig.tight_layout()
@@ -758,7 +788,7 @@ plot_confusion_with_stats(
 
 plot_confusion_with_stats(
     cm_svm_test, CLASS_LABELS,
-    'SVM-RBF  External Test  (n=20)',
+    'SVM-RBF  External Test  (Gr only, n=10)',
     '13_SVM_Confusion_Test.png', 'Oranges', acc_svm_test)
 
 # =============================================================================
@@ -772,7 +802,7 @@ svm_acc_te_v,  svm_rec_te_v  = per_class_metrics(cm_svm_test)
 
 fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 x_ov = np.arange(2); w_ov = 0.28
-groups   = ['5-fold CV\n(train n=60)', 'External Test\n(n=20)']
+groups   = ['5-fold CV\n(train n=60)', 'External Test\n(Gr only, n=10)']
 xc = np.arange(len(CLASS_LABELS)); wc = 0.30
 
 # Panel 1: Overall accuracy
@@ -816,10 +846,10 @@ for bar in list(b1)+list(b2):
 ax.axhline(100, color='grey', ls=':', lw=1)
 ax.set_xticks(xc); ax.set_xticklabels(CLASS_LABELS, fontsize=10)
 ax.set_ylabel('Accuracy (%)', fontsize=12); ax.set_ylim(0, 118)
-ax.set_title('Per-Class Accuracy\nExternal Test', fontsize=11, fontweight='bold')
+ax.set_title('Per-Class Accuracy\nExternal Test (Gr only)', fontsize=11, fontweight='bold')
 ax.legend(fontsize=10); ax.grid(True, alpha=0.2, axis='y')
 
-fig.suptitle('Accuracy  |  Binary: PDMS vs SiO2/Si  |  PLS-DA vs SVM-RBF  |  ' + TITLE_SUF,
+fig.suptitle('Accuracy  |  PDMS vs SiO2/Si  |  PLS-DA vs SVM-RBF  |  ' + TITLE_SUF,
              fontsize=11, fontweight='bold')
 fig.tight_layout()
 save_fig(fig, '14_Accuracy_Comparison.png')
@@ -871,10 +901,10 @@ for bar in list(b1)+list(b2):
 ax.axhline(100, color='grey', ls=':', lw=1)
 ax.set_xticks(xc); ax.set_xticklabels(CLASS_LABELS, fontsize=10)
 ax.set_ylabel('Recall (%)', fontsize=12); ax.set_ylim(0, 122)
-ax.set_title('Per-Class Recall\nExternal Test', fontsize=11, fontweight='bold')
+ax.set_title('Per-Class Recall\nExternal Test (Gr only)', fontsize=11, fontweight='bold')
 ax.legend(fontsize=10); ax.grid(True, alpha=0.2, axis='y')
 
-fig.suptitle('Recall  |  Binary: PDMS vs SiO2/Si  |  PLS-DA vs SVM-RBF  |  ' + TITLE_SUF,
+fig.suptitle('Recall  |  PDMS vs SiO2/Si  |  PLS-DA vs SVM-RBF  |  ' + TITLE_SUF,
              fontsize=12, fontweight='bold')
 fig.tight_layout()
 save_fig(fig, '15_Recall_Comparison.png')
@@ -910,8 +940,8 @@ with pd.ExcelWriter(out_xlsx, engine='openpyxl') as writer:
     # Summary
     rows = [
         ('Input file',                         FILE_NAME),
-        ('Binary Class 1 (PDMS)',              'SSY-PDMS + SSY-Gr-PDMS  (n=40)'),
-        ('Binary Class 2 (SiO2/Si)',           'SSY-SiO2/Si + SSY-Gr-SiO2/Si  (n=40)'),
+        ('Binary Class 1 (PDMS)',              'PDMS + Gr-PDMS  (n=40 total)'),
+        ('Binary Class 2 (SiO2/Si)',           'SiO2/Si + Gr-SiO2/Si  (n=40 total)'),
         ('Spectral window (cm-1)',              '%d-%d' % (WAVENUMBER_MIN, WAVENUMBER_MAX)),
         ('Spectral points in window',           X_crop.shape[1]),
         ('SG window / poly',                    '%d/%d' % (SG_WINDOW, SG_POLY)),
@@ -919,8 +949,9 @@ with pd.ExcelWriter(out_xlsx, engine='openpyxl') as writer:
         ('VIP top-N selected',                  top_n),
         ('N latent variables (PLS-DA)',         N_COMPONENTS),
         ('Total samples',                       len(y)),
-        ('Training set',                        '%d (30 PDMS + 30 SiO2/Si)' % len(y_train)),
-        ('Test set',                            '%d (10 PDMS + 10 SiO2/Si)' % len(y_test)),
+        ('Training set',                        '%d (15 Gr-PDMS + 15 PDMS + 15 Gr-SiO2/Si + 15 SiO2/Si)' % len(y_train)),
+        ('Test set',                            '%d — Gr only (5 Gr-PDMS + 5 Gr-SiO2/Si)' % len(y_test)),
+        ('Excluded (no-Gr)',                    '10 spectra excluded entirely (5 per class)'),
         ('', ''),
         ('--- PLS-DA ---',                      ''),
         ('PLS-DA Train re-sub acc (%)',         '%.2f' % (train_acc_resub * 100)),
@@ -1026,7 +1057,7 @@ print('  Spectral window  : %d-%d cm-1   |   %d points' % (
     WAVENUMBER_MIN, WAVENUMBER_MAX, X_crop.shape[1]))
 print('  VIP > 1          : %d / %d   ->   top-%d selected' % (
     n_vip_gt1, len(vip_all), top_n))
-print('  Split            : 60 train (30+30)  |  20 test (10+10)')
+print('  Split            : 60 train  |  10 test (Gr only: 5+5)  |  10 excluded (no-Gr)')
 print()
 print('  %-10s  %20s  %18s' % ('MODEL', '5-fold CV (train)', 'External Test'))
 print('  ' + '-' * 52)
