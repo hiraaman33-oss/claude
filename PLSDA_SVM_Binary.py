@@ -86,7 +86,7 @@ WAVENUMBER_MAX = 1800
 
 SG_WINDOW      = 7
 SG_POLY        = 2
-VIP_TOP_N      = 1500
+VIP_TOP_N      = 1800
 N_COMPONENTS   = 3          # binary PLS-DA: 3 LVs sufficient
 N_PERM         = 999
 RANDOM_STATE   = 42
