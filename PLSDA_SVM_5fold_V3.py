@@ -6,8 +6,8 @@ SPECTRAL WINDOW : 450 - 1800 cm-1
 
 MODELS    : PLS-DA  (5 LVs, 5-fold CV only)
             SVM-RBF (C=10, gamma=scale, 5-fold CV only)
-VIP       : top-2200  (3-LV PLS-DA on all 80 spectra)
-OUTPUTS   -> C:/Users/Hira Aman/Desktop/PROF_DOMENICOS/PLSDA_SVM_5fold/
+VIP       : ALL variables with VIP > 1  (3-LV PLS-DA on all 80 spectra)
+OUTPUTS   -> C:/Users/Hira Aman/Desktop/PROF_DOMENICOS/PLSDA_SVM_VIPgt1/
 
   01_PLSDA_Scores_LV1_LV2.png
   02_PLSDA_Scores_LV1_LV3.png
@@ -67,13 +67,12 @@ WAVENUMBER_MIN = 450
 WAVENUMBER_MAX = 1800
 SG_WINDOW      = 7
 SG_POLY        = 2
-VIP_TOP_N      = 2200
 N_COMPONENTS   = 5
 CV_FOLDS       = 5
 N_PERM         = 999
 RANDOM_STATE   = 42
 
-OUTPUT_DIR = os.path.join(DATA_PATH, "PLSDA_SVM_5fold")
+OUTPUT_DIR = os.path.join(DATA_PATH, "PLSDA_SVM_VIPgt1")
 
 try:
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -193,19 +192,19 @@ def compute_vip(fitted_pls):
 # =============================================================================
 # 6.  VIP SELECTION
 # =============================================================================
-print("\n[VIP] 3-LV PLS-DA -> top-%d VIP ..." % VIP_TOP_N)
+print("\n[VIP] 3-LV PLS-DA -> all variables with VIP > 1 ...")
 sc_init  = StandardScaler().fit(X_sm)
 Xs_init  = sc_init.transform(X_sm)
 Yd_init  = pd.get_dummies(pd.Series(y)).values.astype(float)
 pls_init = PLSRegression(n_components=3, scale=False, max_iter=10000)
 pls_init.fit(Xs_init, Yd_init)
-vip_all   = compute_vip(pls_init)
-n_vip_gt1 = int((vip_all > 1).sum())
-top_idx   = np.argsort(vip_all)[-VIP_TOP_N:]
-wn_sel    = wavenumbers[top_idx]
-X_sel     = X_sm[:, top_idx]
-print("[VIP] VIP > 1: %d/%d  |  top-%d: %.0f-%.0f cm-1" % (
-    n_vip_gt1, len(vip_all), VIP_TOP_N, wn_sel.min(), wn_sel.max()))
+vip_all        = compute_vip(pls_init)
+top_idx        = np.where(vip_all > 1)[0]
+n_vip_selected = len(top_idx)
+wn_sel         = wavenumbers[top_idx]
+X_sel          = X_sm[:, top_idx]
+print("[VIP] VIP > 1: %d/%d  |  range: %.0f-%.0f cm-1" % (
+    n_vip_selected, len(vip_all), wn_sel.min(), wn_sel.max()))
 
 # =============================================================================
 # 7.  PLS-DA CLASSIFIER
@@ -306,8 +305,8 @@ MARKER = {
     'SSY-Gr-SiO2/Si' : 'D',
 }
 
-TTAG = "VIP top-%d  |  %d LVs  |  %d-%d cm-1  |  n=80" % (
-    VIP_TOP_N, N_COMPONENTS, WAVENUMBER_MIN, WAVENUMBER_MAX)
+TTAG = "VIP > 1 (%d vars)  |  %d LVs  |  %d-%d cm-1  |  n=80" % (
+    n_vip_selected, N_COMPONENTS, WAVENUMBER_MIN, WAVENUMBER_MAX)
 
 def lv_var(i):
     return (r2x_cum[i] - (r2x_cum[i-1] if i > 0 else 0)) * 100
@@ -510,11 +509,8 @@ fig, ax = plt.subplots(figsize=(11, 4.5))
 ax.plot(wavenumbers, vip_all, color='steelblue', lw=1.0, zorder=2)
 ax.fill_between(wavenumbers, vip_all, 1, where=(vip_all > 1),
                 alpha=0.25, color='crimson',
-                label='VIP > 1  (%d vars)' % n_vip_gt1)
+                label='VIP > 1  (%d vars selected)' % n_vip_selected)
 ax.axhline(1, color='crimson', ls='--', lw=1.0, label='VIP = 1 threshold')
-ax.fill_between(wavenumbers, 0, 0.06 * vip_all.max(), where=sel_mask,
-                alpha=0.20, color='green',
-                label='Top-%d selected' % VIP_TOP_N)
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
 ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=12, labelpad=6)
 ax.set_ylabel('VIP score', fontsize=12, labelpad=6)
@@ -529,8 +525,8 @@ save_fig(fig, '07_PLSDA_VIP_Scores.png')
 # 18. LOADINGS  LV1/LV2/LV3
 # =============================================================================
 fig, axes = plt.subplots(3, 1, figsize=(11, 9), sharex=True)
-fig.suptitle('PLS-DA Loadings  LV1 / LV2 / LV3  |  top-%d vars\n%s'
-             % (VIP_TOP_N, TTAG), fontsize=10, fontweight='bold', y=1.01)
+fig.suptitle('PLS-DA Loadings  LV1 / LV2 / LV3  |  VIP > 1 (%d vars)\n%s'
+             % (n_vip_selected, TTAG), fontsize=10, fontweight='bold', y=1.01)
 for i, (ax, col) in enumerate(zip(axes, ['steelblue', 'darkorange', 'seagreen'])):
     ax.stem(wn_sel, P_load[:, i], linefmt=col, markerfmt=' ', basefmt='k-')
     ax.axhline(0, color='k', lw=0.5)
@@ -713,8 +709,7 @@ with pd.ExcelWriter(out_xlsx, engine='openpyxl') as writer:
         ('Total samples',                 len(y)),
         ('Spectral window (cm-1)',        '%d-%d' % (WAVENUMBER_MIN, WAVENUMBER_MAX)),
         ('SG smoothing window/poly',      '%d/%d' % (SG_WINDOW, SG_POLY)),
-        ('VIP > 1',                       n_vip_gt1),
-        ('VIP top-N selected',            VIP_TOP_N),
+        ('VIP > 1 selected',              n_vip_selected),
         ('PLS-DA latent variables',       N_COMPONENTS),
         ('CV folds',                      CV_FOLDS),
         ('', ''),
@@ -779,7 +774,7 @@ with pd.ExcelWriter(out_xlsx, engine='openpyxl') as writer:
         'Wavenumber_cm1': wavenumbers,
         'VIP_Score':      vip_all,
         'VIP_gt_1':       vip_all > 1,
-        'Selected_Top%d' % VIP_TOP_N: sel_mask,
+        'Selected_VIPgt1': sel_mask,
     }).to_excel(writer, sheet_name='VIP_Scores', index=False)
 
     # Loadings
@@ -800,7 +795,7 @@ print('\n[SAVED] %s' % out_xlsx)
 # 26. CONSOLE SUMMARY
 # =============================================================================
 print('\n' + '=' * 65)
-print('  RESULTS  |  %d-fold CV  |  VIP top-%d' % (CV_FOLDS, VIP_TOP_N))
+print('  RESULTS  |  %d-fold CV  |  VIP > 1 (%d vars)' % (CV_FOLDS, n_vip_selected))
 print('=' * 65)
 print('  %-10s   %d-fold CV' % ('MODEL', CV_FOLDS))
 print('  ' + '-' * 28)
