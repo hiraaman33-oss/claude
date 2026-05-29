@@ -27,7 +27,7 @@ import pywt
 # ─────────────────────────────────────────────────────────────────────────────
 FILE_PATH = (
     r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
-    r"\m1DNAHACAT120ngAgSiNW_532nm_600gr_BC200_50XLF_05s_4a_25_5ul_dropcenter.l6m"
+    r"\m1-DNA-HACAT1-20ng-AgSiNW_532nm_600gr_BC200_50XLF_05s_4a_2-5%_5ul_drop-center.l6m"
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
