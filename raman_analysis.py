@@ -32,15 +32,29 @@ from scipy.signal import savgol_filter
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  FILE PATHS
+#  Set MODE = "map1"  to run on the binary .l6m map  (Map 1)
+#  Set MODE = "map2"  to run on the exported .txt map (Map 2)
 # ─────────────────────────────────────────────────────────────────────────────
+MODE = "map2"   # <-- change to "map1" for the binary .l6m / .l6s pipeline
+
+# --- Map 1  (binary LabSpec 6 files) ---
 FILE_PATH = (
     r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
     r"\m1-DNA-HACAT1-20ng-AgSiNW_532nm_600gr_BC200_50XLF_05s_4a_2-5%_5ul_drop-center.l6m"
 )
-
 FILE_PATH_L6S = (
     r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
     r"\S1-DNA-HACAT1-20ng-CaF2_532nm_600gr_BC50_100X_10s_4a_100%.l6s"
+)
+
+# --- Map 2  (LabSpec 6 exported .txt files) ---
+FILE_PATH_TXT = (
+    r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
+    r"\m2-DNA-HACAT1-20ng-AgSiNW_532nm_600gr_BC200_50XLF_05s_4a_2-5%_5ul_drop-edge.txt"
+)
+FILE_PATH_CAF2_TXT = (
+    r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
+    r"\S1-DNA-HACAT1-20ng-CaF2_532nm_600gr_BC50_100X_10s_4a_100%.txt"
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -121,7 +135,113 @@ def load_l6m(filepath):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  1b.  LOAD  .l6s  (single spectrum, LabSpec 6)
+#  1b.  LOAD  .txt map  (LabSpec 6 exported text, Map 2 format)
+# ─────────────────────────────────────────────────────────────────────────────
+def load_txt_map(filepath):
+    """
+    Load a LabSpec 6 map exported as .txt.
+
+    File structure:
+      Lines starting with '#' = metadata header.
+      First data line         = wavenumber axis (tab-separated floats, no X/Y prefix).
+      Subsequent data lines   = spectra: col[0]=X(um), col[1]=Y(um), col[2:]=intensities.
+    """
+    if not os.path.isfile(filepath):
+        raise FileNotFoundError(f"File not found:\n  {filepath}")
+
+    with open(filepath, "r", encoding="utf-8", errors="replace") as fh:
+        lines = fh.readlines()
+
+    data_lines = [l.rstrip("\n") for l in lines
+                  if l.strip() and not l.strip().startswith("#")]
+
+    if len(data_lines) < 2:
+        raise ValueError("No data found in .txt map file.")
+
+    # First data line = wavenumber axis
+    wn_fields = data_lines[0].split("\t")
+    wavenumbers = np.array([float(v) for v in wn_fields if v.strip()], dtype=np.float64)
+    n_wn = len(wavenumbers)
+
+    # Remaining lines = spectra (first two fields are X, Y coords)
+    spectra = []
+    xy = []
+    for line in data_lines[1:]:
+        parts = line.split("\t")
+        if len(parts) < n_wn + 2:
+            continue
+        try:
+            x_um = float(parts[0])
+            y_um = float(parts[1])
+            intensities = np.array([float(v) for v in parts[2:2 + n_wn]],
+                                   dtype=np.float64)
+        except ValueError:
+            continue
+        if len(intensities) == n_wn:
+            spectra.append(intensities)
+            xy.append((x_um, y_um))
+
+    spectra = np.array(spectra)
+    spectra[~np.isfinite(spectra)] = np.nan
+    spectra[spectra > 1e7]         = np.nan
+    spectra[spectra < 0]           = np.nan
+
+    print(f"\n{'─'*55}")
+    print(f"  Map .txt : {len(spectra)} spectra  x  {n_wn} points")
+    print(f"  Range    : {wavenumbers[0]:.1f} - {wavenumbers[-1]:.1f} cm-1")
+    print(f"  Step     : {np.diff(wavenumbers).mean():.3f} cm-1/ch")
+    print(f"{'─'*55}\n")
+    return wavenumbers, spectra
+
+
+def load_txt_caf2(filepath):
+    """
+    Load a LabSpec 6 single-spectrum exported as .txt.
+
+    Supports both:
+      2-column format:  wavenumber  intensity          (tab-separated)
+      3-column format:  row_index   wavenumber  intensity
+    Lines that start with '#' or cannot be parsed are skipped.
+    """
+    if not os.path.isfile(filepath):
+        raise FileNotFoundError(f"File not found:\n  {filepath}")
+
+    wn_list, int_list = [], []
+    with open(filepath, "r", encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split("\t")
+            if len(parts) == 2:
+                try:
+                    wn_list.append(float(parts[0]))
+                    int_list.append(float(parts[1]))
+                except ValueError:
+                    continue
+            elif len(parts) == 3:
+                try:
+                    wn_list.append(float(parts[1]))
+                    int_list.append(float(parts[2]))
+                except ValueError:
+                    continue
+
+    if not wn_list:
+        raise ValueError("No numeric data found in CaF2 .txt file.")
+
+    wavenumbers = np.array(wn_list, dtype=np.float64)
+    intensity   = np.array(int_list, dtype=np.float64)
+
+    print(f"\n{'─'*55}")
+    print(f"  CaF2 .txt : {len(wavenumbers)} points")
+    print(f"  Range     : {wavenumbers[0]:.1f} - {wavenumbers[-1]:.1f} cm-1")
+    print(f"  Max counts: {intensity.max():.1f}")
+    print(f"{'─'*55}\n")
+    return wavenumbers, intensity
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  1c.  LOAD  .l6s  (single spectrum, LabSpec 6)
 # ─────────────────────────────────────────────────────────────────────────────
 def load_l6s(filepath):
     """
@@ -1067,5 +1187,109 @@ def main():
     print("\n  Done.\n")
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  MAIN  (txt version — Map 2 and CaF2 exported .txt files)
+# ─────────────────────────────────────────────────────────────────────────────
+def main_txt():
+    print("\n" + "="*55)
+    print("  RAMAN MAP ANALYSIS PIPELINE  v5  [TXT MODE]")
+    print("="*55)
+
+    # 1. Load map from .txt
+    wn, spectra = load_txt_map(FILE_PATH_TXT)
+
+    raw_spectra = np.array([spectra[i] for i in range(len(spectra))
+                            if np.isfinite(spectra[i]).all()
+                            and spectra[i].max() < 1e6])
+    print(f"  Valid spectra loaded: {len(raw_spectra)}")
+
+    avg_raw = np.mean(raw_spectra, axis=0)
+
+    # 2. Spike removal
+    print("Step 2 - Spike removal ...")
+    cleaned_spectra = clean_all_spectra(raw_spectra, wn, threshold=5.0)
+    avg_cleaned = np.mean(cleaned_spectra, axis=0)
+
+    # 3. SG smooth -> ALS baseline
+    avg_sg = savgol_filter(avg_cleaned, window_length=11, polyorder=3)
+
+    print("Step 3 - ALS baseline correction ...")
+    avg_bc_raw, baseline = subtract_baseline(avg_sg)
+
+    # 4. Wavelet denoise
+    print("Step 4 - Wavelet denoising ...")
+    avg_denoised = wavelet_denoise(avg_bc_raw, wavelet="db8", level=5, mode="soft")
+    avg_denoised = np.clip(avg_denoised, 0, None)
+
+    # 5. Normalise
+    print("Step 5 - Min-Max normalising ...")
+    avg_norm = minmax_normalize(avg_denoised)
+
+    # 6. SNV
+    print("Step 6 - SNV ...")
+    avg_snv = snv(avg_norm)
+
+    print(f"\n{'─'*55}")
+    print(f"  Raw avg      : max={avg_raw.max():.1f}  mean={avg_raw.mean():.1f}")
+    print(f"  After spikes : max={avg_cleaned.max():.1f}")
+    print(f"  After baseline: max={avg_bc_raw.max():.1f}")
+    print(f"  Denoised     : max={avg_denoised.max():.1f}")
+    print(f"  Normalised   : max={avg_norm.max():.4f}  min={avg_norm.min():.4f}")
+    print(f"  SNV          : mean={avg_snv.mean():.4f}  std={avg_snv.std():.4f}")
+    print(f"{'─'*55}\n")
+
+    # Derive output folder from the .txt map file location
+    out_base = os.path.dirname(FILE_PATH_TXT)
+
+    # Save CSV (use same folder as input)
+    csv_path = os.path.join(out_base, "map2_processed_spectrum.csv")
+    header = "wavenumber_cm-1,raw_avg,spike_removed,baseline_corrected,denoised,normalized,snv"
+    np.savetxt(csv_path,
+               np.column_stack([wn, avg_raw, avg_cleaned,
+                                avg_bc_raw, avg_denoised, avg_norm, avg_snv]),
+               delimiter=",", header=header, comments="")
+    print(f"  CSV saved -> {csv_path}")
+
+    # Pipeline figure + zoomed figure (reuse existing functions)
+    print("  Generating pipeline figures ...")
+    # Temporarily set savefig paths to output folder
+    old_cwd = os.getcwd()
+    os.chdir(out_base)
+    plot_full_pipeline(wn, raw_spectra, cleaned_spectra,
+                       avg_raw, avg_cleaned, baseline,
+                       avg_bc_raw, avg_denoised, avg_norm, avg_snv)
+    plot_final_zoomed(wn, avg_norm, avg_snv)
+    os.chdir(old_cwd)
+
+    # Load CaF2 reference from .txt
+    print("\n" + "="*55)
+    print("  CaF2 REFERENCE (.txt)  LOADING")
+    print("="*55)
+    wn_c, sp_c = load_txt_caf2(FILE_PATH_CAF2_TXT)
+    print("  Applying preprocessing pipeline to CaF2 spectrum ...")
+    snv_c = preprocess_single(wn_c, sp_c)
+
+    # SNV comparison overlay
+    print("  Generating SNV comparison figure ...")
+    os.chdir(out_base)
+    plot_comparison(wn, avg_snv, wn_c, snv_c,
+                    label_map="Map-2 average (AgSiNW, 50xLF, 0.5 s)",
+                    label_l6s="CaF2 reference (100x, 10 s)")
+    os.chdir(old_cwd)
+
+    # Individual spectra vs CaF2 — zoomed 3-panel figures
+    print("\n" + "="*55)
+    print("  INDIVIDUAL SPECTRA vs CaF2  (400-1800 cm-1)")
+    print("="*55)
+    out_dir = os.path.join(out_base, "individual_spectra_map2")
+    print(f"  Output folder: {out_dir}")
+    plot_all_individual(wn, cleaned_spectra, wn_c, sp_c, out_dir)
+
+    print("\n  Done.\n")
+
+
 if __name__ == "__main__":
-    main()
+    if MODE == "map2":
+        main_txt()
+    else:
+        main()
