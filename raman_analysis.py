@@ -706,258 +706,268 @@ def plot_comparison(wn_map, snv_map, wn_l6s, snv_l6s,
     plt.show()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  11.  PEAK DETECTION  (automatic, scipy.signal)
-# ─────────────────────────────────────────────────────────────────────────────
-def detect_peaks(wn, spectrum, distance_cm=35, height_pct=0.04, prominence_pct=0.03):
-    """
-    Find peaks in a spectrum over 400–1800 cm⁻¹.
 
-    Works on the ALS-baseline-corrected signal so broad fluorescence
-    background does not swamp low Raman peaks.  Returns an array of
-    peak wavenumbers sorted by ascending wavenumber.
+# -----------------------------------------------------------------------------
+#  11.  PEAK DETECTION  (automatic, scipy.signal)
+# -----------------------------------------------------------------------------
+def _baseline_correct_display(wn, spectrum):
+    """Baseline-correct a spectrum for display; returns (wn_region, bc_spectrum)."""
+    mask  = (wn >= 395) & (wn <= 1810)
+    wn_r  = wn[mask]
+    sp_sg = savgol_filter(spectrum[mask], window_length=11, polyorder=3)
+    bline = als_baseline(sp_sg, lam=1e6, p=0.005, n_iter=15)
+    return wn_r, np.clip(sp_sg - bline, 0, None)
+
+
+def detect_peaks(wn, spectrum,
+                 distance_cm=45, height_pct=0.06, prominence_pct=0.05):
+    """
+    Find peaks in the ALS-baseline-corrected spectrum (400-1800 cm-1).
+    Returns sorted array of peak wavenumbers.
     """
     from scipy.signal import find_peaks as _fp
-
-    mask = (wn >= 395) & (wn <= 1810)
-    wn_r   = wn[mask]
-    sp_sg  = savgol_filter(spectrum[mask], window_length=11, polyorder=3)
-    bline  = als_baseline(sp_sg, lam=1e5, p=0.01, n_iter=10)
-    sp_bc  = np.clip(sp_sg - bline, 0, None)
-
+    wn_r, sp_bc = _baseline_correct_display(wn, spectrum)
     if sp_bc.max() < 1e-6:
         return np.array([])
-
-    step         = float(np.diff(wn_r).mean())
-    dist_pts     = max(3, int(distance_cm / step))
-    height_thr   = height_pct    * sp_bc.max()
-    prom_thr     = prominence_pct * sp_bc.max()
-
-    idxs, _ = _fp(sp_bc, height=height_thr, distance=dist_pts,
-                  prominence=prom_thr)
+    step     = float(np.diff(wn_r).mean())
+    dist_pts = max(3, int(distance_cm / step))
+    idxs, _ = _fp(sp_bc,
+                  height     = height_pct    * sp_bc.max(),
+                  distance   = dist_pts,
+                  prominence = prominence_pct * sp_bc.max())
     return wn_r[idxs]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  12.  INDIVIDUAL SPECTRUM vs CaF₂ COMPARISON PLOTS
-# ─────────────────────────────────────────────────────────────────────────────
-def _sg_display(spectrum, wl=9, po=3):
-    """Light Savitzky-Golay smooth for display (preserves counts scale)."""
-    return savgol_filter(spectrum, window_length=wl, polyorder=po)
+def detect_peaks_caf2(wn, spectrum):
+    """Stricter peak detection for CaF2 (few real Raman bands in 400-1800)."""
+    return detect_peaks(wn, spectrum,
+                        distance_cm=60, height_pct=0.12, prominence_pct=0.10)
 
 
-def plot_spectrum_vs_caf2(wn_map, sp_map, wn_caf2, sp_caf2,
-                          peaks_map, peaks_caf2,
-                          spectrum_idx, out_dir,
-                          peak_tol=22.0):
+# -----------------------------------------------------------------------------
+#  12.  INDIVIDUAL SPECTRUM vs CaF2  --  3-PANEL ZOOMED FIGURES
+# -----------------------------------------------------------------------------
+_ZOOM_REGIONS = [(400, 750), (750, 1250), (1250, 1800)]
+_ZOOM_LABELS  = ["400 - 750 cm⁻¹", "750 - 1250 cm⁻¹", "1250 - 1800 cm⁻¹"]
+
+
+def _annotate_panel(ax, wn_m, sp_m, wn_c, sp_c,
+                    peaks_map, peaks_caf2, lo, hi, peak_tol=22.0):
     """
-    One-panel figure: SERS spectrum (black) vs CaF₂ reference (red).
-
-    Dotted vertical lines mark every detected peak.
-    Wavenumber label + '?' → peak present in SERS but NOT in CaF₂.
-    Plain wavenumber label  → peak present in BOTH (substrate / instrument).
+    Add dotted vertical lines + wavenumber labels to one zoomed panel.
+    Red bold '?' label  => peak in SERS but NOT in CaF2.
+    Grey label          => peak shared with CaF2 (substrate/instrument).
     """
-    matplotlib.rcParams.update({"font.family": "DejaVu Sans",
-                                 "figure.facecolor": "white"})
-
-    # Restrict display to fingerprint region
-    fp = (400, 1800)
-    m_m   = (wn_map  >= fp[0]) & (wn_map  <= fp[1])
-    m_c   = (wn_caf2 >= fp[0]) & (wn_caf2 <= fp[1])
-
-    sp_m_d = _sg_display(sp_map)
-    sp_c_d = _sg_display(sp_caf2)
-
-    fig, ax = plt.subplots(figsize=(14, 5))
-    ax.plot(wn_map[m_m],   sp_m_d[m_m],  color="black", lw=1.3,
-            label=f"SERS map spectrum #{spectrum_idx + 1}")
-    ax.plot(wn_caf2[m_c],  sp_c_d[m_c],  color="#C0392B", lw=1.0, alpha=0.85,
-            label="CaF₂ reference")
-
-    ymax_m = sp_m_d[m_m].max()
-    ymax_c = sp_c_d[m_c].max()
-    ymax   = max(ymax_m, ymax_c)
-    ymin   = min(sp_m_d[m_m].min(), sp_c_d[m_c].min())
-    y_span = ymax - ymin
+    y_m   = sp_m[(wn_m >= lo) & (wn_m <= hi)]
+    y_c   = sp_c[(wn_c >= lo) & (wn_c <= hi)]
+    ymax  = max(y_m.max() if y_m.size else 0, y_c.max() if y_c.size else 0)
+    yspan = ymax if ymax > 0 else 1.0
 
     used_x = []
 
-    # ── annotate SERS peaks ──────────────────────────────────────────────────
+    # SERS peaks
     for wn_p in sorted(peaks_map):
-        if not (fp[0] <= wn_p <= fp[1]):
+        if not (lo <= wn_p <= hi):
             continue
-        if any(abs(wn_p - u) < peak_tol * 0.7 for u in used_x):
+        if any(abs(wn_p - u) < peak_tol * 0.6 for u in used_x):
             continue
         used_x.append(wn_p)
 
         in_caf2 = any(abs(wn_p - c) < peak_tol for c in peaks_caf2)
-
-        # height at this wavenumber in the smoothed map spectrum
-        i_local = np.argmin(np.abs(wn_map - wn_p))
-        y_val   = sp_m_d[i_local]
-
         color  = "#C0392B" if not in_caf2 else "#555555"
-        marker = "?\n" if not in_caf2 else ""
-        lw_vl  = 1.0 if not in_caf2 else 0.7
+        weight = "bold"    if not in_caf2 else "normal"
+        marker = "?\n"     if not in_caf2 else ""
 
-        ax.axvline(wn_p, color=color, lw=lw_vl, ls=":", alpha=0.85)
-        ax.text(wn_p,
-                y_val + y_span * 0.04,
+        i_loc  = np.argmin(np.abs(wn_m - wn_p))
+        y_peak = sp_m[i_loc]
+
+        ax.axvline(wn_p, color=color, lw=0.9, ls="--", alpha=0.75)
+        ax.text(wn_p, y_peak + yspan * 0.06,
                 f"{marker}{int(round(wn_p))}",
-                fontsize=7.5, ha="center", va="bottom",
-                color=color,
-                fontweight="bold" if not in_caf2 else "normal",
-                bbox=dict(boxstyle="round,pad=0.1", fc="white",
-                          ec="none", alpha=0.7))
+                fontsize=9, ha="center", va="bottom",
+                color=color, fontweight=weight,
+                bbox=dict(boxstyle="round,pad=0.15", fc="white",
+                          ec=color, lw=0.5, alpha=0.85))
 
-    # ── annotate CaF₂-only peaks ────────────────────────────────────────────
+    # CaF2-only peaks
     for wn_p in sorted(peaks_caf2):
-        if not (fp[0] <= wn_p <= fp[1]):
+        if not (lo <= wn_p <= hi):
             continue
-        if any(abs(wn_p - u) < peak_tol * 0.7 for u in used_x):
+        if any(abs(wn_p - u) < peak_tol * 0.6 for u in used_x):
             continue
         used_x.append(wn_p)
 
-        i_local = np.argmin(np.abs(wn_caf2 - wn_p))
-        y_val   = sp_c_d[i_local]
+        i_loc  = np.argmin(np.abs(wn_c - wn_p))
+        y_peak = sp_c[i_loc]
 
-        ax.axvline(wn_p, color="#888888", lw=0.6, ls=":", alpha=0.6)
-        ax.text(wn_p,
-                y_val + y_span * 0.02,
+        ax.axvline(wn_p, color="#999999", lw=0.7, ls="--", alpha=0.60)
+        ax.text(wn_p, y_peak + yspan * 0.04,
                 f"{int(round(wn_p))}",
-                fontsize=6.5, ha="center", va="bottom",
-                color="#888888", alpha=0.85)
+                fontsize=7.5, ha="center", va="bottom",
+                color="#777777",
+                bbox=dict(boxstyle="round,pad=0.10", fc="white",
+                          ec="none", alpha=0.7))
 
-    ax.set_xlim(fp[0] - 10, fp[1] + 10)
-    ax.set_ylim(ymin - y_span * 0.08, ymax + y_span * 0.30)
-    ax.set_xlabel("Raman shift (cm⁻¹)", fontsize=10)
-    ax.set_ylabel("Intensity (counts)", fontsize=10)
-    ax.set_title(
-        f"Spectrum #{spectrum_idx + 1}  vs  CaF₂ reference   "
-        f"|   ? = SERS-specific peak (not in CaF₂)",
-        fontsize=10, fontweight="bold"
+
+def plot_spectrum_vs_caf2(wn_map, sp_map, wn_caf2, sp_caf2,
+                          peaks_map, peaks_caf2,
+                          spectrum_idx, out_dir, peak_tol=22.0):
+    """
+    Three-panel zoomed figure per map spectrum.
+
+    Both spectra displayed baseline-corrected so Raman peaks rise from zero.
+    Panel 1: 400-750 cm-1   Panel 2: 750-1250 cm-1   Panel 3: 1250-1800 cm-1
+    Black = SERS.  Red = CaF2.  Red bold '?' = SERS-specific peak.
+    """
+    matplotlib.rcParams.update({"font.family": "DejaVu Sans",
+                                 "figure.facecolor": "white",
+                                 "axes.titlesize": 11,
+                                 "axes.titleweight": "bold"})
+
+    wn_m, sp_m = _baseline_correct_display(wn_map,  sp_map)
+    wn_c, sp_c = _baseline_correct_display(wn_caf2, sp_caf2)
+
+    fig, axes = plt.subplots(3, 1, figsize=(16, 13),
+                             gridspec_kw={"hspace": 0.55,
+                                          "left": 0.06, "right": 0.98,
+                                          "top": 0.93, "bottom": 0.06})
+    fig.suptitle(
+        f"Spectrum #{spectrum_idx + 1}  vs  CaF₂ reference  "
+        f"(ALS baseline-corrected)\n"
+        f"Red bold ? = SERS-specific peak  |  Grey = shared with CaF₂",
+        fontsize=12, fontweight="bold"
     )
-    ax.legend(fontsize=9, loc="upper right", framealpha=0.9)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.tick_params(labelsize=9)
-    ax.grid(True, alpha=0.12, lw=0.5)
+
+    for ax, (lo, hi), rlabel in zip(axes, _ZOOM_REGIONS, _ZOOM_LABELS):
+        m_m = (wn_m >= lo) & (wn_m <= hi)
+        m_c = (wn_c >= lo) & (wn_c <= hi)
+        y_m = sp_m[m_m];  y_c = sp_c[m_c]
+
+        if y_m.size == 0 and y_c.size == 0:
+            ax.set_visible(False); continue
+
+        ax.fill_between(wn_m[m_m], y_m, alpha=0.13, color="black")
+        ax.plot(wn_m[m_m], y_m, color="black",   lw=1.7,
+                label=f"SERS #{spectrum_idx + 1}")
+        ax.fill_between(wn_c[m_c], y_c, alpha=0.13, color="#C0392B")
+        ax.plot(wn_c[m_c], y_c, color="#C0392B", lw=1.3, alpha=0.9,
+                label="CaF₂ reference")
+
+        ymax_local = max(y_m.max() if y_m.size else 0,
+                         y_c.max() if y_c.size else 0)
+        ax.set_ylim(-ymax_local * 0.05, ymax_local * 1.55)
+
+        _annotate_panel(ax, wn_m, sp_m, wn_c, sp_c,
+                        peaks_map, peaks_caf2, lo, hi, peak_tol)
+
+        ax.set_xlim(lo, hi)
+        ax.set_xlabel("Raman shift (cm⁻¹)", fontsize=10)
+        ax.set_ylabel("Intensity (a.u.)", fontsize=10)
+        ax.set_title(rlabel)
+        ax.legend(fontsize=9, loc="upper right", framealpha=0.9)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.tick_params(labelsize=9)
+        ax.grid(True, alpha=0.15, lw=0.5)
 
     os.makedirs(out_dir, exist_ok=True)
     outfile = os.path.join(out_dir, f"spectrum_{spectrum_idx + 1:02d}_vs_caf2.png")
-    fig.savefig(outfile, dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(outfile, dpi=160, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     return outfile
 
 
 def plot_all_individual(wn, spectra, wn_caf2, sp_caf2, out_dir):
     """
-    Generate one figure per map spectrum (spectrum_01 … spectrum_N) plus a
-    summary grid showing all spectra together.
+    One 3-panel zoomed figure per map spectrum + summary grid.
     """
     matplotlib.rcParams.update({"font.family": "DejaVu Sans",
                                  "figure.facecolor": "white"})
 
-    print(f"\n  Detecting CaF₂ reference peaks …")
-    peaks_caf2 = detect_peaks(wn_caf2, sp_caf2)
-    print(f"  CaF₂ peaks found: {len(peaks_caf2)}  "
-          f"({', '.join(str(int(w)) for w in peaks_caf2[:10])}{'…' if len(peaks_caf2)>10 else ''})")
+    print("\n  Detecting CaF₂ reference peaks (strict thresholds) ...")
+    peaks_caf2 = detect_peaks_caf2(wn_caf2, sp_caf2)
+    print(f"  CaF₂ peaks: {len(peaks_caf2)}  "
+          f"[{', '.join(str(int(w)) for w in sorted(peaks_caf2))}]")
 
     n = len(spectra)
-    print(f"\n  Plotting {n} individual spectra vs CaF₂ …")
+    print(f"\n  Plotting {n} individual spectra vs CaF₂ ...")
 
-    # ── Individual figures ────────────────────────────────────────────────────
     all_peaks_map = []
     for i, sp in enumerate(spectra):
         pk = detect_peaks(wn, sp)
         all_peaks_map.append(pk)
         outfile = plot_spectrum_vs_caf2(
-            wn, sp, wn_caf2, sp_caf2,
-            pk, peaks_caf2, i, out_dir
-        )
-        print(f"    [{i+1:2d}/{n}]  {len(pk)} peaks  → {os.path.basename(outfile)}")
+            wn, sp, wn_caf2, sp_caf2, pk, peaks_caf2, i, out_dir)
+        sers_only = sum(1 for w in pk
+                        if not any(abs(w - c) < 22 for c in peaks_caf2))
+        print(f"    [{i+1:2d}/{n}]  {len(pk)} peaks  ({sers_only} SERS-specific)"
+              f"  -> {os.path.basename(outfile)}")
 
-    # ── Summary grid ─────────────────────────────────────────────────────────
+    # Summary grid (baseline-corrected)
     ncols = 5
     nrows = int(np.ceil(n / ncols))
     fig, axes = plt.subplots(nrows, ncols,
-                             figsize=(ncols * 4.5, nrows * 3.2),
+                             figsize=(ncols * 4.0, nrows * 3.0),
                              sharex=True)
     fig.suptitle(
-        "All SERS Map Spectra vs CaF₂ Reference  (400–1800 cm⁻¹)\n"
-        "Black = SERS  |  Red = CaF₂  |  ? = SERS-specific peak",
-        fontsize=12, fontweight="bold", y=1.01
-    )
+        "All SERS Map Spectra vs CaF₂  (baseline-corrected, 400-1800 cm⁻¹)\n"
+        "Black = SERS  |  Red = CaF₂  |  red ? = SERS-specific",
+        fontsize=11, fontweight="bold", y=1.01)
 
-    sp_caf2_sg = _sg_display(sp_caf2)
-    m_c = (wn_caf2 >= 400) & (wn_caf2 <= 1800)
+    wn_c_bc, sp_c_bc = _baseline_correct_display(wn_caf2, sp_caf2)
+    m_c_g = (wn_c_bc >= 400) & (wn_c_bc <= 1800)
 
-    axes_flat = axes.flat if nrows > 1 else [axes] if ncols == 1 else list(axes.flat)
     for i in range(ncols * nrows):
         ax = list(axes.flat)[i]
         if i >= n:
-            ax.set_visible(False)
-            continue
+            ax.set_visible(False); continue
 
-        sp_sg = _sg_display(spectra[i])
-        m_m   = (wn >= 400) & (wn <= 1800)
+        wn_m_bc, sp_m_bc = _baseline_correct_display(wn, spectra[i])
+        m_m_g = (wn_m_bc >= 400) & (wn_m_bc <= 1800)
 
-        ax.plot(wn[m_m],      sp_sg[m_m],      color="black", lw=0.9)
-        ax.plot(wn_caf2[m_c], sp_caf2_sg[m_c], color="#C0392B", lw=0.7, alpha=0.8)
+        ax.plot(wn_m_bc[m_m_g], sp_m_bc[m_m_g], color="black",   lw=0.9)
+        ax.plot(wn_c_bc[m_c_g], sp_c_bc[m_c_g], color="#C0392B", lw=0.7, alpha=0.8)
 
-        ymax = max(sp_sg[m_m].max(), sp_caf2_sg[m_c].max())
-        ymin = min(sp_sg[m_m].min(), sp_caf2_sg[m_c].min())
+        ymax_g = max(sp_m_bc[m_m_g].max(), sp_c_bc[m_c_g].max())
 
         for wn_p in all_peaks_map[i]:
             if not (400 <= wn_p <= 1800):
                 continue
             in_caf2 = any(abs(wn_p - c) < 22 for c in peaks_caf2)
-            color = "#C0392B" if not in_caf2 else "#888888"
-            ax.axvline(wn_p, color=color, lw=0.5, ls=":", alpha=0.8)
+            color  = "#C0392B" if not in_caf2 else "#888888"
             marker = "?" if not in_caf2 else ""
-            ax.text(wn_p, ymax + (ymax - ymin) * 0.05,
+            ax.axvline(wn_p, color=color, lw=0.5, ls=":", alpha=0.8)
+            ax.text(wn_p, ymax_g * 1.05,
                     f"{marker}{int(round(wn_p))}",
-                    fontsize=5.5, ha="center", va="bottom",
+                    fontsize=4.5, ha="center", va="bottom",
                     color=color, rotation=90)
 
         ax.set_xlim(400, 1800)
-        ax.set_ylim(ymin - (ymax - ymin) * 0.05,
-                    ymax + (ymax - ymin) * 0.45)
+        ax.set_ylim(-ymax_g * 0.05, ymax_g * 1.6)
         ax.set_title(f"#{i + 1}", fontsize=8, pad=2)
         ax.tick_params(labelsize=6)
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
-    for ax in list(axes.flat)[n:]:
-        ax.set_visible(False)
-
     fig.tight_layout()
     grid_file = os.path.join(out_dir, "summary_grid_all_spectra.png")
     fig.savefig(grid_file, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
-    print(f"\n  Summary grid saved → {grid_file}")
+    print(f"\n  Summary grid -> {grid_file}")
 
-    # ── SERS-unique peak frequency table ─────────────────────────────────────
-    # Collect all SERS-unique peaks across all spectra; bin into 20-cm⁻¹ slots
-    sers_unique = []
-    for pk_map in all_peaks_map:
-        for wn_p in pk_map:
-            if not (400 <= wn_p <= 1800):
-                continue
-            if not any(abs(wn_p - c) < 22 for c in peaks_caf2):
-                sers_unique.append(wn_p)
-
+    # SERS-unique peak frequency table
+    sers_unique = [wn_p for pk in all_peaks_map for wn_p in pk
+                   if 400 <= wn_p <= 1800
+                   and not any(abs(wn_p - c) < 22 for c in peaks_caf2)]
     if sers_unique:
-        sers_unique = np.array(sers_unique)
-        bins = np.arange(400, 1820, 20)
-        counts, edges = np.histogram(sers_unique, bins=bins)
+        bins = np.arange(400, 1820, 25)
+        counts, edges = np.histogram(np.array(sers_unique), bins=bins)
         hot = np.where(counts > 0)[0]
-        print(f"\n  SERS-unique peak frequency (wavenumber : # spectra showing it):")
-        for idx_b in hot:
-            c = int(counts[idx_b])
-            wn_c = 0.5 * (edges[idx_b] + edges[idx_b + 1])
-            bar = "█" * c
-            print(f"    {wn_c:6.0f} cm⁻¹ : {c:2d}  {bar}")
+        print("\n  SERS-unique peak frequency  (cm-1 : n spectra):")
+        for idx_b in sorted(hot, key=lambda x: -counts[x]):
+            c  = int(counts[idx_b])
+            wc = 0.5 * (edges[idx_b] + edges[idx_b + 1])
+            print(f"    {wc:6.0f} cm-1 : {c:2d}  {'#' * c}")
 
     print(f"\n  All files saved to: {out_dir}\n")
 
