@@ -1,29 +1,35 @@
 # =============================================================================
-#  Raman Map Analysis Pipeline
+#  Raman Map Analysis Pipeline  —  v2  (spike removal + baseline correction)
 #  File  : raman_analysis.py
 #  Usage : Open in PyCharm and press  ▶  Run
 #
-#  Steps :
-#   1.  Load LabSpec 6 .l6m map file  (custom binary parser)
-#   2.  Compute the average Raman spectrum across all valid pixels
-#   3.  Wavelet-based noise filtering  (PyWavelets, Daubechies db8)
-#   4.  Min-Max normalisation  [0, 1]
-#   5.  Standard Normal Variate (SNV) pre-processing
-#   6.  Four-panel figure with every processing stage
+#  Pipeline:
+#   1.  Load LabSpec 6 .l6m map file
+#   2.  Per-spectrum cosmic-ray / spike removal  (modified Z-score, 2nd deriv)
+#   3.  Average all cleaned spectra
+#   4.  Asymmetric Least Squares (ALS) baseline correction
+#   5.  Wavelet denoising  (db8, universal threshold)
+#   6.  Min-Max normalisation  →  [0, 1]
+#   7.  Standard Normal Variate (SNV)
+#   8.  Publication-quality 6-panel figure  +  zoomed fingerprint with labels
 #
-#  Dependencies (install once in PyCharm terminal):
+#  Install once (PyCharm terminal):
 #   pip install numpy matplotlib PyWavelets scipy
 # =============================================================================
 
 import os
-import struct
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from matplotlib.patches import FancyArrowPatch
 import pywt
+from scipy import sparse
+from scipy.sparse.linalg import spsolve
+from scipy.signal import savgol_filter
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 0.  FILE PATH  –  change this to match your machine
+#  FILE PATH
 # ─────────────────────────────────────────────────────────────────────────────
 FILE_PATH = (
     r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
@@ -31,30 +37,40 @@ FILE_PATH = (
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 1.  LOAD  .l6m  (LabSpec 6 binary format)
+#  KNOWN RAMAN / SERS PEAKS  (DNA + HACAT + AgNW, 532 nm excitation)
 # ─────────────────────────────────────────────────────────────────────────────
+PEAK_LABELS = {
+    382:  "Ag–N",
+    521:  "Si",
+    662:  "G (ring)",
+    785:  "DNA backbone",
+    1000: "Phe",
+    1090: "PO₄⁻",
+    1175: "C–H bend",
+    1340: "G (C–N)",
+    1484: "A/C (C=N)",
+    1575: "G/A (ring)",
+    2850: "CH₂ sym",
+    2930: "CH₂ asym",
+    3060: "ArC–H",
+    3130: "C–H str",
+}
 
-def _find_wavenumber_axis(arr_f32):
-    """
-    Scan a float32 array for a monotonically-increasing linear ramp
-    whose values fall in the Raman shift window (100 – 4000 cm⁻¹).
-    Returns (start_index, length) of the axis, or (None, None).
-    """
-    n = len(arr_f32)
+# ─────────────────────────────────────────────────────────────────────────────
+#  1.  LOAD  .l6m
+# ─────────────────────────────────────────────────────────────────────────────
+def _find_wn_axis(arr):
+    """Scan float32 array for monotonically-increasing Raman shift axis."""
     i = 0
-    while i < n - 50:
-        chunk = arr_f32[i : i + 50]
+    while i < len(arr) - 50:
+        chunk = arr[i:i+50]
         if not np.all(np.isfinite(chunk)):
-            i += 1
-            continue
+            i += 1; continue
         d = np.diff(chunk)
-        if (np.all(d > 0)
-                and 0.3 < float(d.mean()) < 10.0
-                and 100.0 < float(chunk[0]) < 3800.0):
-            # Extend rightward while the ramp continues
+        if np.all(d > 0) and 0.3 < float(d.mean()) < 10.0 and 100 < float(chunk[0]) < 3800:
             end = i + 50
-            while end < n and np.isfinite(arr_f32[end]):
-                seg = arr_f32[i : end + 1]
+            while end < len(arr) and np.isfinite(arr[end]):
+                seg = arr[i:end+1]
                 dd  = np.diff(seg)
                 if np.all(dd > 0) and float(dd.std()) < 2.0:
                     end += 1
@@ -66,163 +82,145 @@ def _find_wavenumber_axis(arr_f32):
 
 
 def load_l6m(filepath):
-    """
-    Parse a LabSpec 6 .l6m Raman map file.
-
-    Returns
-    -------
-    wavenumbers : ndarray, shape (n_wn,)
-        Raman shift axis in cm⁻¹.
-    spectra : ndarray, shape (n_spectra, n_wn)
-        Raw intensity matrix (counts).  NaN for invalid pixels.
-    """
     if not os.path.isfile(filepath):
         raise FileNotFoundError(f"File not found:\n  {filepath}")
-
     with open(filepath, "rb") as fh:
         raw = fh.read()
-
     if not raw[:8].startswith(b"LabSpec"):
-        raise ValueError("Not a LabSpec 6 file (bad magic bytes).")
-
-    # ── Align to 4-byte boundary and view as float32 ─────────────────────
+        raise ValueError("Not a LabSpec 6 file.")
     n_aligned = (len(raw) // 4) * 4
     arr = np.frombuffer(raw[:n_aligned], dtype=np.float32).copy()
 
-    # ── Locate the wavenumber axis ────────────────────────────────────────
-    wn_idx, n_wn = _find_wavenumber_axis(arr)
+    wn_idx, n_wn = _find_wn_axis(arr)
     if wn_idx is None:
-        raise RuntimeError(
-            "Could not locate the wavenumber axis in the file.\n"
-            "Please contact the developer or export the data as CSV from LabSpec 6."
-        )
-    wn_byte   = wn_idx * 4
-    wavenumbers = arr[wn_idx : wn_idx + n_wn].astype(np.float64)
+        raise RuntimeError("Could not locate wavenumber axis.")
+    wavenumbers = arr[wn_idx:wn_idx+n_wn].astype(np.float64)
 
-    # ── Locate spectral data block ────────────────────────────────────────
-    #   The intensity block directly precedes the wavenumber axis.
-    #   n_spectra × n_wn float32 values end at wn_byte.
-    total_intensity_floats = wn_idx          # floats before the wn axis
-    n_spectra = total_intensity_floats // n_wn
-    leftover  = total_intensity_floats  % n_wn
+    total_floats = wn_idx
+    n_spectra    = total_floats // n_wn
+    leftover     = total_floats  % n_wn
+    spectra_raw  = arr[leftover:leftover + n_spectra*n_wn].reshape(n_spectra, n_wn).astype(np.float64)
 
-    if n_spectra == 0:
-        raise RuntimeError(
-            f"Unexpected layout: {total_intensity_floats} floats before the "
-            f"wavenumber axis ({n_wn} pts) gives 0 complete spectra."
-        )
-
-    data_start_idx = leftover             # skip any leading partial data
-    data_end_idx   = data_start_idx + n_spectra * n_wn
-
-    spectra_raw = arr[data_start_idx:data_end_idx].reshape(n_spectra, n_wn).astype(np.float64)
-
-    # Mark clearly non-physical values as NaN
-    MAX_REALISTIC_COUNTS = 1e7
-    spectra_raw[~np.isfinite(spectra_raw)]        = np.nan
-    spectra_raw[spectra_raw > MAX_REALISTIC_COUNTS] = np.nan
-    spectra_raw[spectra_raw < 0]                  = np.nan
+    spectra_raw[~np.isfinite(spectra_raw)]      = np.nan
+    spectra_raw[spectra_raw > 1e7]              = np.nan
+    spectra_raw[spectra_raw < 0]                = np.nan
 
     print(f"\n{'─'*55}")
-    print(f"  File    : {os.path.basename(filepath)}")
-    print(f"  Spectra : {n_spectra} pixels × {n_wn} wavenumber points")
+    print(f"  Spectra : {n_spectra} pixels × {n_wn} points")
     print(f"  Range   : {wavenumbers[0]:.1f} – {wavenumbers[-1]:.1f} cm⁻¹")
-    step = float(np.diff(wavenumbers).mean())
-    print(f"  Step    : {step:.3f} cm⁻¹/channel")
-    n_bad = int(np.sum(np.any(np.isnan(spectra_raw), axis=1)))
-    print(f"  Bad px  : {n_bad} (will be excluded from average)")
+    print(f"  Step    : {np.diff(wavenumbers).mean():.3f} cm⁻¹/ch")
     print(f"{'─'*55}\n")
-
     return wavenumbers, spectra_raw
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 2.  AVERAGE SPECTRUM
+#  2.  SPIKE REMOVAL  (per spectrum, before averaging)
 # ─────────────────────────────────────────────────────────────────────────────
-
-def compute_average_spectrum(spectra):
+def remove_spikes(spectrum, threshold=5.0, window=3):
     """
-    Mean over the spatial (pixel) axis, ignoring NaN values.
+    Detect and interpolate over cosmic-ray spikes.
 
-    Returns
-    -------
-    avg : ndarray, shape (n_wn,)
-    n_valid : int   – number of pixels that contributed to each channel
+    Algorithm (Whitaker & Hayes 2018, adapted):
+      • Compute the modified Z-score of the second derivative.
+      • Points exceeding `threshold` are flagged as spikes.
+      • Flagged points are replaced by linear interpolation from
+        their nearest non-spike neighbours.
     """
-    avg     = np.nanmean(spectra, axis=0)
-    n_valid = int(np.sum(np.all(np.isfinite(spectra), axis=1)))
-    print(f"  Average computed from {n_valid} / {spectra.shape[0]} valid spectra.")
-    return avg, n_valid
+    sp = spectrum.copy()
+    x  = np.arange(len(sp))
+
+    # Second derivative
+    d2     = np.concatenate([[0], np.diff(np.diff(sp)), [0]])
+    median = np.median(d2)
+    mad    = np.median(np.abs(d2 - median))
+    mz     = 0.6745 * np.abs(d2 - median) / (mad + 1e-10)
+
+    spike_mask = mz > threshold
+
+    # Dilate mask by `window` to catch shoulder pixels
+    from scipy.ndimage import binary_dilation
+    spike_mask = binary_dilation(spike_mask, iterations=window)
+
+    if spike_mask.any() and (~spike_mask).sum() > 10:
+        sp[spike_mask] = np.interp(
+            x[spike_mask], x[~spike_mask], sp[~spike_mask]
+        )
+    return sp, spike_mask
+
+
+def clean_all_spectra(spectra, wn, threshold=5.0):
+    """Apply spike removal to every valid spectrum."""
+    cleaned = []
+    n_total_spikes = 0
+    for i, sp in enumerate(spectra):
+        if not np.isfinite(sp).all():
+            continue
+        sp_clean, mask = remove_spikes(sp, threshold=threshold)
+        n_total_spikes += int(mask.sum())
+        cleaned.append(sp_clean)
+    print(f"  Spike removal: {len(cleaned)} valid spectra, "
+          f"{n_total_spikes} spike points removed total.")
+    return np.array(cleaned)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 3.  WAVELET-BASED NOISE FILTERING
+#  3.  AVERAGE
 # ─────────────────────────────────────────────────────────────────────────────
+def compute_average(spectra):
+    avg = np.mean(spectra, axis=0)
+    print(f"  Average computed from {len(spectra)} spectra.")
+    return avg
 
-def wavelet_denoise(spectrum,
-                    wavelet    = "db8",
-                    level      = None,
-                    mode       = "soft",
-                    threshold_rule = "universal"):
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  4.  BASELINE CORRECTION  —  Asymmetric Least Squares (ALS)
+# ─────────────────────────────────────────────────────────────────────────────
+def als_baseline(y, lam=1e6, p=0.005, n_iter=15):
     """
-    Remove high-frequency noise via discrete wavelet thresholding.
+    Asymmetric Least Squares baseline estimator (Eilers & Boelens 2005).
 
     Parameters
     ----------
-    spectrum        : 1-D array of intensities
-    wavelet         : PyWavelets wavelet name  (default: Daubechies-8)
-    level           : decomposition depth; None → automatic (log₂ based)
-    mode            : 'soft' (smoother) or 'hard' thresholding
-    threshold_rule  : 'universal'  σ√(2 ln N)   (global noise estimate)
-                      'bayes'      level-adaptive  (better for mixed noise)
-
-    Returns
-    -------
-    denoised : 1-D array, same length as spectrum
+    lam    : smoothness of the baseline (larger → smoother)
+    p      : asymmetry (small p → baseline stays below peaks)
+    n_iter : number of re-weighting iterations
     """
-    n = len(spectrum)
-    if level is None:
-        level = min(pywt.dwt_max_level(n, wavelet), 6)
+    L  = len(y)
+    # Second-difference matrix  (L-2 x L)
+    D  = sparse.diags([1, -2, 1], [0, 1, 2], shape=(L-2, L), dtype=float)
+    DT = D.T                              # (L x L-2)
+    w  = np.ones(L)
+    for _ in range(n_iter):
+        W   = sparse.diags(w, 0, shape=(L, L), dtype=float)
+        Z   = W + lam * DT.dot(D)        # (L x L)
+        z   = spsolve(Z.tocsr(), w * y)
+        w   = p * (y > z) + (1 - p) * (y <= z)
+    return z
 
-    # Decompose
-    coeffs = pywt.wavedec(spectrum, wavelet, level=level)
 
-    # Estimate noise σ from the finest detail coefficients (MAD estimator)
-    finest = coeffs[-1]
-    sigma  = np.median(np.abs(finest)) / 0.6745      # robust σ estimate
-
-    # Threshold each detail sub-band
-    thresholded = [coeffs[0]]                        # keep approximation unchanged
-    for j, c in enumerate(coeffs[1:], start=1):
-        if threshold_rule == "universal":
-            # Donoho-Johnstone universal threshold
-            thr = sigma * np.sqrt(2.0 * np.log(n))
-        else:
-            # Level-adaptive (BayesShrink approximation)
-            sigma_j = np.median(np.abs(c)) / 0.6745
-            thr     = sigma_j ** 2 / max(sigma, 1e-10)
-
-        thresholded.append(pywt.threshold(c, thr, mode=mode))
-
-    denoised = pywt.waverec(thresholded, wavelet)
-
-    # waverec can add one extra sample; trim to original length
-    return denoised[:n]
+def subtract_baseline(spectrum):
+    baseline = als_baseline(spectrum)
+    corrected = spectrum - baseline
+    corrected = np.clip(corrected, 0, None)   # no negative intensities
+    return corrected, baseline
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 4.  MIN-MAX NORMALISATION
+#  5.  WAVELET DENOISING
 # ─────────────────────────────────────────────────────────────────────────────
+def wavelet_denoise(spectrum, wavelet="db8", level=5, mode="soft"):
+    n      = len(spectrum)
+    coeffs = pywt.wavedec(spectrum, wavelet, level=min(level, pywt.dwt_max_level(n, wavelet)))
+    sigma  = np.median(np.abs(coeffs[-1])) / 0.6745
+    thr    = sigma * np.sqrt(2.0 * np.log(n))
+    coeffs_t = [coeffs[0]] + [pywt.threshold(c, thr, mode) for c in coeffs[1:]]
+    return pywt.waverec(coeffs_t, wavelet)[:n]
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  6.  MIN-MAX NORMALISATION
+# ─────────────────────────────────────────────────────────────────────────────
 def minmax_normalize(spectrum):
-    """
-    Scale every intensity to [0, 1].
-
-        x_norm = (x − min) / (max − min)
-
-    This makes spectra from different measurements directly comparable
-    in terms of relative band heights.
-    """
     lo, hi = spectrum.min(), spectrum.max()
     if np.isclose(hi, lo):
         return np.zeros_like(spectrum)
@@ -230,19 +228,9 @@ def minmax_normalize(spectrum):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 5.  STANDARD NORMAL VARIATE  (SNV)
+#  7.  SNV
 # ─────────────────────────────────────────────────────────────────────────────
-
 def snv(spectrum):
-    """
-    Standard Normal Variate pre-processing.
-
-        x_snv = (x − mean(x)) / std(x)
-
-    Centres the spectrum to zero mean and scales it to unit variance.
-    Corrects for multiplicative scatter and baseline differences that
-    arise from sample-to-sample path-length or particle-size variations.
-    """
     mu  = np.mean(spectrum)
     std = np.std(spectrum)
     if np.isclose(std, 0.0):
@@ -251,134 +239,260 @@ def snv(spectrum):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 6.  PLOTTING
+#  8.  FIGURE  —  publication quality
 # ─────────────────────────────────────────────────────────────────────────────
 
-def plot_pipeline(wavenumbers, avg_raw, avg_denoised, avg_norm, avg_snv, n_valid):
-    """Four-panel figure showing every stage of the processing pipeline."""
+STYLE = {
+    "raw"      : ("#7B7B7B", 0.35, 0.8),   # (colour, alpha, lw)
+    "avg_raw"  : ("#C0392B", 1.0,  1.8),
+    "cleaned"  : ("#2980B9", 1.0,  1.6),
+    "baseline" : ("#E67E22", 1.0,  1.4),
+    "denoised" : ("#27AE60", 1.0,  2.0),
+    "norm"     : ("#8E44AD", 1.0,  2.0),
+    "snv"      : ("#1A252F", 1.0,  2.0),
+}
 
-    fig = plt.figure(figsize=(14, 10))
+
+def _axis_style(ax, xlim=None, ylabel="Intensity", grid=True):
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.set_xlabel("Raman shift (cm⁻¹)", fontsize=10)
+    ax.set_ylabel(ylabel, fontsize=10)
+    ax.tick_params(labelsize=9)
+    if xlim:
+        ax.set_xlim(xlim)
+    if grid:
+        ax.grid(True, alpha=0.2, lw=0.5)
+
+
+def _annotate_peaks(ax, wn, spectrum, peak_dict, tol=25, min_height=0.05):
+    """Draw vertical dashed lines + labels for known peaks that appear in spectrum."""
+    ymax = spectrum.max()
+    used_x = []
+    for center, label in sorted(peak_dict.items()):
+        mask = (wn >= center - tol) & (wn <= center + tol)
+        if not mask.any():
+            continue
+        local_max_idx = np.argmax(spectrum[mask])
+        local_wn  = wn[mask][local_max_idx]
+        local_int = spectrum[mask][local_max_idx]
+        if local_int < min_height * ymax:
+            continue
+        # avoid crowding
+        if any(abs(local_wn - u) < 60 for u in used_x):
+            continue
+        used_x.append(local_wn)
+        ax.axvline(local_wn, color="gray", lw=0.8, ls="--", alpha=0.6)
+        ax.text(local_wn, local_int * 1.04, f"{int(local_wn)}\n{label}",
+                fontsize=7.5, ha="center", va="bottom",
+                color="#2C3E50", rotation=0,
+                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.7))
+
+
+def plot_full_pipeline(wn, raw_spectra, cleaned_spectra,
+                       avg_raw, avg_cleaned, baseline,
+                       avg_bc, avg_denoised, avg_norm, avg_snv):
+    """Six-panel figure covering every processing stage."""
+
+    matplotlib.rcParams.update({
+        "font.family": "DejaVu Sans",
+        "axes.titlesize": 11,
+        "axes.titleweight": "bold",
+        "figure.facecolor": "white",
+    })
+
+    fig = plt.figure(figsize=(18, 13))
     fig.suptitle(
-        "Raman Map Analysis Pipeline\n"
-        "m1DNAHACAT120ng AgSiNW | 532 nm | 600 gr/mm | 50×LF | 0.5 s",
-        fontsize=13, fontweight="bold", y=0.98
+        "SERS Raman Map — Complete Pre-processing Pipeline\n"
+        "DNA + HACAT cells on AgSiNW  |  532 nm  |  600 gr/mm  |  50×LF  |  0.5 s  |  4 acc.",
+        fontsize=13, fontweight="bold", y=0.99
     )
 
-    gs   = gridspec.GridSpec(2, 2, hspace=0.42, wspace=0.32)
-    axes = [fig.add_subplot(gs[r, c]) for r in range(2) for c in range(2)]
+    gs = gridspec.GridSpec(3, 2, hspace=0.55, wspace=0.32,
+                           left=0.07, right=0.97, top=0.93, bottom=0.06)
+    axes = [fig.add_subplot(gs[r, c]) for r in range(3) for c in range(2)]
 
-    panels = [
-        (avg_raw,      "Step 1 – Average raw spectrum",
-         f"Average of {n_valid} spectra", "Intensity (counts)", "tab:blue"),
-        (avg_denoised, "Step 2 – Wavelet denoised  (db8, universal threshold)",
-         "Soft-thresholded DWT coefficients", "Intensity (counts)", "tab:green"),
-        (avg_norm,     "Step 3 – Min-Max normalised",
-         "x_norm = (x − min) / (max − min)", "Normalised intensity (a.u.)", "tab:orange"),
-        (avg_snv,      "Step 4 – SNV pre-processed",
-         "x_snv = (x − μ) / σ   |   removes scatter differences", "SNV units (σ)", "tab:red"),
+    # ── Panel 1: All raw spectra + average ──────────────────────────────
+    ax = axes[0]
+    for sp in raw_spectra:
+        ax.plot(wn, sp, color=STYLE["raw"][0], alpha=STYLE["raw"][1],
+                lw=STYLE["raw"][2])
+    ax.plot(wn, avg_raw, color=STYLE["avg_raw"][0], lw=STYLE["avg_raw"][2],
+            label=f"Average (n={len(raw_spectra)})")
+    ax.set_title("① Raw spectra  (all map pixels)")
+    ax.legend(fontsize=9, loc="upper right")
+    _axis_style(ax, ylabel="Counts")
+
+    # ── Panel 2: Before/after spike removal ─────────────────────────────
+    ax = axes[1]
+    ax.plot(wn, avg_raw,     color=STYLE["avg_raw"][0], lw=1.4,
+            alpha=0.55, ls="--", label="Before spike removal")
+    ax.plot(wn, avg_cleaned, color=STYLE["cleaned"][0], lw=STYLE["cleaned"][2],
+            label="After spike removal")
+    ax.set_title("② Cosmic-ray / spike removal  (modified Z-score, 2nd deriv.)")
+    ax.legend(fontsize=9, loc="upper right")
+    _axis_style(ax, ylabel="Counts")
+
+    # ── Panel 3: Baseline + corrected ───────────────────────────────────
+    ax = axes[2]
+    ax.plot(wn, avg_cleaned,  color=STYLE["avg_raw"][0],   lw=1.4,
+            alpha=0.6, label="Spike-cleaned average")
+    ax.plot(wn, baseline,     color=STYLE["baseline"][0],  lw=1.8,
+            ls="--", label="ALS baseline")
+    ax.plot(wn, avg_bc,       color=STYLE["denoised"][0],  lw=1.8,
+            label="Baseline-corrected")
+    ax.set_title("③ Asymmetric Least Squares (ALS) baseline correction")
+    ax.legend(fontsize=9, loc="upper right")
+    _axis_style(ax, ylabel="Counts")
+
+    # ── Panel 4: Denoised — full range ──────────────────────────────────
+    ax = axes[3]
+    ax.plot(wn, avg_bc,       color=STYLE["denoised"][0], lw=1.2,
+            alpha=0.55, ls="--", label="Before denoising")
+    ax.plot(wn, avg_denoised, color=STYLE["norm"][0],     lw=2.0,
+            label="After wavelet denoising (db8, L=5)")
+    ax.set_title("④ Wavelet denoising  (Daubechies-8, soft universal threshold)")
+    ax.legend(fontsize=9, loc="upper right")
+    _axis_style(ax, ylabel="Counts")
+
+    # ── Panel 5: Normalised — fingerprint region ZOOMED with labels ─────
+    ax = axes[4]
+    fp_lo, fp_hi = 400, 1800
+    mask_fp = (wn >= fp_lo) & (wn <= fp_hi)
+    ax.fill_between(wn[mask_fp], avg_norm[mask_fp],
+                    alpha=0.18, color=STYLE["norm"][0])
+    ax.plot(wn[mask_fp], avg_norm[mask_fp],
+            color=STYLE["norm"][0], lw=2.2, label="Min-Max normalised")
+    _annotate_peaks(ax, wn[mask_fp], avg_norm[mask_fp], PEAK_LABELS,
+                    tol=30, min_height=0.08)
+    ax.set_title("⑤ Min-Max normalised  —  fingerprint region  (400–1800 cm⁻¹)")
+    ax.legend(fontsize=9, loc="upper right")
+    _axis_style(ax, xlim=(fp_lo, fp_hi), ylabel="Normalised intensity (a.u.)")
+
+    # ── Panel 6: SNV — fingerprint region ZOOMED with labels ────────────
+    ax = axes[5]
+    ax.fill_between(wn[mask_fp], avg_snv[mask_fp],
+                    alpha=0.18, color=STYLE["snv"][0])
+    ax.plot(wn[mask_fp], avg_snv[mask_fp],
+            color=STYLE["snv"][0], lw=2.2, label="SNV spectrum")
+    ax.axhline(0, color="black", lw=0.6, ls="--", alpha=0.4)
+    _annotate_peaks(ax, wn[mask_fp], avg_snv[mask_fp], PEAK_LABELS,
+                    tol=30, min_height=0.08)
+    ax.set_title("⑥ Standard Normal Variate (SNV)  —  fingerprint region")
+    ax.legend(fontsize=9, loc="upper right")
+    _axis_style(ax, xlim=(fp_lo, fp_hi), ylabel="SNV units (σ)")
+
+    plt.savefig("raman_pipeline_output.png", dpi=180, bbox_inches="tight",
+                facecolor="white")
+    print("  Saved → raman_pipeline_output.png")
+    plt.show()
+
+
+def plot_final_zoomed(wn, avg_norm, avg_snv):
+    """
+    Large two-panel figure of the final spectrum zoomed into
+    fingerprint (400–1800 cm⁻¹) and C-H stretch (2700–3200 cm⁻¹).
+    """
+    matplotlib.rcParams.update({"font.family": "DejaVu Sans"})
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6),
+                             gridspec_kw={"wspace": 0.35})
+    fig.suptitle(
+        "Final SNV-pre-processed Raman Spectrum  —  Key Peak Regions",
+        fontsize=14, fontweight="bold"
+    )
+
+    regions = [
+        (axes[0], 400,  1800, "Fingerprint region  (400–1800 cm⁻¹)"),
+        (axes[1], 2700, 3200, "C–H stretch region  (2700–3200 cm⁻¹)"),
     ]
 
-    for ax, (y, title, subtitle, ylabel, colour) in zip(axes, panels):
-        ax.plot(wavenumbers, y, color=colour, lw=1.0, alpha=0.9)
-        ax.set_title(title, fontsize=10, fontweight="bold", pad=6)
-        ax.set_xlabel("Raman shift (cm⁻¹)", fontsize=9)
-        ax.set_ylabel(ylabel, fontsize=9)
-        ax.text(0.02, 0.97, subtitle,
-                transform=ax.transAxes, fontsize=7.5, va="top",
-                color="dimgray", style="italic")
-        ax.axhline(0, color="black", lw=0.4, ls="--", alpha=0.4)
-        ax.tick_params(labelsize=8)
-        ax.set_xlim(wavenumbers[0], wavenumbers[-1])
-        ax.grid(True, alpha=0.25, lw=0.5)
+    for ax, lo, hi, title in regions:
+        mask = (wn >= lo) & (wn <= hi)
+        y    = avg_snv[mask]
+        x    = wn[mask]
 
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig("raman_pipeline_output.png", dpi=150, bbox_inches="tight")
-    print("  Figure saved → raman_pipeline_output.png")
-    plt.show()
+        ax.fill_between(x, y, y.min(), alpha=0.15, color="#1A252F")
+        ax.plot(x, y, color="#1A252F", lw=2.2)
+        _annotate_peaks(ax, x, y, PEAK_LABELS, tol=30, min_height=0.05)
+        ax.set_title(title, fontsize=11, fontweight="bold", pad=8)
+        _axis_style(ax, xlim=(lo, hi), ylabel="SNV units (σ)")
 
-
-def plot_overlay(wavenumbers, avg_denoised, avg_norm, avg_snv):
-    """
-    Overlay of denoised, normalised, and SNV spectra on a single axis
-    (useful for direct visual comparison of shapes).
-    """
-    fig, ax = plt.subplots(figsize=(12, 5))
-    ax.plot(wavenumbers, avg_denoised / avg_denoised.max(),
-            label="Denoised (scaled to 1)", color="steelblue", lw=1.2, alpha=0.85)
-    ax.plot(wavenumbers, avg_norm,
-            label="Min-Max normalised", color="darkorange", lw=1.2, alpha=0.85)
-    # SNV can be negative; shift it for visual overlay
-    snv_shifted = (avg_snv - avg_snv.min()) / (avg_snv.max() - avg_snv.min())
-    ax.plot(wavenumbers, snv_shifted,
-            label="SNV (shifted to [0,1] for display)", color="firebrick", lw=1.2, alpha=0.85)
-    ax.set_xlabel("Raman shift (cm⁻¹)", fontsize=11)
-    ax.set_ylabel("Relative intensity", fontsize=11)
-    ax.set_title("Spectral comparison after each pre-processing stage", fontsize=12)
-    ax.legend(fontsize=9)
-    ax.grid(True, alpha=0.3)
-    ax.set_xlim(wavenumbers[0], wavenumbers[-1])
-    plt.tight_layout()
-    plt.savefig("raman_overlay_comparison.png", dpi=150, bbox_inches="tight")
-    print("  Overlay figure saved → raman_overlay_comparison.png")
+    plt.savefig("raman_final_zoomed.png", dpi=180, bbox_inches="tight",
+                facecolor="white")
+    print("  Saved → raman_final_zoomed.png")
     plt.show()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 7.  MAIN
+#  MAIN
 # ─────────────────────────────────────────────────────────────────────────────
-
 def main():
     print("\n" + "="*55)
-    print("  RAMAN MAP ANALYSIS PIPELINE")
+    print("  RAMAN MAP ANALYSIS PIPELINE  v2")
     print("="*55)
 
-    # ── 1. Load ──────────────────────────────────────────────────────────
-    wavenumbers, spectra = load_l6m(FILE_PATH)
+    # 1. Load
+    wn, spectra = load_l6m(FILE_PATH)
 
-    # ── 2. Average ───────────────────────────────────────────────────────
-    print("Step 2 – Computing average spectrum …")
-    avg_raw, n_valid = compute_average_spectrum(spectra)
+    # Keep only fully-finite spectra for processing
+    raw_spectra = np.array([spectra[i] for i in range(len(spectra))
+                            if np.isfinite(spectra[i]).all()
+                            and spectra[i].max() < 1e6])
+    print(f"  Valid spectra loaded: {len(raw_spectra)}")
 
-    # ── 3. Wavelet denoise ───────────────────────────────────────────────
-    print("Step 3 – Wavelet denoising …")
-    avg_denoised = wavelet_denoise(
-        avg_raw,
-        wavelet        = "db8",     # Daubechies-8: good for smooth Raman peaks
-        level          = 5,         # 5 levels of decomposition
-        mode           = "soft",    # soft thresholding → smoother result
-        threshold_rule = "universal"
-    )
+    avg_raw = np.mean(raw_spectra, axis=0)
 
-    # ── 4. Normalise ─────────────────────────────────────────────────────
-    print("Step 4 – Min-Max normalising …")
+    # 2. Spike removal (per spectrum)
+    print("Step 2 – Spike removal …")
+    cleaned_spectra = clean_all_spectra(raw_spectra, wn, threshold=5.0)
+    avg_cleaned = np.mean(cleaned_spectra, axis=0)
+
+    # 3. Average already computed above; smooth with Savitzky-Golay first
+    #    to stabilise ALS
+    avg_sg = savgol_filter(avg_cleaned, window_length=11, polyorder=3)
+
+    # 4. Baseline correction
+    print("Step 3 – ALS baseline correction …")
+    avg_bc_raw, baseline = subtract_baseline(avg_sg)
+
+    # 5. Wavelet denoise
+    print("Step 4 – Wavelet denoising …")
+    avg_denoised = wavelet_denoise(avg_bc_raw, wavelet="db8", level=5, mode="soft")
+    avg_denoised = np.clip(avg_denoised, 0, None)
+
+    # 6. Normalise
+    print("Step 5 – Min-Max normalising …")
     avg_norm = minmax_normalize(avg_denoised)
 
-    # ── 5. SNV ───────────────────────────────────────────────────────────
-    print("Step 5 – SNV pre-processing …")
+    # 7. SNV
+    print("Step 6 – SNV …")
     avg_snv = snv(avg_norm)
 
-    # ── 6. Print summary ─────────────────────────────────────────────────
+    # Summary
     print(f"\n{'─'*55}")
-    print("  Summary of processed average spectrum")
-    print(f"{'─'*55}")
-    print(f"  Raw       : mean={avg_raw.mean():.2f},  max={avg_raw.max():.2f}")
-    print(f"  Denoised  : mean={avg_denoised.mean():.2f},  max={avg_denoised.max():.2f}")
-    print(f"  Normalised: min={avg_norm.min():.4f},  max={avg_norm.max():.4f}")
-    print(f"  SNV       : mean={avg_snv.mean():.4f},  std={avg_snv.std():.4f}")
+    print(f"  Raw avg    : max={avg_raw.max():.1f}  mean={avg_raw.mean():.1f}")
+    print(f"  After spikes: max={avg_cleaned.max():.1f}")
+    print(f"  After baseline: max={avg_bc_raw.max():.1f}")
+    print(f"  Denoised   : max={avg_denoised.max():.1f}")
+    print(f"  Normalised : max={avg_norm.max():.4f}  min={avg_norm.min():.4f}")
+    print(f"  SNV        : mean={avg_snv.mean():.4f}  std={avg_snv.std():.4f}")
     print(f"{'─'*55}\n")
 
-    # ── 7. Save processed spectrum to CSV ────────────────────────────────
-    output_csv = "raman_processed_spectrum.csv"
-    header = "wavenumber_cm-1,raw_avg,denoised,normalized,snv"
-    out_arr = np.column_stack([wavenumbers, avg_raw, avg_denoised, avg_norm, avg_snv])
-    np.savetxt(output_csv, out_arr, delimiter=",", header=header, comments="")
-    print(f"  Processed spectrum saved → {output_csv}")
+    # Save CSV
+    header = "wavenumber_cm-1,raw_avg,spike_removed,baseline_corrected,denoised,normalized,snv"
+    out_arr = np.column_stack([wn, avg_raw, avg_cleaned, avg_bc_raw,
+                               avg_denoised, avg_norm, avg_snv])
+    np.savetxt("raman_processed_spectrum.csv", out_arr,
+               delimiter=",", header=header, comments="")
+    print("  CSV saved → raman_processed_spectrum.csv")
 
-    # ── 8. Plot ──────────────────────────────────────────────────────────
+    # Figures
     print("  Generating figures …")
-    plot_pipeline(wavenumbers, avg_raw, avg_denoised, avg_norm, avg_snv, n_valid)
-    plot_overlay(wavenumbers, avg_denoised, avg_norm, avg_snv)
-
+    plot_full_pipeline(wn, raw_spectra, cleaned_spectra,
+                       avg_raw, avg_cleaned, baseline,
+                       avg_bc_raw, avg_denoised, avg_norm, avg_snv)
+    plot_final_zoomed(wn, avg_norm, avg_snv)
     print("\n  Done.\n")
 
 
