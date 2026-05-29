@@ -1,5 +1,5 @@
 # =============================================================================
-#  Raman Map Analysis Pipeline  —  v2  (spike removal + baseline correction)
+#  Raman Map Analysis Pipeline  —  v3  (spike removal + baseline + comparison)
 #  File  : raman_analysis.py
 #  Usage : Open in PyCharm and press  ▶  Run
 #
@@ -12,6 +12,8 @@
 #   6.  Min-Max normalisation  →  [0, 1]
 #   7.  Standard Normal Variate (SNV)
 #   8.  Publication-quality 6-panel figure  +  zoomed fingerprint with labels
+#   9.  Load LabSpec 6 .l6s single-spectrum file and apply same pipeline
+#  10.  Comparison plot: map-average vs single spectrum, peak-to-peak
 #
 #  Install once (PyCharm terminal):
 #   pip install numpy matplotlib PyWavelets scipy
@@ -29,11 +31,16 @@ from scipy.sparse.linalg import spsolve
 from scipy.signal import savgol_filter
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  FILE PATH
+#  FILE PATHS
 # ─────────────────────────────────────────────────────────────────────────────
 FILE_PATH = (
     r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
     r"\m1-DNA-HACAT1-20ng-AgSiNW_532nm_600gr_BC200_50XLF_05s_4a_2-5%_5ul_drop-center.l6m"
+)
+
+FILE_PATH_L6S = (
+    r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
+    r"\S1-DNA-HACAT1-20ng-CaF2_532nm_600gr_BC50_100X_10s_4a_100%.l6s"
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -111,6 +118,102 @@ def load_l6m(filepath):
     print(f"  Step    : {np.diff(wavenumbers).mean():.3f} cm⁻¹/ch")
     print(f"{'─'*55}\n")
     return wavenumbers, spectra_raw
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  1b.  LOAD  .l6s  (single spectrum, LabSpec 6)
+# ─────────────────────────────────────────────────────────────────────────────
+def load_l6s(filepath):
+    """
+    Load a LabSpec 6 single-spectrum .l6s file.
+
+    The file stores float32 values at byte offset +1 from the file start
+    (i.e. the first float32 occupies bytes 1-4, the second bytes 5-8, etc.).
+    This function tries all 4 possible byte alignments to locate the
+    monotonically-increasing wavenumber axis (400–1800 cm⁻¹), then reads
+    the intensity block that immediately precedes it in the file.
+    """
+    if not os.path.isfile(filepath):
+        raise FileNotFoundError(f"File not found:\n  {filepath}")
+    with open(filepath, "rb") as fh:
+        raw = fh.read()
+    if not raw[:8].startswith(b"LabSpec"):
+        raise ValueError("Not a LabSpec 6 file.")
+
+    # Try byte offsets 0, 1, 2, 3 to handle non-standard alignment
+    best = (None, None, 0, 0)   # (offset, wn_idx_in_arr, n_wn, arr)
+    for boff in range(4):
+        chunk = raw[boff:]
+        n_aligned = (len(chunk) // 4) * 4
+        arr = np.frombuffer(chunk[:n_aligned], dtype=np.float32).copy()
+        wn_idx, n_wn = _find_wn_axis_l6s(arr)
+        if wn_idx is not None and n_wn > best[2]:
+            best = (boff, wn_idx, n_wn, arr)
+
+    boff, wn_idx, n_wn, arr = best
+    if wn_idx is None:
+        raise RuntimeError("Could not locate wavenumber axis in .l6s file.")
+
+    wavenumbers = arr[wn_idx:wn_idx + n_wn].astype(np.float64)
+    intensity   = _find_intensity_block(arr, wn_idx, n_wn)
+
+    print(f"\n{'─'*55}")
+    print(f"  Single spectrum  ×  {n_wn} points  (byte offset {boff})")
+    print(f"  Range   : {wavenumbers[0]:.1f} – {wavenumbers[-1]:.1f} cm⁻¹")
+    print(f"  Step    : {np.diff(wavenumbers).mean():.3f} cm⁻¹/ch")
+    print(f"  Max counts : {intensity.max():.1f}")
+    print(f"{'─'*55}\n")
+    return wavenumbers, intensity
+
+
+def _find_wn_axis_l6s(arr):
+    """Find the longest monotonic float32 run in the 400–1800 cm⁻¹ range."""
+    best = (None, 0)
+    i = 0
+    while i < len(arr) - 20:
+        v = float(arr[i])
+        if 390 < v < 420 and np.isfinite(arr[i]):
+            j = i
+            while (j < len(arr) - 1
+                   and np.isfinite(arr[j + 1])
+                   and float(arr[j + 1]) > float(arr[j])
+                   and float(arr[j + 1]) < 1810
+                   and float(arr[j + 1]) - float(arr[j]) < 5.0):
+                j += 1
+            length = j - i + 1
+            if length > best[1]:
+                best = (i, length)
+            i = j + 1
+        else:
+            i += 1
+    return best[0], best[1]
+
+
+def _find_intensity_block(arr, wn_idx, n_wn):
+    """
+    Extract the intensity block immediately before the wavenumber axis.
+    Falls back to scanning all blocks before wn_idx for the one with the
+    largest dynamic range that contains plausible photon counts (0–10^7).
+    """
+    candidate_start = wn_idx - n_wn
+    if candidate_start >= 0:
+        block = arr[candidate_start:candidate_start + n_wn].astype(np.float64)
+        if np.all(np.isfinite(block)) and np.all(block >= 0) and block.max() < 1e7:
+            return block
+
+    best_block = None
+    best_score = -1
+    for start in range(0, wn_idx - n_wn + 1):
+        block = arr[start:start + n_wn].astype(np.float64)
+        if not (np.all(np.isfinite(block)) and np.all(block >= 0) and block.max() < 1e7):
+            continue
+        score = float(block.max()) - float(block.min())
+        if score > best_score:
+            best_score = score
+            best_block = block
+    if best_block is None:
+        raise RuntimeError("Could not locate intensity block in .l6s file.")
+    return best_block
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -425,11 +528,190 @@ def plot_final_zoomed(wn, avg_norm, avg_snv):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  9.  PREPROCESS SINGLE SPECTRUM  (same pipeline as map average)
+# ─────────────────────────────────────────────────────────────────────────────
+def preprocess_single(wn, spectrum):
+    """Apply the full pipeline to a single spectrum and return SNV result."""
+    sp, _ = remove_spikes(spectrum, threshold=5.0, window=3)
+    sp = savgol_filter(sp, window_length=11, polyorder=3)
+    sp_bc, _ = subtract_baseline(sp)
+    sp_dn = wavelet_denoise(sp_bc, wavelet="db8", level=5, mode="soft")
+    sp_dn = np.clip(sp_dn, 0, None)
+    sp_nm = minmax_normalize(sp_dn)
+    sp_snv = snv(sp_nm)
+    return sp_snv
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  10.  COMPARISON PLOT  —  map average vs single .l6s spectrum
+# ─────────────────────────────────────────────────────────────────────────────
+def plot_comparison(wn_map, snv_map, wn_l6s, snv_l6s,
+                    label_map="Map average (AgSiNW, 50×LF, 0.5 s)",
+                    label_l6s="Single spectrum (CaF₂, 100×, 10 s)"):
+    """
+    Side-by-side + overlay comparison of the two SNV-processed spectra.
+
+    Two panels:
+      • Left  : both spectra overlaid with an offset for clarity; dotted
+                vertical lines mark every known peak; colour-coded labels
+                show whether each peak appears in BOTH (green), MAP only
+                (orange) or L6S only (blue).
+      • Right : difference spectrum (map – l6s) after interpolating to a
+                common wavenumber grid.
+    """
+    matplotlib.rcParams.update({
+        "font.family": "DejaVu Sans",
+        "axes.titlesize": 11,
+        "axes.titleweight": "bold",
+        "figure.facecolor": "white",
+    })
+
+    # ── Interpolate both spectra onto a common grid ──────────────────────────
+    wn_min = max(wn_map.min(), wn_l6s.min())
+    wn_max = min(wn_map.max(), wn_l6s.max())
+    wn_common = np.arange(wn_min, wn_max, 1.0)
+
+    interp_map = np.interp(wn_common, wn_map, snv_map)
+    interp_l6s = np.interp(wn_common, wn_l6s, snv_l6s)
+
+    # Offset the map trace so both are visible without overlap
+    offset = max(abs(interp_l6s.max()), abs(interp_map.max())) * 1.6
+    map_shifted = interp_map + offset
+
+    fig, axes = plt.subplots(1, 2, figsize=(18, 7),
+                             gridspec_kw={"width_ratios": [2, 1], "wspace": 0.30})
+    fig.suptitle(
+        "Peak-to-Peak Comparison: SERS Map Average vs Single Spectrum\n"
+        "532 nm  |  600 gr/mm  |  SNV pre-processed",
+        fontsize=13, fontweight="bold", y=1.01
+    )
+
+    ax = axes[0]
+
+    # Plot both traces
+    ax.plot(wn_common, interp_l6s, color="#2471A3", lw=2.0,
+            label=label_l6s, zorder=3)
+    ax.plot(wn_common, map_shifted, color="#C0392B", lw=2.0,
+            label=label_map, zorder=3)
+
+    # Bracket label showing the offset
+    ax.annotate("", xy=(wn_common[-1] + 30, 0),
+                xytext=(wn_common[-1] + 30, offset),
+                arrowprops=dict(arrowstyle="<->", color="gray", lw=1.2))
+    ax.text(wn_common[-1] + 40, offset / 2, "offset",
+            fontsize=8, color="gray", va="center", rotation=90)
+
+    # ── Peak annotations ─────────────────────────────────────────────────────
+    tol = 30      # ±30 cm⁻¹ window for peak detection
+    min_h = 0.06  # minimum relative height to be considered "present"
+
+    used_x = []
+    for center, plabel in sorted(PEAK_LABELS.items()):
+        if not (wn_min <= center <= wn_max):
+            continue
+        mask = (wn_common >= center - tol) & (wn_common <= center + tol)
+        if not mask.any():
+            continue
+
+        # Detect local peak in each spectrum
+        seg_map = interp_map[mask]
+        seg_l6s = interp_l6s[mask]
+        peak_map = seg_map.max()
+        peak_l6s = seg_l6s.max()
+
+        in_map = peak_map > min_h * abs(interp_map).max()
+        in_l6s = peak_l6s > min_h * abs(interp_l6s).max()
+
+        if not (in_map or in_l6s):
+            continue
+
+        # Find the actual wavenumber of the stronger peak
+        if in_map and in_l6s:
+            peak_wn = wn_common[mask][np.argmax(seg_map)]
+            color   = "#1E8449"   # green  – in both
+            marker  = "▲"
+        elif in_map:
+            peak_wn = wn_common[mask][np.argmax(seg_map)]
+            color   = "#E67E22"   # orange – map only
+            marker  = "●"
+        else:
+            peak_wn = wn_common[mask][np.argmax(seg_l6s)]
+            color   = "#2471A3"   # blue   – l6s only
+            marker  = "■"
+
+        # Avoid x-crowding
+        if any(abs(peak_wn - u) < 55 for u in used_x):
+            continue
+        used_x.append(peak_wn)
+
+        # Dotted vertical line spanning both traces
+        ax.axvline(peak_wn, color=color, lw=1.0, ls=":", alpha=0.85, zorder=2)
+
+        # Label on the map trace (top)
+        y_label_map = map_shifted[mask][np.argmax(seg_map)] if in_map else map_shifted[mask].max()
+        ax.text(peak_wn, y_label_map + abs(map_shifted).max() * 0.06,
+                f"{int(peak_wn)}\n{plabel}",
+                fontsize=7.0, ha="center", va="bottom", color=color,
+                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec=color,
+                          alpha=0.85, lw=0.6))
+
+    # ── Legend for colour coding ─────────────────────────────────────────────
+    from matplotlib.lines import Line2D
+    legend_elements = [
+        Line2D([0], [0], color="#2471A3", lw=2, label=label_l6s),
+        Line2D([0], [0], color="#C0392B", lw=2, label=f"{label_map}  (offset)"),
+        Line2D([0], [0], color="#1E8449", lw=1.5, ls=":",
+               label="Peak in BOTH  ▲"),
+        Line2D([0], [0], color="#E67E22", lw=1.5, ls=":",
+               label="Map only  ●"),
+        Line2D([0], [0], color="#2471A3", lw=1.5, ls=":",
+               label="Single-spectrum only  ■"),
+    ]
+    ax.legend(handles=legend_elements, fontsize=8.5, loc="upper right",
+              framealpha=0.9)
+
+    ax.set_xlabel("Raman shift (cm⁻¹)", fontsize=10)
+    ax.set_ylabel("SNV units (σ)", fontsize=10)
+    ax.set_title("Spectral comparison with peak labels", fontsize=11)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.tick_params(labelsize=9)
+    ax.grid(True, alpha=0.15, lw=0.5)
+    ax.set_xlim(wn_common[0] - 20, wn_common[-1] + 80)
+
+    # ── Right panel: difference spectrum ────────────────────────────────────
+    ax2 = axes[1]
+    diff = interp_map - interp_l6s
+    ax2.fill_between(wn_common, diff, 0,
+                     where=diff > 0, alpha=0.35, color="#E67E22",
+                     label="Map > Single")
+    ax2.fill_between(wn_common, diff, 0,
+                     where=diff < 0, alpha=0.35, color="#2471A3",
+                     label="Single > Map")
+    ax2.plot(wn_common, diff, color="#2C3E50", lw=1.4)
+    ax2.axhline(0, color="black", lw=0.8, ls="--", alpha=0.5)
+
+    ax2.set_xlabel("Raman shift (cm⁻¹)", fontsize=10)
+    ax2.set_ylabel("Δ SNV (map − single)", fontsize=10)
+    ax2.set_title("Difference spectrum", fontsize=11)
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
+    ax2.tick_params(labelsize=9)
+    ax2.grid(True, alpha=0.15, lw=0.5)
+    ax2.legend(fontsize=8.5, loc="upper right", framealpha=0.9)
+
+    plt.savefig("raman_comparison.png", dpi=180, bbox_inches="tight",
+                facecolor="white")
+    print("  Saved → raman_comparison.png")
+    plt.show()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  MAIN
 # ─────────────────────────────────────────────────────────────────────────────
 def main():
     print("\n" + "="*55)
-    print("  RAMAN MAP ANALYSIS PIPELINE  v2")
+    print("  RAMAN MAP ANALYSIS PIPELINE  v3")
     print("="*55)
 
     # 1. Load
@@ -493,6 +775,19 @@ def main():
                        avg_raw, avg_cleaned, baseline,
                        avg_bc_raw, avg_denoised, avg_norm, avg_snv)
     plot_final_zoomed(wn, avg_norm, avg_snv)
+
+    # ── Load and process single .l6s spectrum ────────────────────────────────
+    print("\n" + "="*55)
+    print("  SINGLE SPECTRUM (.l6s)  PROCESSING")
+    print("="*55)
+    wn_s, raw_s = load_l6s(FILE_PATH_L6S)
+    print("  Applying preprocessing pipeline to single spectrum …")
+    snv_s = preprocess_single(wn_s, raw_s)
+
+    # ── Comparison plot ───────────────────────────────────────────────────────
+    print("  Generating comparison figure …")
+    plot_comparison(wn, avg_snv, wn_s, snv_s)
+
     print("\n  Done.\n")
 
 
