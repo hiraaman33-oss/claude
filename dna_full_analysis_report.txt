@@ -1,0 +1,154 @@
+==========================================================================
+REPORT: DNA+HaCaT — Complete Peak Analysis
+==========================================================================
+
+S1  : 861 pts, 401–1800 cm-1, ALS-corrected max = 100 counts
+SERS: m3 spectrum 20, 1989 pts, 201–3200 cm-1, ALS-corrected max = 809 counts
+
+==========================================================================
+GOAL 1 — ALL PEAKS IN m3_sp20  (200–3200 cm-1)
+==========================================================================
+
+  #     Position         Norm.Int     Assignment
+  ----------------------------------------------------------------
+  1     242.4            0.2822       —
+  2     405.0            0.0923       Ring def. / sugar
+  3     524.5            0.2406       Backbone C-C
+  4     595.7            0.1549       G/C deform.
+  5     637.2            0.1377       G/T ring breath.
+  6     669.5            0.1689       G/T ring breath.
+  7     691.8            0.1988       G ring breath.
+  8     736.3            0.1450       A ring breath.
+  9     772.0            0.2315       Cyt. + O-P-O
+  10    913.5            0.5669       Backbone C-C
+  11    998.3            0.3597       Phe / ring
+  12    1118.6           1.0000       PO₄/C-N
+  13    1170.7           0.6601       C-N (Cyt/A)
+  14    1235.3           0.0918       Amide III/T
+  15    1315.4           0.9864       A/T/G in-plane
+  16    1367.9           0.5110       T/G CH def.
+  17    1402.7           0.1500       A/G ring str.
+  18    1424.7           0.1977       A/G ring str.
+  19    1484.3           0.1600       A/C C=N str.
+  20    1508.6           0.1711       A/C C=N str.
+  21    1544.4           0.0655       G/A ring C=C
+  22    1564.6           0.0902       G/A ring C=C
+  23    1624.8           0.1259       Amide I/C=C
+  24    1667.7           0.0932       Amide I/C=C
+  25    2148.4           0.0562       —
+  26    2930.7           0.0717       CH₃ sym str.
+  27    2977.1           0.0550       CH₂ asym str.
+
+==========================================================================
+GOAL 2 — COMPARISON S1 vs SERS  (400–1800 cm-1)
+==========================================================================
+
+  [A] MATCHED PAIRS  (|shift| ≤ 15 cm-1):
+  S1 (cm-1)      SERS (cm-1)    Δ (SERS−S1)    S1-Int     SERS-Int   Assignment
+  ------------------------------------------------------------------------------
+     407.9         405.0              -2.9 cm-1   0.233      0.092      Ring def. / sugar
+  >> 518.7         524.5              +5.8 cm-1   0.100      0.241      Backbone C-C
+  !! 581.4         595.7             +14.4 cm-1   0.161      0.155      G/C deform.
+     635.0         637.2              +2.2 cm-1   0.178      0.138      G/T ring breath.
+     666.0         669.5              +3.5 cm-1   0.252      0.169      G/T ring breath.
+  >> 686.6         691.8              +5.3 cm-1   0.124      0.199      G ring breath.
+  !! 722.5         736.3             +13.8 cm-1   0.367      0.145      A ring breath.
+  >> 780.3         772.0              -8.3 cm-1   0.938      0.231      Cyt. + O-P-O
+  !! 898.8         913.5             +14.8 cm-1   0.187      0.567      Backbone C-C
+  >> 1005.2        998.3              -7.0 cm-1   0.328      0.360      Phe / ring
+     1113.7        1118.6             +4.9 cm-1   0.298      1.000      PO₄ sym str.
+  >> 1160.9        1170.7             +9.8 cm-1   0.097      0.660      C-N (Cyt/A)
+  >> 1241.7        1235.3             -6.3 cm-1   0.636      0.092      Amide III/T
+  >> 1322.4        1315.4             -6.9 cm-1   0.614      0.986      A/T/G in-plane
+     1365.3        1367.9             +2.6 cm-1   0.447      0.511      T/G CH def.
+  >> 1393.8        1402.7             +8.9 cm-1   0.308      0.150      T/G CH def.
+  >> 1419.0        1424.7             +5.7 cm-1   0.197      0.198      A/G ring str.
+     1483.4        1484.3             +0.9 cm-1   1.000      0.160      A/C C=N str.
+  >> 1499.0        1508.6             +9.6 cm-1   0.356      0.171      A/C C=N str.
+  !! 1530.2        1544.4            +14.3 cm-1   0.133      0.065      G/A ring C=C
+  >> 1556.5        1564.6             +8.1 cm-1   0.290      0.090      G/A ring C=C
+     1622.9        1624.8             +1.9 cm-1   0.317      0.126      Amide I/C=C
+     1665.8        1667.7             +1.9 cm-1   0.512      0.093      Amide I/C=C
+
+  Matched pairs     : 23
+  Blue-shifted (+)  : 18  mean = +7.1 cm-1
+  Red-shifted  (-)  : 5  mean = -6.3 cm-1
+  Overall mean Δ    : +4.2 cm-1   SD = 6.9 cm-1
+
+  [B] S1 PEAKS NOT IN SERS  (mode not enhanced by AgSiNW):
+       425.5 cm-1   int=0.238   Ring def. / sugar
+       448.5 cm-1   int=0.188   Ring def. / sugar
+       478.4 cm-1   int=0.130   Sugar-phosphate
+       499.4 cm-1   int=0.241   Sugar-phosphate
+       548.3 cm-1   int=0.198   Backbone C-C
+       598.7 cm-1   int=0.149   G/C deform.
+       619.5 cm-1   int=0.099   G/T ring breath.
+       703.7 cm-1   int=0.157   G ring breath.
+       753.2 cm-1   int=0.209   Cyt. + O-P-O
+       804.0 cm-1   int=0.578   Backbone O-P-O
+       827.7 cm-1   int=0.254   Backbone O-P-O
+       846.7 cm-1   int=0.192   Backbone O-P-O
+       865.2 cm-1   int=0.295   Backbone C-C
+       913.8 cm-1   int=0.279   Backbone C-C
+       933.9 cm-1   int=0.219   Sugar C-O
+       968.8 cm-1   int=0.255   Sugar C-O
+       1020.1 cm-1   int=0.205   C-N / ring
+       1056.4 cm-1   int=0.357   C-N / ring
+       1074.4 cm-1   int=0.433   C-N / ring
+       1094.1 cm-1   int=0.535   PO₄ sym str.
+       1130.0 cm-1   int=0.183   PO₄/C-N
+       1144.6 cm-1   int=0.110   PO₄/C-N
+       1178.7 cm-1   int=0.232   C-N (Cyt/A)
+       1203.0 cm-1   int=0.188   Amide III/T
+       1260.9 cm-1   int=0.474   Amide III/T
+       1293.6 cm-1   int=0.734   A/T/G in-plane
+       1439.5 cm-1   int=0.195   A/G ring str.
+       1467.7 cm-1   int=0.544   A/C C=N str.
+       1514.6 cm-1   int=0.234   G/A ring C=C
+       1575.1 cm-1   int=0.896   G/A ring C=C
+       1592.1 cm-1   int=0.313   G/A ring C=C
+       1609.0 cm-1   int=0.259   Amide I/C=C
+       1650.5 cm-1   int=0.427   Amide I/C=C
+       1684.3 cm-1   int=0.514   C=O (base)
+       1711.8 cm-1   int=0.357   C=O (base)
+       1725.5 cm-1   int=0.182   C=O (base)
+       1740.7 cm-1   int=0.210   C=O (base)
+       1770.9 cm-1   int=0.234   C=O (base)
+       1786.0 cm-1   int=0.160   C=O (base)
+
+  [C] SERS-ONLY PEAKS  (not in S1, enhanced or outside S1 range):
+       242.4 cm-1   int=0.282   —
+       2148.4 cm-1   int=0.056   —
+       2930.7 cm-1   int=0.072   CH₃ sym str.
+       2977.1 cm-1   int=0.055   CH₂ asym str.
+
+==========================================================================
+GOAL 3 — SUGGESTIONS
+==========================================================================
+
+  1. m3_sp20 IS YOUR BEST REPRESENTATIVE SERS SPECTRUM.
+     It has the highest SNR of all 100 spectra (SNR≈87) and 14/19 known
+     DNA+HaCaT Raman bands. Use it as the representative spectrum in figures.
+
+  2. S1 IS WEAK (99 counts after baseline removal).
+     Normal Raman on CaF2 with BC50/10s is at its detection limit here.
+     Re-measure with 30-60 s and 5× accumulation for a cleaner reference.
+
+  3. REPORT THE OVERALL SHIFT DIRECTION.
+     18 peaks blue-shift, 5 red-shift; mean = +4.2 cm-1.
+     Small near-zero mean shift says no strong covalent Ag-DNA bond.
+     The 5–15 cm-1 scatter reflects hot-spot-to-hotspot geometry variation.
+
+  4. THE 2930/2977 cm-1 PEAKS ARE HaCaT CELL CH STRETCHES.
+     These are NOT in S1 (S1 only goes to 1800 cm-1).
+     They are real SERS-enhanced lipid/protein CH modes from HaCaT cells,
+     worth reporting as evidence that the SERS substrate detects whole cells.
+
+  5. THE DOMINANT SERS PEAKS ARE AT 1118 AND 1315 cm-1.
+     In S1 the dominant peaks are at 1483 and 1575 cm-1.
+     This redistribution of intensity shows SERS selectively enhances
+     the phosphate backbone (1118 cm-1) and A/T/G in-plane modes (1315 cm-1)
+     over the C=N nucleobase stretches. This means DNA adsorbs with its
+     backbone/ribose CLOSER to the Ag surface than the nucleobases.
+
+==========================================================================
