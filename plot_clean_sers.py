@@ -153,7 +153,7 @@ def find_spectrum_peaks(wn, sp_n, height=0.05, prominence=0.04):
 
 
 def score_spectrum(wn, sp_raw):
-    """Score a spectrum for 'cleanliness': high SNR + many known DNA bands."""
+    """Score a spectrum: SNR quality + count of known DNA+HaCaT bands detected."""
     sp_n, sp_max, _ = process_spectrum(wn, sp_raw)
     if sp_max <= 0:
         return -1, sp_n, sp_max
