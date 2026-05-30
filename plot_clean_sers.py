@@ -1,13 +1,13 @@
 """
 plot_clean_sers.py
 ==================
-Loads SERS maps m1–m4, automatically finds the cleanest DNA+HaCaT spectrum
-from all 100 spectra, and plots it (200–3200 cm-1) with every peak labeled.
+Loads SERS maps m1-m4, finds the cleanest DNA+HaCaT spectrum
+from all 100 spectra, plots it (200-3200 cm-1) with every peak labeled.
 
 HOW TO RUN IN PyCharm:
-  1. Edit FOLDER below (the folder that contains all 4 map .txt files).
-  2. Run (Shift+F10).
-  3. Figure saved to the same folder as:  clean_sers_spectrum.png
+  1. Edit FOLDER below (folder containing all 4 map .txt files).
+  2. Run with Shift+F10.
+  3. Figure saved to that folder as: clean_sers_spectrum.png
 
 REQUIREMENTS:
   pip install numpy scipy matplotlib
@@ -16,17 +16,17 @@ REQUIREMENTS:
 import os
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")          # remove this line if you want an interactive window
+matplotlib.use("Agg")          # remove this line to get an interactive window
 import matplotlib.pyplot as plt
 from scipy.sparse import diags
 from scipy.sparse.linalg import spsolve
 from scipy.signal import find_peaks
 
-# ══════════════════════════════════════════════════════════════════
-#  ▼  EDIT THIS PATH ONLY  ▼
+# ======================================================================
+#  EDIT THIS PATH ONLY
 FOLDER = r"C:\Users\Hira Aman\Desktop\RAMAN MAP 1"
-#  ▲  EDIT THIS PATH ONLY  ▲
-# ══════════════════════════════════════════════════════════════════
+#  EDIT THIS PATH ONLY
+# ======================================================================
 
 FILE_M1 = os.path.join(FOLDER, "m1-DNA-HACAT1-20ng-AgSiNW_532nm_600gr_BC200_50XLF_05s_4a_2-5%_5ul_drop-center.txt")
 FILE_M2 = os.path.join(FOLDER, "m2-DNA-HACAT1-20ng-AgSiNW_532nm_600gr_BC200_50XLF_05s_4a_2-5%_5ul_drop-edge.txt")
@@ -35,24 +35,23 @@ FILE_M4 = os.path.join(FOLDER, "m4-DNA-HACAT1-20ng-AgSiNW_532nm_600gr_BC200_50XL
 
 MAP_FILES = {"m1": FILE_M1, "m2": FILE_M2, "m3": FILE_M3, "m4": FILE_M4}
 
-# ── Known DNA + HaCaT Raman band positions (literature) ──────────
+# Known DNA + HaCaT Raman band positions (literature, cm-1)
 KNOWN_BANDS = [650, 720, 752, 782, 828, 932, 1001, 1092,
                1178, 1240, 1310, 1375, 1425, 1484, 1575, 1640,
                2870, 2930, 2960]
-KNOWN_TOL   = 18    # cm-1 match window for scoring
-MATCH_TOL   = 18    # cm-1 window used for peak finding
+KNOWN_TOL = 18    # cm-1 window for scoring
 
-# ── Spectral region colours and labels (background shading) ──────
+# Spectral region colours and labels
 REGIONS = {
-    (200,  400):  ("#EBF5FB", "200–400"),
-    (400,  900):  ("#FEF9E7", "DNA backbone\n400–900"),
-    (900,  1300): ("#EAFAF1", "Fingerprint\n900–1300"),
-    (1300, 1800): ("#FDF2F8", "Nucleobases\n1300–1800"),
-    (1800, 2800): ("#F8F9FA", "Silent region\n1800–2800"),
-    (2800, 3200): ("#EBF5FB", "CH stretch\n2800–3200"),
+    (200,  400):  ("#EBF5FB", "200-400"),
+    (400,  900):  ("#FEF9E7", "DNA backbone\n400-900"),
+    (900,  1300): ("#EAFAF1", "Fingerprint\n900-1300"),
+    (1300, 1800): ("#FDF2F8", "Nucleobases\n1300-1800"),
+    (1800, 2800): ("#F8F9FA", "Silent region\n1800-2800"),
+    (2800, 3200): ("#EBF5FB", "CH stretch\n2800-3200"),
 }
 
-# ── Assignment table ──────────────────────────────────────────────
+# Assignment table
 ASSIGN = {
     (400,  460):  "Ring deformation / sugar",
     (460,  510):  "Sugar-phosphate backbone",
@@ -67,8 +66,8 @@ ASSIGN = {
     (920,  970):  "Sugar C-O stretch",
     (970,  1020): "Phenylalanine / ring",
     (1020, 1075): "C-N stretch / ring",
-    (1075, 1115): "PO₄ symmetric stretch",
-    (1115, 1145): "PO₄ / C-N",
+    (1075, 1115): "PO4 symmetric stretch",
+    (1115, 1145): "PO4 / C-N",
     (1145, 1200): "C-N (cytosine/adenine)",
     (1200, 1270): "Amide III / thymine",
     (1270, 1340): "A/T/G in-plane",
@@ -78,24 +77,25 @@ ASSIGN = {
     (1510, 1595): "G/A ring C=C / C=N",
     (1595, 1680): "Amide I / C=C stretch",
     (1680, 1800): "C=O stretch (nucleobase)",
-    (2800, 2900): "CH₂ symmetric stretch (HaCaT)",
-    (2900, 2970): "CH₃ symmetric stretch (HaCaT)",
-    (2970, 3100): "CH₂ asymmetric stretch (HaCaT)",
+    (2800, 2900): "CH2 symmetric stretch (HaCaT)",
+    (2900, 2970): "CH3 symmetric stretch (HaCaT)",
+    (2970, 3100): "CH2 asymmetric stretch (HaCaT)",
 }
+
 
 def get_assignment(wn_val):
     for (lo, hi), label in ASSIGN.items():
         if lo <= wn_val < hi:
             return label
-    return "—"
+    return "---"
 
 
-# ═════════════════════════════════════════════════════════════════
-#  PROCESSING FUNCTIONS
-# ═════════════════════════════════════════════════════════════════
+# ======================================================================
+#  DATA LOADING
+# ======================================================================
 
 def load_map(filepath):
-    """Load a LabSpec6 map .txt file. Returns (wavenumber_array, spectra_2D)."""
+    """Load a LabSpec6 map txt file. Returns wavenumber array and 2D spectra array."""
     rows = []
     with open(filepath, "r", encoding="utf-8", errors="replace") as fh:
         for line in fh:
@@ -114,11 +114,18 @@ def load_map(filepath):
     spectra = []
     for row in rows[1:]:
         arr = np.array(row)
-        if   len(arr) == n_pts + 2:  spectra.append(arr[2:])
-        elif len(arr) == n_pts:       spectra.append(arr)
-        else:                         spectra.append(arr[-n_pts:])
+        if len(arr) == n_pts + 2:
+            spectra.append(arr[2:])
+        elif len(arr) == n_pts:
+            spectra.append(arr)
+        else:
+            spectra.append(arr[-n_pts:])
     return wavenumbers, np.array(spectra)
 
+
+# ======================================================================
+#  SIGNAL PROCESSING
+# ======================================================================
 
 def als_baseline(y, lam=1e5, p=0.005, n_iter=15):
     """Asymmetric Least Squares baseline correction."""
@@ -133,44 +140,48 @@ def als_baseline(y, lam=1e5, p=0.005, n_iter=15):
 
 
 def process_spectrum(wn, sp_raw):
-    """ALS baseline correction + min-max normalisation."""
+    """ALS baseline correction then min-max normalisation."""
     z  = als_baseline(sp_raw)
     bc = np.clip(sp_raw - z, 0, None)
     sp_max = bc.max()
     if sp_max <= 0:
-        return bc, 0.0, 0.0
+        return bc, 0.0
     sp_n = bc / sp_max
-    return sp_n, sp_max, z.max()
+    return sp_n, sp_max
 
 
 def find_spectrum_peaks(wn, sp_n, height=0.05, prominence=0.04):
-    """Detect genuine Raman peaks (above noise floor)."""
-    step = float(np.diff(wn).mean())
+    """Detect genuine Raman peaks above noise floor."""
+    step     = float(np.diff(wn).mean())
     min_dist = max(5, int(15 / step))
-    idxs, props = find_peaks(sp_n, height=height, prominence=prominence,
-                             distance=min_dist)
+    idxs, _  = find_peaks(sp_n, height=height, prominence=prominence,
+                           distance=min_dist)
     return wn[idxs], sp_n[idxs]
 
 
 def score_spectrum(wn, sp_raw):
-    """Score a spectrum: SNR quality + count of known DNA+HaCaT bands detected."""
-    sp_n, sp_max, _ = process_spectrum(wn, sp_raw)
+    """Score spectrum quality: SNR multiplied by matched known DNA bands."""
+    sp_n, sp_max = process_spectrum(wn, sp_raw)
     if sp_max <= 0:
         return -1, sp_n, sp_max
 
-    # SNR: signal max vs noise in the 'silent' 2050–2550 cm-1 region
+    # SNR: signal max vs noise in silent region 2050-2550 cm-1
     noise_mask = (wn > 2050) & (wn < 2550)
-    noise_std  = (sp_raw - als_baseline(sp_raw))[noise_mask].std()
+    z_full     = als_baseline(sp_raw)
+    bc_full    = np.clip(sp_raw - z_full, 0, None)
+    noise_std  = bc_full[noise_mask].std()
     if noise_std < 1:
         noise_std = 1
     snr = sp_max / noise_std
 
     # Count how many known DNA+HaCaT bands are present
     pk_wns, _ = find_spectrum_peaks(wn, sp_n)
-    n_matched  = sum(1 for k in KNOWN_BANDS
-                     if pk_wns.size > 0 and np.abs(pk_wns - k).min() < KNOWN_TOL)
+    n_matched = 0
+    for k in KNOWN_BANDS:
+        if pk_wns.size > 0 and np.abs(pk_wns - k).min() < KNOWN_TOL:
+            n_matched += 1
 
-    # Penalise artifact peaks in 1800–2600 cm-1 (biologically silent region)
+    # Penalise artifact peaks in biologically silent region 1800-2600 cm-1
     artifact_mask = (pk_wns > 1800) & (pk_wns < 2600)
     n_artifacts   = int(artifact_mask.sum())
 
@@ -178,9 +189,9 @@ def score_spectrum(wn, sp_raw):
     return score, sp_n, sp_max
 
 
-# ═════════════════════════════════════════════════════════════════
+# ======================================================================
 #  MAIN
-# ═════════════════════════════════════════════════════════════════
+# ======================================================================
 
 def main():
     matplotlib.rcParams.update({"font.family": "DejaVu Sans",
@@ -190,46 +201,49 @@ def main():
     print("Scanning all 100 SERS spectra for the cleanest signal ...")
     print("=" * 60)
 
-    best = {"score": -1}
+    best_score  = -1
+    best_map    = ""
+    best_sp_idx = 0
+    best_wn     = None
+    best_sp_n   = None
+    best_sp_max = 0.0
+    best_pk_wns = None
+    best_pk_int = None
 
     for map_name, filepath in MAP_FILES.items():
         print(f"  Loading {map_name} ...")
         wn, spectra = load_map(filepath)
         for i, sp_raw in enumerate(spectra):
             score, sp_n, sp_max = score_spectrum(wn, sp_raw)
-            if score > best["score"]:
+            if score > best_score:
                 pk_wns, pk_ints = find_spectrum_peaks(wn, sp_n)
-                best = {
-                    "score":   score,
-                    "map":     map_name,
-                    "sp_idx":  i + 1,
-                    "wn":      wn,
-                    "sp_n":    sp_n,
-                    "sp_max":  sp_max,
-                    "pk_wns":  pk_wns,
-                    "pk_ints": pk_ints,
-                }
+                best_score  = score
+                best_map    = map_name
+                best_sp_idx = i + 1
+                best_wn     = wn
+                best_sp_n   = sp_n
+                best_sp_max = sp_max
+                best_pk_wns = pk_wns
+                best_pk_int = pk_ints
 
-    print(f"\n  Best spectrum : {best['map']} · spectrum {best['sp_idx']}")
-    print(f"  Raw max count : {best['sp_max']:.0f}")
+    print(f"\n  Best spectrum : {best_map} -- spectrum {best_sp_idx}")
+    print(f"  Raw max count : {best_sp_max:.0f}")
+
     n_bio = sum(1 for k in KNOWN_BANDS
-                if best["pk_wns"].size > 0 and
-                   np.abs(best["pk_wns"] - k).min() < KNOWN_TOL)
+                if best_pk_wns.size > 0 and
+                   np.abs(best_pk_wns - k).min() < KNOWN_TOL)
     print(f"  Peaks matched : {n_bio}/19 known DNA+HaCaT bands")
-    print(f"  Peaks detected: {len(best['pk_wns'])} total")
+    print(f"  Peaks detected: {len(best_pk_wns)} total")
 
-    # ── Print peak table ─────────────────────────────────────────
+    # Print peak table to console
     print("\n  #   Position (cm-1)  Norm. intensity  Assignment")
     print("  " + "-" * 62)
-    for j, (w, h) in enumerate(zip(best["pk_wns"], best["pk_ints"]), 1):
+    for j, (w, h) in enumerate(zip(best_pk_wns, best_pk_int), 1):
         print(f"  {j:<4}{w:<20.1f}{h:<17.4f}{get_assignment(w)}")
 
-    # ═══════════════════════════════════════════════════════════════
+    # ------------------------------------------------------------------
     #  FIGURE
-    # ═══════════════════════════════════════════════════════════════
-    wn   = best["wn"]
-    sp_n = best["sp_n"]
-
+    # ------------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(18, 7))
     fig.patch.set_facecolor("white")
     ax.set_facecolor("white")
@@ -242,17 +256,16 @@ def main():
             ax.text(mid, 1.28, label, fontsize=7.5, ha="center", va="bottom",
                     color="grey", style="italic")
 
-    # Spectrum fill + line
-    mask = (wn >= 200) & (wn <= 3200)
-    ax.fill_between(wn[mask], sp_n[mask], alpha=0.15, color="#1A5276")
-    ax.plot(wn[mask], sp_n[mask], color="#1A5276", lw=1.5, zorder=5)
+    # Spectrum fill and line
+    mask = (best_wn >= 200) & (best_wn <= 3200)
+    ax.fill_between(best_wn[mask], best_sp_n[mask], alpha=0.15, color="#1A5276")
+    ax.plot(best_wn[mask], best_sp_n[mask], color="#1A5276", lw=1.5, zorder=5)
 
-    # Peak markers + staggered labels
-    pks = [(w, h) for w, h in zip(best["pk_wns"], best["pk_ints"])
-           if 200 < w < 3200]
+    # Peak markers and staggered labels
+    pks = [(w, h) for w, h in zip(best_pk_wns, best_pk_int) if 200 < w < 3200]
     pks.sort(key=lambda x: x[0])
-    label_y = [1.10, 1.18, 1.10, 1.18]
-    prev_x = -9999
+    label_y   = [1.10, 1.18, 1.10, 1.18]
+    prev_x    = -9999
     level_idx = 0
     for w, h in pks:
         gap = w - prev_x
@@ -272,13 +285,13 @@ def main():
     ax.set_ylim(-0.05, 1.50)
     ax.set_xlabel("Raman shift (cm⁻¹)", fontsize=13, fontweight="bold")
     ax.set_ylabel("Normalised intensity (a.u.)", fontsize=13, fontweight="bold")
-    ax.set_title(
-        f"DNA + HaCaT cells  |  SERS  |  {best['map']} spectrum {best['sp_idx']}"
-        f"  |  AgSiNW substrate  |  532 nm · 2.5% laser power · 0.5 s × 4 acc.\n"
-        f"Cleanest signal from 100 spectra (m1–m4)  ·  "
-        f"ALS baseline corrected  ·  {len(pks)} peaks detected",
-        fontsize=11, fontweight="bold"
-    )
+
+    title_line1 = (f"DNA + HaCaT cells  |  SERS  |  {best_map} spectrum {best_sp_idx}"
+                   f"  |  AgSiNW substrate  |  532 nm  |  2.5% laser power  |  0.5 s x 4 acc.")
+    title_line2 = (f"Cleanest signal from 100 spectra (m1-m4)  "
+                   f"ALS baseline corrected  {len(pks)} peaks detected")
+    ax.set_title(title_line1 + "\n" + title_line2, fontsize=11, fontweight="bold")
+
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.tick_params(labelsize=10)
@@ -288,7 +301,7 @@ def main():
     fig.savefig(out_path, dpi=180, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"\n  Figure saved: {out_path}")
-    print("\nDone.")
+    print("Done.")
 
 
 if __name__ == "__main__":
