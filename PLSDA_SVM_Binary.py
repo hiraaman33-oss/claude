@@ -28,6 +28,7 @@ OUTPUTS -> C:/Users/Hira Aman/Desktop/PROF_DOMENICO'S/PLSDA_SVM_Binary/
   06_PLSDA_VIP_Scores.png
   07_PLSDA_Loadings.png
   08_PLSDA_Permutation.png
+  08b_SVM_Permutation.png
   09_PLSDA_Cluster_5fold.png
   10_SVM_Cluster_5fold.png
   11_SVM_Cluster_Test.png
@@ -422,6 +423,17 @@ acc_svm_test = accuracy_score(y_test, y_svm_test)
 cm_svm_test  = confusion_matrix(y_test, y_svm_test)
 print("[SVM-RBF] External test accuracy : %.1f%%" % (acc_svm_test * 100))
 
+# Permutation test
+print("[SVM-RBF] Permutation test (%d permutations) ..." % N_PERM)
+obs_score_svm, perm_scores_svm, p_val_svm = permutation_test_score(
+    svm_pipe, X_train_sel, y_train,
+    scoring='accuracy', cv=cv5,
+    n_permutations=N_PERM,
+    random_state=RANDOM_STATE, n_jobs=-1)
+print("[SVM-RBF] Observed : %.2f%%   p = %.4f  [%s]" % (
+    obs_score_svm * 100, p_val_svm,
+    'SIGNIFICANT (p<0.05)' if p_val_svm < 0.05 else 'NOT significant'))
+
 # =============================================================================
 # 11. PCA FOR CLUSTER VISUALISATION  (fit on TRAIN only)
 # =============================================================================
@@ -670,6 +682,21 @@ ax.set_title('Permutation Test (%d perm.)  |  PLS-DA Binary  |  ' % N_PERM + TIT
 ax.legend(fontsize=9); ax.grid(True, alpha=0.25)
 fig.tight_layout()
 save_fig(fig, '08_PLSDA_Permutation.png')
+
+# SVM-RBF Permutation
+fig, ax = plt.subplots(figsize=(7.5, 4.5))
+ax.hist(perm_scores_svm, bins=35, color='lightsalmon', edgecolor='white',
+        label='Permuted accuracy')
+ax.axvline(obs_score_svm, color='darkred', lw=2.5,
+           label='Observed: %.1f%%   p=%.4f' % (obs_score_svm*100, p_val_svm))
+ax.axvline(0.50, color='grey', lw=1.2, ls=':', label='Chance level (50%)')
+ax.set_xlabel('5-fold CV accuracy', fontsize=12)
+ax.set_ylabel('Count', fontsize=12)
+ax.set_title('Permutation Test (%d perm.)  |  SVM-RBF Binary  |  ' % N_PERM + TITLE_SUF,
+             fontsize=10, fontweight='bold')
+ax.legend(fontsize=9); ax.grid(True, alpha=0.25)
+fig.tight_layout()
+save_fig(fig, '08b_SVM_Permutation.png')
 
 # =============================================================================
 # 18. PLS-DA CLUSTER PLOT  (LV1 vs LV2)
@@ -964,6 +991,9 @@ with pd.ExcelWriter(out_xlsx, engine='openpyxl') as writer:
         ('--- SVM-RBF ---',                     ''),
         ('SVM-RBF 5-fold CV acc (%)',           '%.2f' % (acc_svm_cv   * 100)),
         ('SVM-RBF External test acc (%)',       '%.2f' % (acc_svm_test * 100)),
+        ('SVM-RBF Permutation p-value',         '%.4f' % p_val_svm),
+        ('SVM-RBF Permutation result',
+         'Significant (p<0.05)' if p_val_svm < 0.05 else 'NOT significant'),
         ('SVM kernel', 'RBF'), ('SVM C', 10), ('SVM gamma', 'scale'),
     ]
     for i, r2 in enumerate(r2x_cum, 1):
@@ -1041,8 +1071,9 @@ with pd.ExcelWriter(out_xlsx, engine='openpyxl') as writer:
 
     # Permutation
     pd.DataFrame({
-        'Permutation_Index': np.arange(1, N_PERM+1),
-        'Permuted_Accuracy': perm_scores,
+        'Permutation_Index':       np.arange(1, N_PERM+1),
+        'PLSDA_Permuted_Accuracy': perm_scores,
+        'SVM_Permuted_Accuracy':   perm_scores_svm,
     }).to_excel(writer, sheet_name='Permutation_Test', index=False)
 
 print('\n[SAVED] %s' % out_xlsx)
@@ -1064,8 +1095,10 @@ print('  ' + '-' * 52)
 print('  %-10s  %19.1f%%  %17.1f%%' % ('PLS-DA',  acc_pls_cv*100,  acc_pls_test*100))
 print('  %-10s  %19.1f%%  %17.1f%%' % ('SVM-RBF', acc_svm_cv*100,  acc_svm_test*100))
 print()
-print('  PLS-DA permutation p-value : %.4f  [%s]' % (
-    p_val, 'SIGNIFICANT' if p_val < 0.05 else 'NOT significant'))
+print('  PLS-DA  permutation p-value : %.4f  [%s]' % (
+    p_val,     'SIGNIFICANT' if p_val     < 0.05 else 'NOT significant'))
+print('  SVM-RBF permutation p-value : %.4f  [%s]' % (
+    p_val_svm, 'SIGNIFICANT' if p_val_svm < 0.05 else 'NOT significant'))
 print()
 print('  Per-class Accuracy & Recall — 5-fold CV (train):')
 print('  %-12s  %9s  %7s  |  %9s  %7s' % (
