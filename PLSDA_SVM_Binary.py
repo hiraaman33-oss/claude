@@ -637,7 +637,7 @@ ax.fill_between(wavenumbers, 0, 0.07*vip_all.max(), where=sel_mask,
                 alpha=0.18, color='green',
                 label='Top-%d selected' % top_n)
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-ax.set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
+ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 ax.set_ylabel('VIP score', fontsize=12)
 ax.set_title('Variable Importance in Projection  |  Binary  |  ' + TITLE_SUF,
              fontsize=11, fontweight='bold')
@@ -660,7 +660,7 @@ for i, (ax, col) in enumerate(zip(axes, colors_load[:N_COMPONENTS])):
         ax.annotate('%.0f' % wn_sel[pk],
                     xy=(wn_sel[pk], P_load[pk, i]), fontsize=7,
                     ha='center', xytext=(0, 5), textcoords='offset points')
-axes[-1].set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
+axes[-1].set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 axes[0].set_title('PLS-DA Loadings  |  Binary  |  ' + TITLE_SUF,
                   fontsize=10, fontweight='bold')
 fig.tight_layout()
@@ -949,7 +949,7 @@ for cls in CLASS_LABELS:
     ax.plot(wavenumbers, m, color=PALETTE[cls], lw=2.0, label='%s (n=%d)' % (cls, idx.sum()))
     ax.fill_between(wavenumbers, m-s, m+s, color=PALETTE[cls], alpha=0.15)
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-ax.set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
+ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 ax.set_ylabel('Intensity (a.u.)', fontsize=12)
 ax.set_title('Mean Raman Spectra ± 1 SD  |  Binary Classes  |  %d–%d cm⁻¹' % (
     WAVENUMBER_MIN, WAVENUMBER_MAX), fontsize=11, fontweight='bold')

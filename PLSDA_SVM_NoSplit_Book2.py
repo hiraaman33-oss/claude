@@ -465,7 +465,7 @@ ax.fill_between(wavenumbers, 0, 0.06 * vip_all.max(), where=sel_mask,
                 alpha=0.20, color='green',
                 label='Top-%d selected' % VIP_TOP_N)
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-ax.set_xlabel('Wavenumber (cm-1)', fontsize=12)
+ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 ax.set_ylabel('VIP score', fontsize=12)
 ax.set_title('Variable Importance in Projection  |  ' + TITLE_SUF,
              fontsize=11, fontweight='bold')
@@ -488,7 +488,7 @@ for i, (ax, col) in enumerate(zip(axes,
         ax.annotate('%.0f' % wn_sel[pk],
                     xy=(wn_sel[pk], P_load[pk, i]), fontsize=7,
                     ha='center', xytext=(0, 5), textcoords='offset points')
-axes[-1].set_xlabel('Wavenumber (cm-1)', fontsize=12)
+axes[-1].set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 axes[0].set_title('PLS-DA Loadings  LV1 / LV2 / LV3  |  top-%d vars  |  %s' % (
     VIP_TOP_N, TITLE_SUF), fontsize=10, fontweight='bold')
 fig.tight_layout()
@@ -662,7 +662,7 @@ for cls in le.classes_:
     ax.fill_between(wavenumbers, m - s, m + s,
                     color=PALETTE[cls], alpha=0.12)
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-ax.set_xlabel('Wavenumber (cm-1)', fontsize=12)
+ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 ax.set_ylabel('Intensity (a.u.)', fontsize=12)
 ax.set_title('Mean Raman Spectra +/- 1 SD  (all 100 spectra)  |  %d-%d cm-1' % (
     WAVENUMBER_MIN, WAVENUMBER_MAX), fontsize=11, fontweight='bold')

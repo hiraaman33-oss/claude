@@ -301,7 +301,7 @@ for band_c, (lo, hi), bname in [('purple', D_BAND_RANGE, 'D-band'),
     ax.axvspan(lo, hi, alpha=0.12, color=band_c, label='%s (%d-%d cm-1)' % (bname, lo, hi))
 
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=12)
+ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 ax.set_ylabel('Intensity (SNV a.u.)', fontsize=12)
 ax.set_title('Mean Raman Spectra ± 1 SD  |  ALS + SNV preprocessed  |  n=25 per class',
              fontsize=11, fontweight='bold')
@@ -349,7 +349,7 @@ for band_c, (lo, hi), bname in [('purple', D_BAND_RANGE, 'D-band'),
             color=band_c, fontweight='bold')
 
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=12)
+ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 ax.set_ylabel('Δ Intensity (SNV a.u.)', fontsize=12)
 ax.set_title('Difference Spectra : Graphene Effect\n'
              'Positive = graphene increases intensity  |  Negative = graphene suppresses',
@@ -538,7 +538,7 @@ def plot_binary_vip(res, wavenumbers, title_prefix, fname):
                                       ('green',  G_BAND_RANGE, 'G-band')]:
         ax.axvspan(lo, hi, alpha=0.15, color=band_c, label=bname)
     ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-    ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=12)
+    ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
     ax.set_ylabel('VIP score', fontsize=12)
     ax.set_title('VIP Scores  |  %s\nVIP > 1 = important for graphene discrimination' %
                  title_prefix, fontsize=11, fontweight='bold')
@@ -632,7 +632,7 @@ for ax, (res, title, col) in zip(axes, panel_info):
     ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
     ax.grid(True, alpha=0.2)
 
-axes[-1].set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=12)
+axes[-1].set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 axes[0].set_title(panel_info[0][1] + '    [%s]' % (
     '5fold=%.0f%%  LOO=%.0f%%' % (res_bin['acc_5f']*100, res_bin['acc_loo']*100)),
     fontsize=10, fontweight='bold')

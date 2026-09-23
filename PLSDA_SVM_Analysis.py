@@ -598,7 +598,7 @@ ax.fill_between(wavenumbers, 0, 0.07*vip_all.max(), where=sel_mask,
                 alpha=0.18, color='green',
                 label='Top-%d selected' % top_n)
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-ax.set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
+ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 ax.set_ylabel('VIP score', fontsize=12)
 ax.set_title('VIP Scores  |  ' + TITLE_SUF, fontsize=11, fontweight='bold')
 ax.legend(fontsize=9); ax.grid(True, alpha=0.25)
@@ -619,7 +619,7 @@ for i, (ax, col) in enumerate(zip(axes, ['steelblue', 'darkorange', 'seagreen'])
         ax.annotate('%.0f' % wn_sel[pk],
                     xy=(wn_sel[pk], P_load[pk, i]), fontsize=7,
                     ha='center', xytext=(0, 5), textcoords='offset points')
-axes[-1].set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
+axes[-1].set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 axes[0].set_title('PLS-DA Loadings  LV1/LV2/LV3  |  ' + TITLE_SUF,
                   fontsize=10, fontweight='bold')
 fig.tight_layout()
@@ -904,7 +904,7 @@ for cls in le.classes_:
     ax.plot(wavenumbers, m, color=PALETTE[cls], lw=1.5, label=cls)
     ax.fill_between(wavenumbers, m-s, m+s, color=PALETTE[cls], alpha=0.12)
 ax.set_xlim(WAVENUMBER_MIN, WAVENUMBER_MAX)
-ax.set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
+ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 ax.set_ylabel('Intensity (a.u.)', fontsize=12)
 ax.set_title('Mean Raman Spectra ± 1 SD  (all 80 spectra)  |  %d–%d cm⁻¹' % (
     WAVENUMBER_MIN, WAVENUMBER_MAX), fontsize=11, fontweight='bold')

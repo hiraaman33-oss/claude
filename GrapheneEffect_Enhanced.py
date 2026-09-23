@@ -210,7 +210,7 @@ for ax, (cls_gr, cls_ng, col, sname) in zip(axes, pairs):
     ax.legend(fontsize=8.5, ncol=2, loc='lower right')
     ax.grid(True, alpha=0.2)
 
-axes[-1].set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=12)
+axes[-1].set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 fig.suptitle('Smoothed Difference Spectra : Effect of Adding Graphene\n'
              'Shaded line = SG-smoothed mean difference  |  Band = 95% CI\n'
              'Above zero = graphene increases intensity  |  Below zero = graphene reduces intensity',
@@ -255,7 +255,7 @@ for ax, (cls_gr, cls_ng, col, sname) in zip(axes, pairs):
     ax.legend(fontsize=9, loc='lower right')
     ax.grid(True, alpha=0.2)
 
-axes[-1].set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=12)
+axes[-1].set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
 fig.suptitle('Spectral Ratio : mean(Gr) / mean(non-Gr)  |  ALS-corrected, SG-smoothed\n'
              'Regions > 1.0 : graphene increases signal  |  Regions < 1.0 : graphene reduces signal',
              fontsize=11, fontweight='bold')
@@ -286,7 +286,7 @@ for row, (cls_gr, cls_ng, col, sname) in enumerate(pairs):
     ymax_txt = max(mean_se(cls_gr)[0][zoom].max(), mean_se(cls_ng)[0][zoom].max())
     add_bands(ax, ymax_txt * 1.03)
     ax.set_xlim(ZOOM_MIN, ZOOM_MAX)
-    ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=11)
+    ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=11)
     ax.set_ylabel('Intensity (SNV a.u.)', fontsize=11)
     ax.set_title('%s : mean +/- SE  |  %d-%d cm$^{-1}$' % (sname, ZOOM_MIN, ZOOM_MAX),
                  fontsize=10, fontweight='bold')
@@ -311,7 +311,7 @@ for row, (cls_gr, cls_ng, col, sname) in enumerate(pairs):
     ax2.plot(wn_z, diff_z, color=col_gr, lw=2.0)
     add_bands(ax2, diff_z.max() * 1.05)
     ax2.set_xlim(ZOOM_MIN, ZOOM_MAX)
-    ax2.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=11)
+    ax2.set_xlabel('Raman shift (cm⁻¹)', fontsize=11)
     ax2.set_ylabel('Gr minus non-Gr (SNV a.u.)', fontsize=11)
     ax2.set_title('%s : smoothed difference' % sname,
                   fontsize=10, fontweight='bold')
@@ -445,7 +445,7 @@ for ax, (cls_gr, cls_ng, col, sname) in zip(axes, pairs):
     ax.axvline(1580, color='green', ls=':', lw=1.5, alpha=0.8,
                label='G peak ~1580 cm$^{-1}$')
     ax.set_xlim(GBAND_MIN, GBAND_MAX)
-    ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=12)
+    ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=12)
     ax.set_ylabel('Intensity (SNV a.u.)', fontsize=12)
     ax.set_title('%s  |  G-band region\nmean +/- SE  (n=25 per class)' % sname,
                  fontsize=11, fontweight='bold')
@@ -483,7 +483,7 @@ for ax, cls, title in zip(axes.flat, class_order, titles):
     ymax_txt = mean_sp.max() + se_sp.max()
     add_bands(ax, ymax_txt * 1.05)
     ax.set_xlim(ZOOM_MIN, ZOOM_MAX)
-    ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize=10)
+    ax.set_xlabel('Raman shift (cm⁻¹)', fontsize=10)
     ax.set_ylabel('Intensity (SNV a.u.)', fontsize=10)
     ax.set_title(title, fontsize=11, fontweight='bold')
     ax.legend(fontsize=9); ax.grid(True, alpha=0.15)
