@@ -1,0 +1,8 @@
+spectrum,type,1456_pos,1456_SNR,1726_pos,1726_SNR,r_vs_CaF2_fingerprint,r_vs_CaF2_1456_1726_windows
+s10,CaF2 reference,1457.6,34.6,1729.0,19.7,0.951,0.99
+s8,CaF2 reference,1455.9,29.5,1726.9,15.9,0.985,0.998
+s5,CaF2 reference,1455.9,23.0,1733.1,11.3,0.976,0.983
+s9,CaF2 reference,1455.5,39.3,1731.0,21.4,0.958,0.985
+s4,CaF2 reference,1455.1,21.0,1733.9,10.4,0.965,0.992
+S1,AgSiNW single,1453.7,0.7,1714.6,0.0,0.242,0.44
+S2,AgSiNW single,1445.1,0.0,1723.1,16.1,0.443,0.374
