@@ -1,0 +1,6 @@
+spectrum,1456_checks_passed,1456_pos_cm-1,1456_SNR,1456 V1,1456 V2,1456 V3,1456 V4,1456 V5,1456 V6,1456 V7,1456 V8,1456 V9,1456 V10,1726_checks_passed,1726_pos_cm-1,1726_SNR,1726 V1,1726 V2,1726 V3,1726 V4,1726 V5,1726 V6,1726 V7,1726 V8,1726 V9,1726 V10
+s4,10,1455.0,18.0,True,True,True,True,True,True,True,True,True,True,9,1728.0,9.7,True,True,True,True,True,True,True,True,False,True
+s5,10,1457.0,20.1,True,True,True,True,True,True,True,True,True,True,9,1727.0,10.8,True,True,True,True,True,True,True,True,False,True
+s8,10,1455.0,28.3,True,True,True,True,True,True,True,True,True,True,9,1726.0,13.7,True,True,True,True,True,True,True,True,False,True
+s9,10,1454.0,35.8,True,True,True,True,True,True,True,True,True,True,10,1729.0,19.6,True,True,True,True,True,True,True,True,True,True
+s10,10,1457.0,37.9,True,True,True,True,True,True,True,True,True,True,10,1730.0,18.5,True,True,True,True,True,True,True,True,True,True
