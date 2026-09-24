@@ -1,0 +1,27 @@
+EV Acacia on CaF2 (cm-1),EV Acacia on AgSiNW (cm-1),shift (cm-1),SNR EV Acacia on CaF2,SNR EV Acacia on AgSiNW,status,assignment
+322.3,,,25.1,,only in EV Acacia on CaF2,CaF2 lattice mode (substrate)
+,493.8,,,5.8,only in EV Acacia on AgSiNW,unassigned
+,518.8,,,17.3,only in EV Acacia on AgSiNW,Si optical phonon (substrate)
+532.5,539.4,6.9,6.4,5.5,in both,unassigned
+,666.7,,,5.9,only in EV Acacia on AgSiNW,unassigned
+,764.2,,,5.5,only in EV Acacia on AgSiNW,Trp ring breathing
+,801.1,,,6.8,only in EV Acacia on AgSiNW,unassigned
+,830.8,,,12.9,only in EV Acacia on AgSiNW,Tyr (Fermi doublet) / O-P-O stretch
+850.5,855.2,4.7,13.0,7.9,in both,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)"
+925.2,933.0,7.8,8.5,5.8,in both,C-C stretch protein backbone (alpha-helix)
+1000.3,1003.0,2.7,6.9,22.6,in both,Phe ring breathing
+,1054.2,,,16.9,only in EV Acacia on AgSiNW,unassigned
+1083.7,,,14.1,,only in EV Acacia on CaF2; nearest EV Acacia on AgSiNW band at 1096.5 (Δ12.8),PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate)
+,1096.5,,,5.9,only in EV Acacia on AgSiNW,PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate)
+1117.2,,,7.7,,only in EV Acacia on CaF2,"C-C stretch (lipid, trans) / C-N stretch (protein)"
+,1138.5,,,6.6,only in EV Acacia on AgSiNW,unassigned
+,1168.6,,,7.7,only in EV Acacia on AgSiNW,Tyr C-H bend
+,1246.6,,,9.3,only in EV Acacia on AgSiNW,Amide III
+1302.9,1300.2,-2.7,10.6,8.4,in both,CH2 twist (lipid)
+,1367.8,,,29.1,only in EV Acacia on AgSiNW,COO- symmetric stretch / CH3 bend / carbon D band
+1457.6,,,36.8,,only in EV Acacia on CaF2,CH2/CH3 deformation (scissoring)
+1559.2,,,6.0,,only in EV Acacia on CaF2,Amide II / Trp
+1606.6,1602.9,-3.7,9.0,58.4,in both,Phe / Tyr ring C=C stretch
+1721.5,,,17.4,,only in EV Acacia on CaF2,"C=O stretch (ester, lipids)"
+2884.2,,,11.7,,only in EV Acacia on CaF2,CH2 asymmetric stretch (lipid)
+2936.0,2929.5,-6.5,124.8,9.7,in both,CH3 symmetric stretch (protein) / CH stretch

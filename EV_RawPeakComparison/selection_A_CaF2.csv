@@ -1,0 +1,6 @@
+spectrum,n_bands,shared_bands,shared_bands_found,mean_SNR_shared,noise_sigma
+s10,14,10,8,30.0,14.4
+s9,10,10,8,29.2,18.6
+s8,9,10,8,24.1,23.7
+s4,7,10,7,18.7,23.2
+s5,8,10,6,22.3,24.1

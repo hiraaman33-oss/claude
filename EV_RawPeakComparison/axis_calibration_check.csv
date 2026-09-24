@@ -1,0 +1,5 @@
+group,band,n,median_raw_max,offset,spread_IQR
+EV Acacia on CaF2,CaF2 321.6,5,321.8,0.2,1.0
+EV nano Acacia on CaF2,CaF2 321.6,1,321.3,-0.3,0.0
+EV Acacia on AgSiNW,Si 520.7,102,519.3,-1.4,1.0
+EV nano Acacia on AgSiNW,Si 520.7,23,519.3,-1.4,1.0

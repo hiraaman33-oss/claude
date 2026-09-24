@@ -1,0 +1,25 @@
+EV Acacia on CaF2 (cm-1),EV nano Acacia on CaF2 (cm-1),shift (cm-1),SNR EV Acacia on CaF2,SNR EV nano Acacia on CaF2,status,assignment
+322.3,,,25.1,,only in EV Acacia on CaF2,CaF2 lattice mode (substrate)
+,381.1,,,10.9,only in EV nano Acacia on CaF2,unassigned
+,435.8,,,7.1,only in EV nano Acacia on CaF2,unassigned
+,459.7,,,6.5,only in EV nano Acacia on CaF2,unassigned
+,507.5,,,9.1,only in EV nano Acacia on CaF2,unassigned
+532.5,,,6.4,,only in EV Acacia on CaF2,unassigned
+850.5,851.4,0.9,13.0,8.8,in both,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)"
+,899.6,,,8.8,only in EV nano Acacia on CaF2,C-C stretch / C-O-C (saccharide)
+925.2,,,8.5,,only in EV Acacia on CaF2,C-C stretch protein backbone (alpha-helix)
+1000.3,,,6.9,,only in EV Acacia on CaF2,Phe ring breathing
+1083.7,,,14.1,,only in EV Acacia on CaF2; nearest EV nano Acacia on CaF2 band at 1096.4 (Δ12.7),PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate)
+,1096.4,,,45.7,only in EV nano Acacia on CaF2,PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate)
+1117.2,1118.6,1.4,7.7,7.3,in both,"C-C stretch (lipid, trans) / C-N stretch (protein)"
+,1291.3,,,5.5,only in EV nano Acacia on CaF2,CH2 twist (lipid)
+1302.9,,,10.6,,only in EV Acacia on CaF2; nearest EV nano Acacia on CaF2 band at 1291.3 (Δ11.6),CH2 twist (lipid)
+,1339.0,,,8.5,only in EV nano Acacia on CaF2,"CH3CH2 wagging (protein, nucleic acids)"
+,1377.4,,,13.7,only in EV nano Acacia on CaF2,COO- symmetric stretch / CH3 bend
+1457.6,1465.4,7.8,36.8,12.3,in both,CH2/CH3 deformation (scissoring)
+1559.2,,,6.0,,only in EV Acacia on CaF2,Amide II / Trp
+1606.6,1603.7,-2.9,9.0,23.7,in both,Phe / Tyr ring C=C stretch
+1721.5,,,17.4,,only in EV Acacia on CaF2,"C=O stretch (ester, lipids)"
+2884.2,,,11.7,,only in EV Acacia on CaF2; nearest EV nano Acacia on CaF2 band at 2894.9 (Δ10.7),CH2 asymmetric stretch (lipid)
+,2894.9,,,28.7,only in EV nano Acacia on CaF2,CH2 asymmetric stretch (lipid)
+2936.0,,,124.8,,only in EV Acacia on CaF2,CH3 symmetric stretch (protein) / CH stretch

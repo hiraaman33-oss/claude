@@ -1,0 +1,16 @@
+EV nano Acacia on CaF2 (cm-1),EV nano Acacia on AgSiNW (cm-1),shift (cm-1),SNR EV nano Acacia on CaF2,SNR EV nano Acacia on AgSiNW,status,assignment
+381.1,,,10.9,,only in EV nano Acacia on CaF2,unassigned
+435.8,,,7.1,,only in EV nano Acacia on CaF2,unassigned
+459.7,,,6.5,,only in EV nano Acacia on CaF2,unassigned
+507.5,,,9.1,,only in EV nano Acacia on CaF2; nearest EV nano Acacia on AgSiNW band at 521.2 (Δ13.7),unassigned
+,521.2,,,7.4,only in EV nano Acacia on AgSiNW,Si optical phonon (substrate)
+851.4,,,8.8,,only in EV nano Acacia on CaF2,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)"
+899.6,,,8.8,,only in EV nano Acacia on CaF2,C-C stretch / C-O-C (saccharide)
+1096.4,,,45.7,,only in EV nano Acacia on CaF2,PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate)
+1118.6,,,7.3,,only in EV nano Acacia on CaF2,"C-C stretch (lipid, trans) / C-N stretch (protein)"
+1291.3,1288.6,-2.7,5.5,6.1,in both,CH2 twist (lipid)
+1339.0,,,8.5,,only in EV nano Acacia on CaF2,"CH3CH2 wagging (protein, nucleic acids)"
+1377.4,1384.8,7.4,13.7,20.9,in both,COO- symmetric stretch / CH3 bend
+1465.4,,,12.3,,only in EV nano Acacia on CaF2,CH2/CH3 deformation (scissoring)
+1603.7,1605.8,2.1,23.7,31.7,in both,Phe / Tyr ring C=C stretch
+2894.9,,,28.7,,outside EV nano Acacia on AgSiNW range,CH2 asymmetric stretch (lipid)
