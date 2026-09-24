@@ -1,0 +1,20 @@
+position_cm1,raw_counts,prominence_counts,SNR,FWHM_cm1,assignment,flag,check1_local,check1_pos,check1_SNR,check2_repeat,confirmed,spectrum
+532.5,2324.8,125.3,6.7,18.4,unassigned,,True,532.5,6.8,True,True,CaF2 s1
+848.6,2438.2,211.3,11.3,14.8,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)",,True,848.6,9.8,True,True,CaF2 s1
+1118.6,2388.5,221.1,11.9,12.1,"C-C stretch (lipid, trans) / C-N stretch (protein)",,True,1118.6,8.4,True,True,CaF2 s1
+1255.5,2349.3,143.1,7.7,10.3,Amide III,,True,1255.5,7.4,True,True,CaF2 s1
+1341.6,2405.1,198.8,10.7,22.9,"CH3CH2 wagging (protein, nucleic acids)",,True,1341.6,8.7,False,False,CaF2 s1
+1456.8,2705.4,517.0,27.7,23.2,CH2/CH3 deformation (scissoring),,True,1456.8,30.9,True,True,CaF2 s1
+1559.2,2135.7,157.3,8.4,12.8,Amide II / Trp,,True,1559.2,7.7,False,False,CaF2 s1
+1605.4,2115.8,120.6,6.5,19.2,Phe / Tyr ring C=C stretch,,True,1605.4,7.2,True,True,CaF2 s1
+1729.4,2158.2,252.4,13.5,26.7,"C=O stretch (ester, lipids)",,True,1729.4,16.8,True,True,CaF2 s1
+518.8,231.7,85.0,19.3,8.4,Si optical phonon (substrate),,True,518.8,20.0,True,True,AgSiNW S2
+831.3,180.3,35.2,8.0,6.0,Tyr (Fermi doublet) / O-P-O stretch,,True,831.3,8.1,True,True,AgSiNW S2
+933.5,171.1,28.6,6.5,4.6,C-C stretch protein backbone (alpha-helix),,True,933.5,6.4,True,True,AgSiNW S2
+1001.6,193.0,50.5,11.4,7.4,Phe ring breathing,,True,1001.6,11.3,True,True,AgSiNW S2
+1170.0,198.9,43.5,9.9,11.1,Tyr C-H bend,,True,1170.0,9.1,True,True,AgSiNW S2
+1210.1,184.4,28.8,6.5,6.0,Tyr / Phe C-C6H5 stretch,,True,1210.1,5.1,True,True,AgSiNW S2
+1355.6,258.0,76.9,17.4,56.3,COO- symmetric stretch / CH3 bend / carbon D band,,True,1355.6,17.4,True,True,AgSiNW S2
+1580.1,272.3,46.1,10.4,7.7,COO- asymmetric stretch / carbon G band / Phe,,True,1580.1,10.4,True,True,AgSiNW S2
+1607.1,282.6,82.4,18.7,23.0,Phe / Tyr ring C=C stretch / carbon G band,,True,1607.1,20.6,True,True,AgSiNW S2
+1722.3,219.8,75.6,17.1,21.3,"C=O stretch (ester, lipids)",,True,1722.3,16.7,True,True,AgSiNW S2
