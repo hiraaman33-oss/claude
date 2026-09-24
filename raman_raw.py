@@ -198,3 +198,151 @@ def noise_threshold(wn, y, sigma, region=(600.0, 720.0), n=300, pct=99.0, seed=0
     that pure noise reaches with the same test."""
     rng = np.random.default_rng(seed)
     return float(np.percentile([calib_score(wn, y, c, sigma)[1] for c in rng.uniform(*region, n)], pct))
+
+
+def checked_peaks(wn, y, substrate, lo, hi):
+    """Raw peaks plus two independent re-checks (local_check; repeat search with other settings)."""
+    sigma = noise_sigma(wn, y)
+    acc, rej = raw_peaks(wn, y, substrate, lo, hi, sigma=sigma)
+    alt, _ = raw_peaks(wn, y, substrate, lo, hi, k_sigma=4.0, wlen_cm=100.0, min_dist_cm=4.0, sigma=sigma)
+    c1, c1pos, c1snr, c2 = [], [], [], []
+    for _, p in acc.iterrows():
+        f0 = max(15.0, p.FWHM_cm1)
+        ok, xm, snr = local_check(wn, y, p.position_cm1, sigma, flank=(f0, f0 + 20.0))
+        c1.append(ok)
+        c1pos.append(xm)
+        c1snr.append(snr)
+        c2.append(bool((not alt.empty) and np.min(np.abs(alt.position_cm1.values - p.position_cm1)) <= 2.0))
+    acc = acc.assign(check1_local=c1, check1_pos=c1pos, check1_SNR=c1snr, check2_repeat=c2)
+    acc["confirmed"] = acc.check1_local & acc.check2_repeat
+    return acc, rej, sigma
+
+
+# ------------------------------------------------------------------ noise-calibrated peak list (replicate-aware)
+def spike_like(wn, y, xm, height):
+    """A cosmic-ray spike is 1-2 data points wide: its maximum stands far above the mean of the
+    neighbouring points (±1-2 points). For a real band (FWHM >= 4.5 cm-1, ~10 points) the
+    neighbours are almost as high. Spike-like if the drop exceeds 60 % of the band height."""
+    i = int(np.argmin(np.abs(wn - xm)))
+    nb = np.r_[y[max(i - 2, 0):i], y[i + 1:i + 3]]
+    return bool(height > 0 and (y[i] - nb.mean()) > 0.6 * height)
+
+
+def visible_peaks(spectra, name, lo, hi, substrate="SERS", step=1.0, merge_cm=8.0):
+    """Noise-calibrated peak list for spectra[name]["wn_y"]; the other entries of `spectra` are
+    replicates used to check reproduction. Returns (DataFrame, noise threshold)."""
+    wn, y = spectra[name]["wn_y"]
+    sigma = noise_sigma(wn, y)
+    thr = noise_threshold(wn, y, sigma)
+    others = {}
+    for o, v in spectra.items():
+        if o != name:
+            ow, oy = v["wn_y"]
+            osg = noise_sigma(ow, oy)
+            others[o] = (ow, oy, osg, noise_threshold(ow, oy, osg))
+    own_pk, _, _ = checked_peaks(wn, y, substrate, lo, hi)
+    own_ok = own_pk[own_pk.confirmed]  # bands passing checks 1+2 in this spectrum
+    own_conf, own_fwhm = own_ok.position_cm1.values, own_ok.FWHM_cm1.values
+    grid = np.arange(lo + 40, hi - 40, step)
+    sc = np.array([calib_score(wn, y, c, sigma) for c in grid], dtype=float)  # (position, score)
+
+    def reproduced(xm):
+        rep_in = []
+        for o, (ow, oy, osg, othr) in others.items():
+            ox, osc = calib_score(ow, oy, xm, osg)
+            if osc > othr and abs(ox - xm) <= 3.0:
+                rep_in.append(f"{o} {ox:.1f}")
+        return rep_in
+
+    # each contiguous stretch of the score profile above the noise threshold is one band (its
+    # strongest maximum); a secondary maximum inside the stretch (>= merge_cm away) is kept as a
+    # separate band only if another spectrum reproduces it (independent evidence of a shoulder)
+    above = sc[:, 1] > thr
+    rows = []
+    k = 0
+    while k < len(grid):
+        if not above[k]:
+            k += 1
+            continue
+        e = k
+        while e + 1 < len(grid) and above[e + 1]:
+            e += 1
+        seg = sc[k:e + 1]
+        # candidate bands in the stretch: distinct raw maxima found by calib_score, best score each
+        cands = {}
+        for xm, s_ in seg:
+            cands[xm] = max(s_, cands.get(xm, 0.0))
+        cands = sorted(cands.items(), key=lambda t: -t[1])
+        rep = {xm: bool(reproduced(xm)) for xm, _ in cands}
+        own = {}  # FWHM of the checks-1+2 band at this maximum (None if there is none)
+        for xm, _ in cands:
+            d = np.abs(own_conf - xm) if len(own_conf) else np.array([99.0])
+            own[xm] = float(own_fwhm[d.argmin()]) if d.min() <= 2.0 else None
+        # main band: strongest reproduced maximum, else strongest maximum
+        main = next(((xm, s_) for xm, s_ in cands if rep[xm]), cands[0])
+        chosen = [main]
+        for xm, s_ in cands:  # further bands: >= merge_cm apart and reproduced or confirmed by checks 1+2
+            dist = min(abs(xm - c[0]) for c in chosen)
+            # an own (checks 1+2) band only counts separately if it is narrower than its distance to the
+            # main maximum - a broad band's own maximum is the same band, not a shoulder
+            if dist >= merge_cm and (rep[xm] or (own[xm] is not None and own[xm] < dist)):
+                chosen.append((xm, s_))
+        for xm, s_ in chosen:
+            rep_in = reproduced(xm)
+            spike = spike_like(wn, y, xm, s_ * sigma)
+            rows.append(dict(position_cm1=round(float(xm), 1), raw_counts=round(float(y[np.argmin(np.abs(wn - xm))]), 1),
+                             calib_score=round(float(s_), 1), noise_threshold=round(thr, 1),
+                             band_extent_cm1=f"{grid[k]:.0f}-{grid[e]:.0f}",
+                             reproduced_in="; ".join(rep_in), assignment=assign(xm, substrate),
+                             flag=("spike-like, reproduced" if rep_in else
+                                   "spike-like, not reproduced: possible cosmic ray") if spike
+                             else ("" if rep_in else "not reproduced in other AgSiNW spectra"),
+                             confirmed=(not spike) or bool(rep_in)))
+        k = e + 1
+    out = pd.DataFrame(rows).drop_duplicates("position_cm1").sort_values("position_cm1").reset_index(drop=True)
+    out["SNR"] = out.calib_score
+    out["FWHM_cm1"] = np.nan  # not measurable reliably on raw data for weak bands; see band_extent_cm1
+    return out, thr
+
+
+# compact slide labels (full assignments are in the CSV files)
+SLIDE = {"C-C stretch protein backbone": "C-C backbone", "CH2/CH3 deformation": "CH$_2$/CH$_3$",
+         "COO- symmetric stretch": "COO$^-$ sym.", "COO- asymmetric stretch": "COO$^-$ asym.",
+         "Si optical phonon": "Si", "Tyr ring breathing": "Tyr", "Phe ring breathing": "Phe",
+         "Tyr C-H bend": "Tyr", "C=O stretch": "C=O ester", "C-C stretch": "C-C", "Tyr": "Tyr", "Phe": "Phe",
+         "unassigned": "n.a.", "PO2- symmetric stretch": "PO$_2^-$ / C-O", "CH3CH2 wagging": "CH$_3$CH$_2$ wag",
+         "CH2 twist": "CH$_2$ twist", "Amide II": "Amide II", "Tyr / Trp ring C=C stretch": "Tyr/Trp", "Si 2nd-order phonon": "Si 2nd order", "Carotenoid C=C stretch": "Carotenoid"}
+
+
+def slide_label(assignment):
+    if assignment in SLIDE:
+        return SLIDE[assignment]
+    sh = short(assignment)
+    return SLIDE.get(sh, sh)
+
+
+def draw(ax, wn, y, pk, lo, hi, color, shared_pos, label_fs=10, headroom=0.9, title=None, shared_color="#2ca02c"):
+    """Raw spectrum with labelled confirmed peaks (labels pushed apart, ticks at true positions)."""
+    m = (wn >= lo) & (wn <= hi)
+    ax.plot(wn[m], y[m], color=color, lw=0.9)
+    ymin, ymax = y[m].min(), y[m].max()
+    rng = ymax - ymin
+    ax.set_ylim(ymin - 0.03 * rng, ymax + headroom * rng)
+    for p in shared_pos:
+        if lo <= p <= hi:
+            ax.axvline(p, color=shared_color, ls="--", lw=1.0, alpha=0.8)
+    sel = pk[(pk.confirmed) & (pk.position_cm1 >= lo) & (pk.position_cm1 <= hi)].sort_values("position_cm1")
+    gap = 0.014 * (hi - lo) * (label_fs / 11.0)  # minimum x-distance between rotated labels
+    xs = []
+    for x in sel.position_cm1:  # push labels apart left-to-right; ticks stay at the true position
+        xs.append(max(x, xs[-1] + gap) if xs else x)
+    for (_, p), xt in zip(sel.iterrows(), xs):
+        top = p.raw_counts + 0.03 * rng
+        ax.plot([p.position_cm1, p.position_cm1, xt], [top, top + 0.04 * rng, top + 0.06 * rng], color="k", lw=0.9)
+        ax.text(xt, top + 0.07 * rng, f"{p.position_cm1:.1f} {slide_label(p.assignment)}",
+                rotation=90, fontsize=label_fs, ha="center", va="bottom", clip_on=True)
+    if title:
+        ax.text(0.01, 0.97, title, transform=ax.transAxes, ha="left", va="top", color=color, fontsize=14,
+                fontweight="bold", bbox=dict(facecolor="white", edgecolor="none", alpha=0.85, pad=2))
+    ax.set_xlim(lo, hi)
+    ax.tick_params(direction="in", length=5)
