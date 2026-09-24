@@ -412,9 +412,9 @@ def short(a):
     return a.split(" / ")[0].split(" (")[0]
 
 
-def plot_pair(g1, g2, name):
+def plot_pair(g1, g2, name, segs=None):
     specs = [g1, g2]
-    segs = [s for s in SEGS if any(groups[g][chosen[g]]["wn_y"][0].max() > s[0] + 50 and
+    segs = segs or [s for s in SEGS if any(groups[g][chosen[g]]["wn_y"][0].max() > s[0] + 50 and
                                    groups[g][chosen[g]]["wn_y"][0].min() < s[1] - 50 for g in specs)]
     fig, axs = plt.subplots(2, len(segs), figsize=(22, 11), squeeze=False,
                             gridspec_kw=dict(width_ratios=[s[1] - s[0] for s in segs]))
@@ -454,4 +454,5 @@ def plot_pair(g1, g2, name):
 
 for g1, g2, name in pairs:
     plot_pair(g1, g2, name)
+    plot_pair(g1, g2, f"{name}_400-1800", segs=[(400, 1800)])  # fingerprint-only zoom
 print(f"\nOutputs written to {OUT}/")
