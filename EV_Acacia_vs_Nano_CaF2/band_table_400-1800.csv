@@ -1,0 +1,21 @@
+Acacia_cm1,nano_cm1,shift_cm1,score_Acacia,score_nano,status,band
+,435.8,,,8.4,only EV nano Acacia,unassigned
+,459.7,,,9.0,only EV nano Acacia,unassigned
+482.9,,,9.7,,only EV Acacia,unassigned
+848.6,851.4,2.8,13.7,10.6,in both,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)"
+,899.6,,,8.4,only EV nano Acacia,C-C stretch / C-O-C (saccharide)
+927.5,,,9.0,,only EV Acacia,C-C stretch protein backbone (alpha-helix)
+,978.6,,,7.9,only EV nano Acacia,unassigned
+,1002.1,,,7.5,only EV nano Acacia,Phe ring breathing
+1076.9,,,11.6,,only EV Acacia,PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate)
+,1096.4,,,42.1,only EV nano Acacia,PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate)
+1115.0,1118.6,3.6,10.0,21.1,in both,"C-C stretch (lipid, trans) / C-N stretch (protein)"
+1244.8,,,7.2,,"only EV Acacia (nearest nano 1258.1, Δ13.3)",Amide III
+,1258.1,,,10.5,only EV nano Acacia,Amide III
+1305.5,,,8.7,,only EV Acacia,CH2 twist (lipid)
+1341.6,1339.0,-2.6,9.6,11.2,in both,"CH3CH2 wagging (protein, nucleic acids)"
+1456.8,,,33.6,,"only EV Acacia (nearest nano 1465.4, Δ8.6)",CH2/CH3 deformation (scissoring)
+,1465.4,,,13.9,only EV nano Acacia,CH2/CH3 deformation (scissoring)
+1559.2,,,7.7,,only EV Acacia,Amide II / Trp
+1605.4,1603.7,-1.7,7.3,25.2,in both,Phe / Tyr ring C=C stretch
+1729.4,,,17.2,,only EV Acacia,"C=O stretch (ester, lipids)"

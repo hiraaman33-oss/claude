@@ -1,0 +1,27 @@
+position_cm1,raw_counts,calib_score,noise_threshold,band_extent_cm1,reproduced_in,assignment,flag,confirmed,SNR,FWHM_cm1,spectrum
+482.9,2427.2,9.7,7.1,440-494,s8 480.0,unassigned,"spike-like, reproduced",True,9.7,,EV Acacia CaF2 s1
+641.2,2319.6,9.2,7.1,630-653,,Tyr C-C twist,"spike-like, not reproduced: possible cosmic ray",False,9.2,,EV Acacia CaF2 s1
+848.6,2438.2,13.7,7.1,799-897,s10 850.5; s8 848.2; s5 849.1; s9 849.6,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)",,True,13.7,,EV Acacia CaF2 s1
+927.5,2356.2,9.0,7.1,907-951,s10 925.2; s4 925.2,C-C stretch protein backbone (alpha-helix),,True,9.0,,EV Acacia CaF2 s1
+1076.9,2377.2,11.6,7.1,1051-1140,s8 1077.8,PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate),,True,11.6,,EV Acacia CaF2 s1
+1115.0,2369.0,10.0,7.1,1051-1140,s10 1117.2; s8 1115.4; s5 1115.0,"C-C stretch (lipid, trans) / C-N stretch (protein)",,True,10.0,,EV Acacia CaF2 s1
+1244.8,2315.8,7.2,7.1,1231-1242,s10 1243.9; s8 1245.7,Amide III,,True,7.2,,EV Acacia CaF2 s1
+1305.5,2390.5,8.7,7.1,1294-1358,s10 1302.9; s8 1304.7; s5 1304.7; s9 1308.2; s4 1302.5,CH2 twist (lipid),,True,8.7,,EV Acacia CaF2 s1
+1341.6,2405.1,9.6,7.1,1294-1358,s4 1340.3,"CH3CH2 wagging (protein, nucleic acids)",,True,9.6,,EV Acacia CaF2 s1
+1456.8,2705.4,33.6,7.1,1419-1491,s10 1457.6; s8 1455.9; s5 1458.1; s9 1455.1; s4 1455.1,CH2/CH3 deformation (scissoring),,True,33.6,,EV Acacia CaF2 s1
+1559.2,2135.7,7.7,7.1,1546-1584,s8 1560.5; s5 1561.3; s9 1558.0,Amide II / Trp,,True,7.7,,EV Acacia CaF2 s1
+1605.4,2115.8,7.3,7.1,1598-1613,s10 1606.6,Phe / Tyr ring C=C stretch,,True,7.3,,EV Acacia CaF2 s1
+1729.4,2158.2,17.2,7.1,1691-1756,s8 1727.3; s4 1728.5,"C=O stretch (ester, lipids)",,True,17.2,,EV Acacia CaF2 s1
+435.8,5422.4,8.4,6.3,440-523,,unassigned,no replicate available,True,8.4,,EV nano Acacia CaF2 s1
+459.7,5437.6,9.0,6.3,440-523,,unassigned,no replicate available,True,9.0,,EV nano Acacia CaF2 s1
+851.4,5945.8,10.6,6.3,806-880,,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)",no replicate available,True,10.6,,EV nano Acacia CaF2 s1
+899.6,5948.6,8.4,6.3,886-924,,C-C stretch / C-O-C (saccharide),no replicate available,True,8.4,,EV nano Acacia CaF2 s1
+962.4,5974.9,7.4,6.3,955-967,,unassigned,"spike-like, not reproduced: possible cosmic ray",False,7.4,,EV nano Acacia CaF2 s1
+978.6,6010.1,7.9,6.3,969-993,,unassigned,no replicate available,True,7.9,,EV nano Acacia CaF2 s1
+1002.1,6101.6,7.5,6.3,995-1011,,Phe ring breathing,no replicate available,True,7.5,,EV nano Acacia CaF2 s1
+1096.4,7481.7,42.1,6.3,1040-1144,,PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate),no replicate available,True,42.1,,EV nano Acacia CaF2 s1
+1118.6,6857.4,21.1,6.3,1040-1144,,"C-C stretch (lipid, trans) / C-N stretch (protein)",no replicate available,True,21.1,,EV nano Acacia CaF2 s1
+1258.1,6546.8,10.5,6.3,1218-1281,,Amide III,no replicate available,True,10.5,,EV nano Acacia CaF2 s1
+1339.0,6740.3,11.2,6.3,1311-1430,,"CH3CH2 wagging (protein, nucleic acids)",no replicate available,True,11.2,,EV nano Acacia CaF2 s1
+1465.4,6730.1,13.9,6.3,1439-1498,,CH2/CH3 deformation (scissoring),no replicate available,True,13.9,,EV nano Acacia CaF2 s1
+1603.7,6925.9,25.2,6.3,1576-1646,,Phe / Tyr ring C=C stretch,no replicate available,True,25.2,,EV nano Acacia CaF2 s1

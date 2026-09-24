@@ -4,10 +4,8 @@ Acacia_cm1,nano_cm1,shift_cm1,score_Acacia,score_nano,status,band
 ,926.5,,,9.0,only EV nano Acacia,C-C stretch protein backbone (alpha-helix)
 ,955.5,,,7.5,only EV nano Acacia,Si 2nd-order phonon (substrate)
 1001.6,1001.6,0.0,11.9,8.8,in both,Phe ring breathing
-1126.3,,,8.4,,only EV Acacia,"C-C stretch (lipid, trans) / C-N stretch (protein)"
 1166.4,,,10.7,,only EV Acacia,Tyr C-H bend
 ,1244.4,,,7.3,only EV nano Acacia,Amide III
-1279.8,,,8.8,,only EV Acacia,Amide III
 1380.9,1387.4,6.5,16.4,9.4,in both,COO- symmetric stretch / CH3 bend / carbon D band
 1519.8,,,8.1,,only EV Acacia,Carotenoid C=C stretch
 1580.1,1574.1,-6.0,16.5,8.6,in both,COO- asymmetric stretch / carbon G band / Phe

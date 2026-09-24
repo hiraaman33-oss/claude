@@ -1,22 +1,22 @@
 position_cm1,raw_counts,calib_score,noise_threshold,band_extent_cm1,reproduced_in,assignment,flag,confirmed,SNR,FWHM_cm1,spectrum
 518.8,231.7,20.5,7.5,499-539,S1 520.1,Si optical phonon (substrate),,True,20.5,,EV Acacia AgSiNW S2
-831.3,180.3,8.6,7.5,819-845,,Tyr (Fermi doublet) / O-P-O stretch,not reproduced in other AgSiNW spectra,True,8.6,,EV Acacia AgSiNW S2
+831.3,180.3,8.6,7.5,819-845,,Tyr (Fermi doublet) / O-P-O stretch,not reproduced in replicates,True,8.6,,EV Acacia AgSiNW S2
 1001.6,193.0,11.9,7.5,987-1018,S1 1003.5,Phe ring breathing,,True,11.9,,EV Acacia AgSiNW S2
-1126.3,184.5,8.4,7.5,1114-1144,,"C-C stretch (lipid, trans) / C-N stretch (protein)",not reproduced in other AgSiNW spectra,True,8.4,,EV Acacia AgSiNW S2
-1166.4,198.6,10.7,7.5,1150-1183,,Tyr C-H bend,not reproduced in other AgSiNW spectra,True,10.7,,EV Acacia AgSiNW S2
-1279.8,213.3,8.8,7.5,1230-1291,,Amide III,not reproduced in other AgSiNW spectra,True,8.8,,EV Acacia AgSiNW S2
+1126.3,184.5,8.4,7.5,1114-1144,,"C-C stretch (lipid, trans) / C-N stretch (protein)","spike-like, not reproduced: possible cosmic ray",False,8.4,,EV Acacia AgSiNW S2
+1166.4,198.6,10.7,7.5,1150-1183,,Tyr C-H bend,not reproduced in replicates,True,10.7,,EV Acacia AgSiNW S2
+1279.8,213.3,8.8,7.5,1230-1291,,Amide III,"spike-like, not reproduced: possible cosmic ray",False,8.8,,EV Acacia AgSiNW S2
 1380.9,252.4,16.4,7.5,1327-1410,S1 1383.9,COO- symmetric stretch / CH3 bend / carbon D band,,True,16.4,,EV Acacia AgSiNW S2
 1519.8,224.5,8.1,7.5,1497-1538,S1 1518.6,Carotenoid C=C stretch,,True,8.1,,EV Acacia AgSiNW S2
-1580.1,272.3,16.5,7.5,1561-1649,,COO- asymmetric stretch / carbon G band / Phe,not reproduced in other AgSiNW spectra,True,16.5,,EV Acacia AgSiNW S2
+1580.1,272.3,16.5,7.5,1561-1649,,COO- asymmetric stretch / carbon G band / Phe,not reproduced in replicates,True,16.5,,EV Acacia AgSiNW S2
 1607.1,282.6,24.1,7.5,1561-1649,S1 1605.0,Phe / Tyr ring C=C stretch / carbon G band,,True,24.1,,EV Acacia AgSiNW S2
 1632.9,236.1,10.4,7.5,1561-1649,S1 1634.9,unassigned,,True,10.4,,EV Acacia AgSiNW S2
-1722.3,219.8,18.0,7.5,1705-1753,,"C=O stretch (ester, lipids)",not reproduced in other AgSiNW spectra,True,18.0,,EV Acacia AgSiNW S2
+1722.3,219.8,18.0,7.5,1705-1753,,"C=O stretch (ester, lipids)",not reproduced in replicates,True,18.0,,EV Acacia AgSiNW S2
 519.3,185.7,16.1,6.7,500-538,s3 518.8; s4a 519.3,Si optical phonon (substrate),,True,16.1,,EV nano Acacia AgSiNW s4
-926.5,167.3,9.0,6.7,915-939,,C-C stretch protein backbone (alpha-helix),not reproduced in other AgSiNW spectra,True,9.0,,EV nano Acacia AgSiNW s4
+926.5,167.3,9.0,6.7,915-939,,C-C stretch protein backbone (alpha-helix),not reproduced in replicates,True,9.0,,EV nano Acacia AgSiNW s4
 955.5,162.2,7.5,6.7,944-979,s3 954.6,Si 2nd-order phonon (substrate),,True,7.5,,EV nano Acacia AgSiNW s4
 1001.6,166.9,8.8,6.7,990-1014,s4a 1003.0,Phe ring breathing,,True,8.8,,EV nano Acacia AgSiNW s4
 1244.4,162.2,7.3,6.7,1232-1256,s4a 1242.1,Amide III,,True,7.3,,EV nano Acacia AgSiNW s4
 1387.4,174.7,9.4,6.7,1361-1418,s3 1389.2; s4a 1385.2,COO- symmetric stretch / CH3 bend / carbon D band,,True,9.4,,EV nano Acacia AgSiNW s4
-1574.1,182.9,8.6,6.7,1559-1646,,Amide II / Trp,not reproduced in other AgSiNW spectra,True,8.6,,EV nano Acacia AgSiNW s4
+1574.1,182.9,8.6,6.7,1559-1646,,Amide II / Trp,not reproduced in replicates,True,8.6,,EV nano Acacia AgSiNW s4
 1606.7,195.1,14.0,6.7,1559-1646,s3 1607.1,Phe / Tyr ring C=C stretch / carbon G band,,True,14.0,,EV nano Acacia AgSiNW s4
 1617.2,179.4,8.9,6.7,1559-1646,s3 1617.2,Tyr / Trp ring C=C stretch,,True,8.9,,EV nano Acacia AgSiNW s4

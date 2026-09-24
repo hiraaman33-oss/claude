@@ -4,10 +4,9 @@ CaF2_cm1,AgSiNW_cm1,shift_cm1,SNR_CaF2,SNR_AgSiNW,FWHM_CaF2,FWHM_AgSiNW,status,b
 ,831.3,,,8.6,,,only on AgSiNW,,Tyr (Fermi doublet) / O-P-O stretch
 848.6,,,11.3,,14.8,,only on CaF2,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)",
 ,1001.6,,,11.9,,,only on AgSiNW,,Phe ring breathing
-1118.6,1126.3,7.7,11.9,8.4,12.1,,in both,"C-C stretch (lipid, trans) / C-N stretch (protein)","C-C stretch (lipid, trans) / C-N stretch (protein)"
+1118.6,,,11.9,,12.1,,only on CaF2,"C-C stretch (lipid, trans) / C-N stretch (protein)",
 ,1166.4,,,10.7,,,only on AgSiNW,,Tyr C-H bend
 1255.5,,,7.7,,10.3,,only on CaF2,Amide III,
-,1279.8,,,8.8,,,only on AgSiNW,,Amide III
 ,1380.9,,,16.4,,,only on AgSiNW,,COO- symmetric stretch / CH3 bend / carbon D band
 1456.8,,,27.7,,23.2,,only on CaF2,CH2/CH3 deformation (scissoring),
 ,1519.8,,,8.1,,,only on AgSiNW,,Carotenoid C=C stretch

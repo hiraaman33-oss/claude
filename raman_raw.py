@@ -195,9 +195,20 @@ def calib_score(wn, y, c, sigma):
 
 def noise_threshold(wn, y, sigma, region=(600.0, 720.0), n=300, pct=99.0, seed=0):
     """pct-th percentile of calib_score at random positions in a band-free region: the score
-    that pure noise reaches with the same test."""
+    that pure noise reaches with the same test (windows containing a cosmic ray excluded)."""
+    from scipy.signal import medfilt
     rng = np.random.default_rng(seed)
-    return float(np.percentile([calib_score(wn, y, c, sigma)[1] for c in rng.uniform(*region, n)], pct))
+    # cosmic rays in the reference region (points > 5 sigma above the running median of 7 points)
+    # are not part of the noise the test must beat: skip positions whose window contains one
+    m = (wn >= region[0] - 20) & (wn <= region[1] + 20)
+    rays = wn[m][(y[m] - medfilt(y[m], 7)) > 5.0 * sigma]
+    maxwin = max(w for w, _ in CALIB_WINDOWS)
+    scores = []
+    for c in rng.uniform(*region, n):
+        if len(rays) and np.min(np.abs(rays - c)) <= maxwin + 1.0:
+            continue
+        scores.append(calib_score(wn, y, c, sigma)[1])
+    return float(np.percentile(scores, pct))
 
 
 def checked_peaks(wn, y, substrate, lo, hi):
@@ -222,10 +233,24 @@ def checked_peaks(wn, y, substrate, lo, hi):
 def spike_like(wn, y, xm, height):
     """A cosmic-ray spike is 1-2 data points wide: its maximum stands far above the mean of the
     neighbouring points (±1-2 points). For a real band (FWHM >= 4.5 cm-1, ~10 points) the
-    neighbours are almost as high. Spike-like if the drop exceeds 60 % of the band height."""
+    neighbours are almost as high. Spike-like if the drop exceeds 60 % of the band height, or if
+    only 1-2 contiguous points lie above half of the band height."""
     i = int(np.argmin(np.abs(wn - xm)))
     nb = np.r_[y[max(i - 2, 0):i], y[i + 1:i + 3]]
-    return bool(height > 0 and (y[i] - nb.mean()) > 0.6 * height)
+    if height <= 0:
+        return False
+    if (y[i] - nb.mean()) > 0.6 * height:
+        return True
+    # also spike-like if only 1-2 contiguous points lie above half height (a band of FWHM >= 3.5 cm-1
+    # spans >= ~8 points at 0.44 cm-1 spacing)
+    half = y[i] - 0.5 * height
+    lo_i = i
+    while lo_i - 1 >= 0 and y[lo_i - 1] >= half:
+        lo_i -= 1
+    hi_i = i
+    while hi_i + 1 < len(y) and y[hi_i + 1] >= half:
+        hi_i += 1
+    return bool(hi_i - lo_i + 1 <= 2)
 
 
 def visible_peaks(spectra, name, lo, hi, substrate="SERS", step=1.0, merge_cm=8.0):
@@ -254,6 +279,9 @@ def visible_peaks(spectra, name, lo, hi, substrate="SERS", step=1.0, merge_cm=8.
                 rep_in.append(f"{o} {ox:.1f}")
         return rep_in
 
+    def reps(xm):
+        return {r.split()[0] for r in reproduced(xm)}
+
     # each contiguous stretch of the score profile above the noise threshold is one band (its
     # strongest maximum); a secondary maximum inside the stretch (>= merge_cm away) is kept as a
     # separate band only if another spectrum reproduces it (independent evidence of a shoulder)
@@ -273,7 +301,7 @@ def visible_peaks(spectra, name, lo, hi, substrate="SERS", step=1.0, merge_cm=8.
         for xm, s_ in seg:
             cands[xm] = max(s_, cands.get(xm, 0.0))
         cands = sorted(cands.items(), key=lambda t: -t[1])
-        rep = {xm: bool(reproduced(xm)) for xm, _ in cands}
+        rep = {xm: reps(xm) for xm, _ in cands}
         own = {}  # FWHM of the checks-1+2 band at this maximum (None if there is none)
         for xm, _ in cands:
             d = np.abs(own_conf - xm) if len(own_conf) else np.array([99.0])
@@ -282,10 +310,13 @@ def visible_peaks(spectra, name, lo, hi, substrate="SERS", step=1.0, merge_cm=8.
         main = next(((xm, s_) for xm, s_ in cands if rep[xm]), cands[0])
         chosen = [main]
         for xm, s_ in cands:  # further bands: >= merge_cm apart and reproduced or confirmed by checks 1+2
-            dist = min(abs(xm - c[0]) for c in chosen)
-            # an own (checks 1+2) band only counts separately if it is narrower than its distance to the
-            # main maximum - a broad band's own maximum is the same band, not a shoulder
-            if dist >= merge_cm and (rep[xm] or (own[xm] is not None and own[xm] < dist)):
+            near = min(chosen, key=lambda c: abs(xm - c[0]))
+            dist = abs(xm - near[0])
+            # a reproduced maximum is a separate band (shoulder) only if one replicate shows BOTH it and
+            # the neighbouring band; otherwise replicates just scatter around one broad band.
+            # An own (checks 1+2) band counts if it is narrower than its distance.
+            separate_rep = bool(rep[xm] & rep.get(near[0], set()))
+            if dist >= merge_cm and (separate_rep or (own[xm] is not None and own[xm] < dist)):
                 chosen.append((xm, s_))
         for xm, s_ in chosen:
             rep_in = reproduced(xm)
@@ -296,10 +327,23 @@ def visible_peaks(spectra, name, lo, hi, substrate="SERS", step=1.0, merge_cm=8.
                              reproduced_in="; ".join(rep_in), assignment=assign(xm, substrate),
                              flag=("spike-like, reproduced" if rep_in else
                                    "spike-like, not reproduced: possible cosmic ray") if spike
-                             else ("" if rep_in else "not reproduced in other AgSiNW spectra"),
+                             else ("" if rep_in else ("not reproduced in replicates" if others
+                                                      else "no replicate available")),
                              confirmed=(not spike) or bool(rep_in)))
         k = e + 1
     out = pd.DataFrame(rows).drop_duplicates("position_cm1").sort_values("position_cm1").reset_index(drop=True)
+    # bands closer than merge_cm (a band split where the score dipped under the threshold): keep the
+    # kept/reproduced/stronger one
+    keep = []
+    for _, r in out.iterrows():
+        if keep and r.position_cm1 - keep[-1].position_cm1 < merge_cm:
+            prev = keep[-1]
+            rank = lambda q: (bool(q.confirmed), bool(q.reproduced_in), q.calib_score)  # noqa: E731
+            if rank(r) > rank(prev):
+                keep[-1] = r
+            continue
+        keep.append(r)
+    out = pd.DataFrame(keep).reset_index(drop=True)
     out["SNR"] = out.calib_score
     out["FWHM_cm1"] = np.nan  # not measurable reliably on raw data for weak bands; see band_extent_cm1
     return out, thr

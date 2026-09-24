@@ -12,11 +12,11 @@ position_cm1,raw_counts,prominence_counts,SNR,FWHM_cm1,assignment,flag,check1_lo
 1465.4,6730.1,392.4,12.3,18.7,CH2/CH3 deformation (scissoring),,True,1465.4,13.9,True,True,CaF2 s1,,,,
 1603.7,6925.9,753.2,23.7,16.5,Phe / Tyr ring C=C stretch,,True,1603.7,22.9,True,True,CaF2 s1,,,,
 519.3,185.7,,16.1,,Si optical phonon (substrate),,,,,,True,AgSiNW s4,16.1,6.7,500-538,s3 518.8; s4a 519.3
-926.5,167.3,,9.0,,C-C stretch protein backbone (alpha-helix),not reproduced in other AgSiNW spectra,,,,,True,AgSiNW s4,9.0,6.7,915-939,
+926.5,167.3,,9.0,,C-C stretch protein backbone (alpha-helix),not reproduced in replicates,,,,,True,AgSiNW s4,9.0,6.7,915-939,
 955.5,162.2,,7.5,,Si 2nd-order phonon (substrate),,,,,,True,AgSiNW s4,7.5,6.7,944-979,s3 954.6
 1001.6,166.9,,8.8,,Phe ring breathing,,,,,,True,AgSiNW s4,8.8,6.7,990-1014,s4a 1003.0
 1244.4,162.2,,7.3,,Amide III,,,,,,True,AgSiNW s4,7.3,6.7,1232-1256,s4a 1242.1
 1387.4,174.7,,9.4,,COO- symmetric stretch / CH3 bend / carbon D band,,,,,,True,AgSiNW s4,9.4,6.7,1361-1418,s3 1389.2; s4a 1385.2
-1574.1,182.9,,8.6,,Amide II / Trp,not reproduced in other AgSiNW spectra,,,,,True,AgSiNW s4,8.6,6.7,1559-1646,
+1574.1,182.9,,8.6,,Amide II / Trp,not reproduced in replicates,,,,,True,AgSiNW s4,8.6,6.7,1559-1646,
 1606.7,195.1,,14.0,,Phe / Tyr ring C=C stretch / carbon G band,,,,,,True,AgSiNW s4,14.0,6.7,1559-1646,s3 1607.1
 1617.2,179.4,,8.9,,Tyr / Trp ring C=C stretch,,,,,,True,AgSiNW s4,8.9,6.7,1559-1646,s3 1617.2
