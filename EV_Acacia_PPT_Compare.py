@@ -12,7 +12,8 @@ slide-ready figures (16:9).
               window, 4 cm-1 spacing) must find the peak again within ±2 cm-1.
    Only peaks passing both checks are labelled on the figures; all are listed in the CSV.
 
-Usage:  python3 EV_Acacia_PPT_Compare.py <caf2_dir> <agsinw_dir>
+Usage:  python3 EV_Acacia_PPT_Compare.py <caf2_dir> <agsinw_dir> ["sample name"]
+        (sample name defaults to "EV Acacia"; output goes to <sample_name>_PPT_Compare/)
 """
 import glob
 import os
@@ -27,7 +28,9 @@ import pandas as pd
 from raman_raw import clean, local_check, noise_sigma, raw_peaks, read_single, short, tag
 
 CAF2_DIR, SERS_DIR = sys.argv[1:3]
-OUT = "EV_Acacia_PPT_Compare"
+SAMPLE = sys.argv[3] if len(sys.argv) > 3 else "EV Acacia"
+TAG = SAMPLE.replace(" ", "_")
+OUT = f"{TAG}_PPT_Compare"
 os.makedirs(OUT, exist_ok=True)
 LO, HI = 400, 1800
 MATCH_CM = 8.0
@@ -93,8 +96,8 @@ print("AgSiNW candidates:\n", sel.to_string(index=False), f"\n-> chosen: {best}"
 
 pd.set_option("display.width", 250)
 pd.set_option("display.max_colwidth", 60)
-for lab, pk, sg, f in [(f"EV Acacia on CaF2 ({ref_name})", ref_pk, ref_sigma, caf2[ref_name]["file"]),
-                       (f"EV Acacia on AgSiNW ({best})", s_pk, s_sigma, sers[best]["file"])]:
+for lab, pk, sg, f in [(f"{SAMPLE} on CaF2 ({ref_name})", ref_pk, ref_sigma, caf2[ref_name]["file"]),
+                       (f"{SAMPLE} on AgSiNW ({best})", s_pk, s_sigma, sers[best]["file"])]:
     print(f"\n=== {lab}  {f}  noise sigma {sg:.1f} counts ===")
     print(pk.to_string(index=False))
 
@@ -140,9 +143,10 @@ plt.rcParams.update({"font.size": 13, "axes.linewidth": 1.1})
 # compact slide labels (full assignments are in the CSV files)
 SLIDE = {"C-C stretch protein backbone": "C-C backbone", "CH2/CH3 deformation": "CH$_2$/CH$_3$",
          "COO- symmetric stretch": "COO$^-$ sym.", "COO- asymmetric stretch": "COO$^-$ asym.",
-         "Si optical phonon": "Si (substrate)", "Tyr ring breathing": "Tyr", "Phe ring breathing": "Phe",
+         "Si optical phonon": "Si", "Tyr ring breathing": "Tyr", "Phe ring breathing": "Phe",
          "Tyr C-H bend": "Tyr", "C=O stretch": "C=O ester", "C-C stretch": "C-C", "Tyr": "Tyr", "Phe": "Phe",
-         "unassigned": "n.a."}
+         "unassigned": "n.a.", "PO2- symmetric stretch": "PO$_2^-$ / C-O", "CH3CH2 wagging": "CH$_3$CH$_2$ wag",
+         "CH2 twist": "CH$_2$ twist", "Amide II": "Amide II"}
 
 
 def slide_label(assignment):
@@ -174,16 +178,16 @@ def draw(ax, wn, y, pk, lo, hi, color, shared_pos, label_fs=10, headroom=0.9, ti
 # (1) 400-1800 comparison, 16:9 slide
 fig, axs = plt.subplots(2, 1, figsize=(13.33, 7.5), sharex=True)
 draw(axs[0], wn_r, y_r, ref_pk, LO, HI, C_CAF2, shared[:, 0] if len(shared) else [], label_fs=11, headroom=1.3,
-     title=f"EV Acacia on CaF$_2$ ({ref_name})")
+     title=f"{SAMPLE} on CaF$_2$ ({ref_name})")
 draw(axs[1], wn_s, y_s, s_pk, LO, HI, C_SERS, shared[:, 1] if len(shared) else [], label_fs=11, headroom=1.3,
-     title=f"EV Acacia on AgSiNW ({best})")
+     title=f"{SAMPLE} on AgSiNW ({best})")
 for a in axs:
     a.set_ylabel("Intensity (counts)")
 axs[1].set_xlabel("Raman shift (cm$^{-1}$)")
 fig.text(0.99, 0.005, "Raw data, no smoothing/baseline correction. Green dashed: band present on both substrates "
          f"(±{MATCH_CM:.0f} cm$^{{-1}}$).", ha="right", fontsize=9, color="0.35")
 fig.tight_layout(rect=(0, 0.02, 1, 1))
-fig.savefig(f"{OUT}/EV_Acacia_CaF2_vs_AgSiNW_400-1800.png", dpi=300)
+fig.savefig(f"{OUT}/{TAG}_CaF2_vs_AgSiNW_400-1800.png", dpi=300)
 plt.close(fig)
 
 # (2) zoomed regions, 16:9 slide
@@ -197,6 +201,6 @@ axs[0, 0].set_ylabel(f"CaF$_2$ ({ref_name})\nIntensity (counts)", color=C_CAF2)
 axs[1, 0].set_ylabel(f"AgSiNW ({best})\nIntensity (counts)", color=C_SERS)
 fig.text(0.99, 0.005, "Raw data. Labelled peaks passed both independent re-checks.", ha="right", fontsize=9, color="0.35")
 fig.tight_layout(rect=(0, 0.02, 1, 1))
-fig.savefig(f"{OUT}/EV_Acacia_CaF2_vs_AgSiNW_zoom.png", dpi=300)
+fig.savefig(f"{OUT}/{TAG}_CaF2_vs_AgSiNW_zoom.png", dpi=300)
 plt.close(fig)
 print(f"\nOutputs written to {OUT}/")

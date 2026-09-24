@@ -1,0 +1,4 @@
+spectrum,file,range,confirmed_peaks,CaF2_bands,CaF2_bands_matched,fraction,matched_SNR_sum,noise_sigma
+s4,s4-EV_nano_ACACIA-20ng-AgSiNW_532nm_1800gr_BC100_50XLF_1s_4a_10.txt,200-3100,6,10,1,0.1,14.1,3.8
+s3,s3-EV_nano_ACACIA-20ng-AgSiNW_532nm_1800gr_BC100_50XLF_1s_4a_10.txt,200-3100,7,10,1,0.1,9.4,3.9
+s4a,s4a-EV_nano_ACACIA-20ng-AgSiNW_532nm_1800gr_BC200_50XLF_1s_4a_10.txt,200-3100,7,10,0,0.0,0.0,4.7
