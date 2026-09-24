@@ -455,4 +455,44 @@ def plot_pair(g1, g2, name, segs=None):
 for g1, g2, name in pairs:
     plot_pair(g1, g2, name)
     plot_pair(g1, g2, f"{name}_400-1800", segs=[(400, 1800)])  # fingerprint-only zoom
+
+
+# ------------------------------------------------------------------ all four spectra, 400-1800 cm-1
+def plot_all(lo=400, hi=1800, name="4_Acacia_vs_nanoAcacia_all_400-1800"):
+    order = ["A_CaF2", "N_CaF2", "A_SERS", "N_SERS"]
+    # bands shared by EV Acacia and EV nano Acacia on the same substrate (from the pair tables)
+    shared = {}
+    for g1, g2, sub in [("A_CaF2", "N_CaF2", "CaF2"), ("A_SERS", "N_SERS", "AgSiNW")]:
+        t = pair_table(g1, g2)
+        t = t[t.status == "in both"]
+        shared[sub] = [(r.iloc[0], r.iloc[1]) for _, r in t.iterrows() if lo <= r.iloc[0] <= hi]
+    fig, axs = plt.subplots(4, 1, figsize=(20, 17), sharex=True)
+    for a, g in zip(axs, order):
+        wn, y = groups[g][chosen[g]]["wn_y"]
+        m = (wn >= lo) & (wn <= hi)
+        a.plot(wn[m], y[m], color=COLORS[g], lw=0.7)
+        ymin, ymax = y[m].min(), y[m].max()
+        a.set_ylim(ymin - 0.02 * (ymax - ymin), ymax + 0.5 * (ymax - ymin))
+        sub = "CaF2" if g.endswith("CaF2") else "AgSiNW"
+        for p1, p2 in shared[sub]:
+            a.axvline(p1 if g.startswith("A") else p2, color="#2ca02c", ls=":", lw=0.9)
+        pk = tables[g]
+        for _, p in pk[(pk.position_cm1 >= lo) & (pk.position_cm1 <= hi)].iterrows():
+            a.plot([p.position_cm1] * 2, [p.raw_counts + 0.02 * (ymax - ymin), p.raw_counts + 0.08 * (ymax - ymin)],
+                   color="k", lw=0.7)
+            a.text(p.position_cm1, p.raw_counts + 0.09 * (ymax - ymin), f"{p.position_cm1:.1f} {short(p.assignment)}",
+                   rotation=90, fontsize=6.5, ha="center", va="bottom")
+        a.set_title(f"{title[g]} – {groups[g][chosen[g]]['label']}  [raw data, no processing]",
+                    loc="left", fontsize=10, color=COLORS[g])
+        a.set_ylabel("raw intensity (counts)")
+        a.set_xlim(lo, hi)
+    axs[-1].set_xlabel("Raman shift (cm$^{-1}$)")
+    fig.suptitle("EV Acacia vs EV nano Acacia on CaF2 and AgSiNW (raw data). Green dotted lines: bands found in both "
+                 f"EV Acacia and EV nano Acacia on the same substrate (within ±{MATCH_CM:.0f} cm$^{{-1}}$)", fontsize=11)
+    fig.tight_layout()
+    fig.savefig(f"{OUT}/{name}.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+
+plot_all()
 print(f"\nOutputs written to {OUT}/")
