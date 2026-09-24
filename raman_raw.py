@@ -44,6 +44,7 @@ ASSIGN = [
     (1575, 1595, "COO- asymmetric stretch / Phe"),
     (1595, 1615, "Phe / Tyr ring C=C stretch / carbon G band", "SERS"),
     (1595, 1615, "Phe / Tyr ring C=C stretch"),
+    (1615, 1625, "Tyr / Trp ring C=C stretch"),
     (1640, 1675, "Amide I / C=C stretch (lipid)"),
     (1710, 1750, "C=O stretch (ester, lipids)"),
     (2840, 2860, "CH2 symmetric stretch (lipid)"),
@@ -172,3 +173,28 @@ def local_check(wn, y, pos, sigma, win=6.0, flank=(15.0, 35.0), k=3.0):
     xr, yr = wn[rm][np.argmin(y[rm])], y[rm].min()
     h = y[m].max() - (yl + (yr - yl) * (xm - xl) / (xr - xl))
     return bool(abs(xm - pos) <= 1.01 * step and h >= k * sigma), round(float(xm), 1), round(float(h / sigma), 1)
+
+
+# ------------------------------------------------------------------ noise-calibrated local test
+CALIB_WINDOWS = [(5.0, (12.0, 30.0)), (8.0, (20.0, 40.0)), (12.0, (35.0, 60.0))]
+
+
+def calib_score(wn, y, c, sigma):
+    """Best local_check height/sigma around c over several window sizes, re-centred on the raw
+    maximum it finds (second pass, ±3 cm-1). Returns (position of raw maximum, score)."""
+    best = (np.nan, 0.0)
+    for win, fl in CALIB_WINDOWS:
+        _, xm, _ = local_check(wn, y, c, sigma, win=win, flank=fl, k=-np.inf)
+        if np.isnan(xm):
+            continue
+        _, xm2, s2 = local_check(wn, y, xm, sigma, win=3.0, flank=fl, k=-np.inf)
+        if s2 > best[1]:
+            best = (xm2, s2)
+    return best
+
+
+def noise_threshold(wn, y, sigma, region=(600.0, 720.0), n=300, pct=99.0, seed=0):
+    """pct-th percentile of calib_score at random positions in a band-free region: the score
+    that pure noise reaches with the same test."""
+    rng = np.random.default_rng(seed)
+    return float(np.percentile([calib_score(wn, y, c, sigma)[1] for c in rng.uniform(*region, n)], pct))

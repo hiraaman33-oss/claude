@@ -1,16 +1,19 @@
 CaF2_cm1,AgSiNW_cm1,shift_cm1,SNR_CaF2,SNR_AgSiNW,FWHM_CaF2,FWHM_AgSiNW,status,band_CaF2,band_AgSiNW
 435.8,,,7.1,,4.8,,only on CaF2,unassigned,
 459.7,,,6.5,,6.4,,only on CaF2,unassigned,
-,488.8,,,6.5,,6.7,only on AgSiNW,,unassigned
-,519.3,,,15.8,,7.7,only on AgSiNW,,Si optical phonon (substrate)
+,519.3,,,16.1,,,only on AgSiNW,,Si optical phonon (substrate)
 851.4,,,8.8,,15.8,,only on CaF2,"Tyr ring breathing / C-C stretch (proline, polysaccharide C-O-C)",
 899.6,,,8.8,,10.2,,only on CaF2,C-C stretch / C-O-C (saccharide),
+,926.5,,,9.0,,,only on AgSiNW,,C-C stretch protein backbone (alpha-helix)
+,955.5,,,7.5,,,only on AgSiNW,,Si 2nd-order phonon (substrate)
+,1001.6,,,8.8,,,only on AgSiNW,,Phe ring breathing
 1096.4,,,45.7,,22.9,,only on CaF2,PO2- symmetric stretch / C-C (gauche lipid) / C-O (carbohydrate),
 1118.6,,,7.3,,4.5,,only on CaF2,"C-C stretch (lipid, trans) / C-N stretch (protein)",
-,1244.4,,,6.3,,7.7,only on AgSiNW,,Amide III
+,1244.4,,,7.3,,,only on AgSiNW,,Amide III
 1291.3,,,5.5,,4.8,,only on CaF2,CH2 twist (lipid),
 1339.0,,,8.5,,14.9,,only on CaF2,"CH3CH2 wagging (protein, nucleic acids)",
-,1387.4,,,9.1,,29.4,only on AgSiNW,,COO- symmetric stretch / CH3 bend / carbon D band
+,1387.4,,,9.4,,,only on AgSiNW,,COO- symmetric stretch / CH3 bend / carbon D band
 1465.4,,,12.3,,18.7,,only on CaF2,CH2/CH3 deformation (scissoring),
-,1574.1,,,7.5,,6.2,only on AgSiNW,,Amide II / Trp
-1603.7,1606.7,3.0,23.7,14.1,16.5,17.5,in both,Phe / Tyr ring C=C stretch,Phe / Tyr ring C=C stretch / carbon G band
+,1574.1,,,8.6,,,only on AgSiNW,,Amide II / Trp
+1603.7,1606.7,3.0,23.7,14.0,16.5,,in both,Phe / Tyr ring C=C stretch,Phe / Tyr ring C=C stretch / carbon G band
+,1617.2,,,8.9,,,only on AgSiNW,,Tyr / Trp ring C=C stretch
