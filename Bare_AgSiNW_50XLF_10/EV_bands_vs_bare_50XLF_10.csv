@@ -1,0 +1,20 @@
+sample,EV_band_cm1,assignment,bare_max_cm1,bare_score,bare_noise_threshold,on_bare_AgSiNW
+EV Acacia S2,518.8,Si optical phonon (substrate),518.7,17.2,4.5,yes (clear peak)
+EV Acacia S2,831.3,Tyr (Fermi doublet) / O-P-O stretch,835.9,4.1,4.5,no
+EV Acacia S2,1001.6,Phe ring breathing,1006.6,3.7,4.5,no
+EV Acacia S2,1166.4,Tyr C-H bend,1164.5,4.3,4.5,no
+EV Acacia S2,1380.9,COO- symmetric stretch / CH3 bend / carbon D band,1375.8,6.2,4.5,weak
+EV Acacia S2,1519.8,Carotenoid C=C stretch,1518.3,5.0,4.5,weak
+EV Acacia S2,1580.1,COO- asymmetric stretch / carbon G band / Phe,1591.3,5.3,4.5,weak
+EV Acacia S2,1607.1,Phe / Tyr ring C=C stretch / carbon G band,1596.4,6.5,4.5,weak
+EV Acacia S2,1632.9,unassigned,1627.2,5.3,4.5,weak
+EV Acacia S2,1722.3,"C=O stretch (ester, lipids)",1721.2,3.7,4.5,no
+EV nano Acacia s4,519.3,Si optical phonon (substrate),518.7,17.2,4.5,yes (clear peak)
+EV nano Acacia s4,926.5,C-C stretch protein backbone (alpha-helix),931.7,5.1,4.5,weak
+EV nano Acacia s4,955.5,Si 2nd-order phonon (substrate),947.6,5.1,4.5,weak
+EV nano Acacia s4,1001.6,Phe ring breathing,1006.6,3.7,4.5,no
+EV nano Acacia s4,1244.4,Amide III,1244.6,4.0,4.5,no
+EV nano Acacia s4,1387.4,COO- symmetric stretch / CH3 bend / carbon D band,1375.8,6.2,4.5,weak
+EV nano Acacia s4,1574.1,Amide II / Trp,1582.8,4.2,4.5,no
+EV nano Acacia s4,1606.7,Phe / Tyr ring C=C stretch / carbon G band,1596.4,6.5,4.5,weak
+EV nano Acacia s4,1617.2,Tyr / Trp ring C=C stretch,1610.7,6.6,4.5,weak
