@@ -43,8 +43,8 @@ OUT_CSV = 'R13_EV_Acacia_PeakAssignments.csv'
 # ----------------------------------------------------------------------------
 # SETTINGS
 # ----------------------------------------------------------------------------
-LOW_MIN, LOW_MAX = 200, 1800
-HIGH_MIN, HIGH_MAX = 2700, 3200
+LOW_MIN, LOW_MAX = 400, 1800
+HIGH_MIN, HIGH_MAX = 2700, 3100
 SEARCH_HALF = 8          # cm-1 window to locate the measured maximum
 
 # (marked on manual plot, class, assignment, source)
@@ -132,8 +132,8 @@ axL.set_ylim(y_min - 0.05 * (y_max - y_min), y_top)
 axL.spines['right'].set_visible(False)
 axR.spines['left'].set_visible(False)
 axR.tick_params(left=False, right=True, labelleft=False)
-axL.set_xticks([200, 400, 600, 800, 1000, 1200, 1400, 1600])
-axR.set_xticks([2800, 3000, 3200])
+axL.set_xticks([400, 600, 800, 1000, 1200, 1400, 1600])
+axR.set_xticks([2800, 3000])
 
 # // break marks
 d = 0.012
