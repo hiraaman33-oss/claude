@@ -1,0 +1,12 @@
+Nominal (cm-1),Measured AgSiNW (cm-1),Label,Assignment,Source
+519,520,520 Si peak,Crystalline silicon phonon (520.7 cm-1); SiNW substrate,[P]
+836,831,831 Proteins,Tyrosine Fermi doublet (828/850),[M][T]
+1001,1002,1002 Proteins,Phenylalanine symmetric ring breathing (1002-1004),[M][T]
+1034,1031,1031 Proteins,Phenylalanine C-H in-plane bending (1030-1034),[M][T]
+1167,1166,1166 Protein (tyrosine C-H bend),Tyrosine C-H in-plane bending (1170-1175),[M][T]
+1355,1355,1355 Proteins,"Tryptophan / CH deformation (1340-1380), broad band",[M][T]
+1582,1579,1579 Proteins (Phe C=C),Phenylalanine C=C bending (1584),[M][T]
+1602,1606,1606 Proteins (Phe/Tyr ring C=C),Phenylalanine / tyrosine ring C=C stretch (1600-1607),[M][T]
+1725,1724,1724 Lipids,C=O ester stretching of (phospho)lipids (1720-1745),[M][T][C]
+2931,2927,2927 Lipids,CH2/CH3 stretching (2925-2935); lipids and proteins,[P][M][C]
+1520,,1510-1530 Lipids (Carotenoids),C=C stretching of carotenoids (1520-1525),[M][T]
