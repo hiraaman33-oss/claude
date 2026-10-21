@@ -12,9 +12,9 @@
 # Every peak label is measured from the data: the maximum of the lightly
 # smoothed spectrum (Savitzky-Golay 11 pts, 3rd order; used ONLY to locate the
 # maximum) after removing a straight local background over +/-30 cm-1.
-# Peaks rising > 2.5 x the noise of that spectrum are labelled normally; weaker
-# features are labelled in italics with '~' (tentative), as stated on the figure.
-# All measured values are written to EV_NV_Comparison_peaks.csv.
+# Labels follow the layout of the user's original figure. Bands rising less than
+# 2.5 x the noise are flagged as weak in EV_NV_Comparison_peaks.csv (all measured
+# values are written there).
 #
 # HOW TO RUN (PyCharm):
 #   pip install numpy scipy matplotlib
@@ -40,37 +40,40 @@ OUT = 'EV_NV_Comparison'
 
 X_MIN, X_MAX = 450, 1800
 OFFSET = 560            # counts added to the NV spectrum (display only)
-SNR_MIN = 2.5           # below this peak height / noise a label is marked '~' (weak)
+SNR_MIN = 2.5           # below this peak height / noise a band is flagged 'weak' in the CSV
 BOXES = [(775, 890), (1195, 1320), (1515, 1690)]   # dashed comparison regions
 
-# nominal position, class shown on the figure, assignment (for the CSV)
-# where = 'up', 'up-left' or 'up-right': label above the peak (shifted aside for close pairs);
-# 'pair-1' + 'pair-2': two bands of a doublet drawn as one label (e.g. 825/852)
+# nominal position, label class (None = number only), assignment (CSV), placement
+# placement: 'up' / 'up-left' / 'up-right' = above the peak;
+# 'pair-1' + 'pair-2' = doublet written as one label (e.g. 826/55)
 PEAKS = {
     'NV': [
         (519, 'Si', 'Si substrate (crystalline silicon phonon)', 'up'),
-        (797, 'Nucleic acids', 'O-P-O backbone stretching', 'up-left'),
+        (797, 'Nucleic Acids', 'O-P-O backbone stretching', 'up-left'),
         (826, 'Proteins', 'Tyr Fermi doublet', 'pair-1'),
         (855, 'Proteins', 'Tyr Fermi doublet', 'pair-2'),
-        (1001, 'Proteins', 'Phe ring breathing', 'up'),
-        (1034, 'Proteins', 'Phe C-H in-plane bending', 'up'),
+        (1001, 'Proteins', 'Phe ring breathing', 'up-left'),
+        (1034, 'Proteins', 'Phe C-H in-plane bending', 'up-right'),
         (1241, 'Proteins', 'Amide III', 'up'),
         (1387, 'Lipids/NA', 'CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag', 'up'),
-        (1607, 'Proteins', 'Phe/Tyr ring C=C stretching', 'up-left'),
-        (1624, 'Proteins', 'Tyr/Trp ring C=C stretching', 'up-right'),
+        (1607, None, 'Phe/Tyr ring C=C stretching (protein)', 'up-left'),
+        (1624, None, 'Tyr/Trp ring C=C stretching (protein)', 'up-right'),
     ],
     'EV': [
-        (519, 'Si', 'Si substrate (crystalline silicon phonon)', 'up'),
-        (1001, 'Proteins', 'Phe ring breathing', 'up'),
-        (1043, 'Proteins', 'Phe C-H in-plane bending', 'up'),
+        (1043, None, 'Phe C-H in-plane bending', 'up'),
         (1206, 'Proteins', 'Phe/Tyr C-C6H5 stretching', 'up'),
-        (1284, 'Proteins', 'Amide III', 'up'),
-        (1380, 'Lipids/NA', 'CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag', 'up'),
-        (1604, 'Proteins', 'Phe/Tyr ring C=C stretching', 'up-left'),
-        (1628, 'Proteins', 'Tyr/Trp ring C=C stretching (shoulder)', 'up-right'),
+        (1284, None, 'Amide III', 'up'),
+        (1380, None, 'CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag', 'up'),
+        (1604, None, 'Phe/Tyr ring C=C stretching', 'up-left'),
+        (1628, None, 'Tyr/Trp ring C=C stretching (shoulder)', 'up-right'),
     ],
 }
-CLASS_COL = {'Proteins': '#7030A0', 'Nucleic acids': '#1F3864', 'Lipids/NA': '#2E75B6', 'Si': 'k'}
+# extra class word written next to a group of numbers (as in the original figure)
+GROUP_LABELS = [('NV', 1712, 'Proteins')]
+# label text segments: (text, colour)
+CLASS_SEGMENTS = {'Proteins': [('Proteins', '#7030A0')],
+                  'Nucleic Acids': [('Nucleic Acids', '#1F3864')],
+                  'Lipids/NA': [('Lipids/', '#2E75B6'), ('NA', 'k')]}
 C_EV, C_NV = 'k', '#FF0000'
 
 plt.rcParams.update({'font.family': 'sans-serif',
@@ -109,18 +112,14 @@ def measure(x, y, nominal, noise, shoulder=False):
 spectra = {'EV': load(EV_FILE), 'NV': load(NV_FILE)}
 noise = {s: np.std(np.diff(y)) / np.sqrt(2) for s, (x, y) in spectra.items()}
 
-def two_colour_label(ax, xpos, ybase, num, cls, ha, weak):
-    """Vertical label: wavenumber in black, then '-Class' in the class colour."""
-    style = 'italic' if weak else 'normal'
-    t = ax.text(xpos, ybase, num, rotation=90, va='bottom', ha=ha, fontsize=10,
-                color='k', style=style)
-    if cls == 'Si':
-        return
-    ax.figure.canvas.draw()
-    bb = t.get_window_extent().transformed(ax.transData.inverted())
+def segment_label(ax, xpos, ybase, segments, ha):
+    """Vertical label made of coloured text segments stacked upwards."""
+    y = ybase
     gap = 0.004 * (ax.get_ylim()[1] - ax.get_ylim()[0])   # remove the font's end padding
-    ax.text(xpos, bb.y1 - gap, f'-{cls}', rotation=90, va='bottom', ha=ha, fontsize=10,
-            color=CLASS_COL[cls], style=style)
+    for i, (txt, col) in enumerate(segments):
+        t = ax.text(xpos, y, txt, rotation=90, va='bottom', ha=ha, fontsize=11, color=col)
+        ax.figure.canvas.draw()
+        y = t.get_window_extent().transformed(ax.transData.inverted()).y1 - gap
 
 
 rows, labels = [], []
@@ -136,17 +135,20 @@ for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
         rows.append([s, nominal, round(pos, 1), round(h, 1), round(snr, 1), cls, assign,
                      'weak - tentative (~)' if weak else 'yes'])
         top = ys_plot[np.abs(x - pos) <= 4].max() + off
-        txt = f'{"~" if weak else ""}{pos:.0f}{" sh" if sh else ""}'
+        txt = f'{pos:.1f}' if cls == 'Si' else f'{pos:.0f}'
         if where == 'pair-1':              # first band of a doublet: drawn with the second
             pair = (pos, txt, top, weak)
             continue
         if where == 'pair-2':
-            txt = f'{pair[1]}/{txt}'
+            txt = f'{pair[1]}/{txt[-2:]}'           # e.g. 825/52, written as in the original
             pos, top, weak, where = (pair[0] + pos) / 2, max(pair[2], top), pair[3] or weak, 'up'
         top = ys_plot[np.abs(x - pos) <= 25].max() + off if where != 'up' else top
         dx = {'up': 0, 'up-left': -4, 'up-right': 4}[where]
-        labels.append((pos + dx, top + 8, txt, cls,
-                       {'up': 'center', 'up-left': 'right', 'up-right': 'left'}[where], weak))
+        segs = [(txt, 'k')]
+        if cls not in (None, 'Si'):
+            segs = [(txt + '- ', 'k')] + CLASS_SEGMENTS[cls]
+        labels.append((pos + dx, top + 8, segs,
+                       {'up': 'center', 'up-left': 'right', 'up-right': 'left'}[where]))
 
 y_lo = spectra['EV'][1].min() - 15
 y_hi = spectra['NV'][1].max() + OFFSET + 190
@@ -156,18 +158,19 @@ for lo, hi in BOXES:
 ax.set_xlim(X_MIN, X_MAX)
 ax.set_ylim(y_lo, y_hi)
 for lab in labels:                       # after the axis limits are fixed
-    two_colour_label(ax, *lab)
-ax.set_yticks([])
+    segment_label(ax, *lab)
+for s_, xg, word in GROUP_LABELS:
+    x, y = spectra[s_]
+    off = OFFSET if s_ == 'NV' else 0
+    segment_label(ax, xg, y[np.abs(x - xg) <= 60].max() + off + 8, CLASS_SEGMENTS[word], 'center')
+ax.tick_params(axis='y', direction='in', length=5, labelleft=False)
 ax.tick_params(axis='x', direction='in', length=5, top=False)
 ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=13)
 ax.set_ylabel('Intensity (a.u.)', fontsize=13)
 ax.text(0.99, 1.012, 'Nanovesicles Acacia on Ag/SiNWs', transform=ax.transAxes,
-        ha='right', va='bottom', color=C_NV, fontsize=12)
-ax.text(0.01, 0.20, 'EV Acacia on Ag/SiNWs', transform=ax.transAxes,
-        ha='left', va='bottom', color=C_EV, fontsize=12)
-ax.text(0.01, 0.60, f'~ weak band (< {SNR_MIN} x noise), tentative;  sh = shoulder',
-        transform=ax.transAxes, ha='left', va='top', fontsize=9, style='italic',
-        bbox=dict(fc='white', ec='none', pad=1), zorder=5)
+        ha='right', va='bottom', color=C_NV, fontsize=11)
+ax.text(0.006, 0.20, 'EV Acacia on Ag/SiNWs', transform=ax.transAxes,
+        ha='left', va='bottom', color=C_EV, fontsize=11)
 fig.tight_layout()
 fig.savefig(f'{OUT}.png', dpi=600)
 fig.savefig(f'{OUT}.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
