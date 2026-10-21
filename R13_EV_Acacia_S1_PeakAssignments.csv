@@ -1,4 +1,4 @@
-Marked (cm-1),Measured AgSiNW (cm-1),Class,Assignment,Source
+Nominal (cm-1),Measured AgSiNW (cm-1),Class,Assignment,Source
 228,233,Ag substrate,"Ag-adsorbate (Ag-N / Ag-O / Ag-Cl) low-frequency mode; substrate, not EV",[T]
 519,518,Si substrate,Crystalline silicon optical phonon (520.7 cm-1 Si band); from SiNW,[P]
 612,612,Protein,C-C twisting of phenylalanine (~621); weak Si 2nd-order phonon may overlap,[M][T]

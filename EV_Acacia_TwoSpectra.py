@@ -18,7 +18,7 @@
 #
 # HOW TO RUN:
 #   pip install numpy scipy matplotlib
-#   python EV_Acacia_TwoSpectra.py  <CaF2.txt>  <AgSiNW.txt>
+#   python EV_Acacia_TwoSpectra.py  <CaF2.txt>  <AgSiNW.txt>  <S1|S2>
 # =============================================================================
 
 import sys
@@ -37,8 +37,9 @@ FILE_CAF2 = (sys.argv[1] if len(sys.argv) > 1 else
              's1-EV_nano_Acacia-dropCaF2_532nm_1800gr_10_50xLF_BC200_1s_4a.txt')
 FILE_AG = (sys.argv[2] if len(sys.argv) > 2 else
            's4a-EV_nano_ACACIA-20ng-AgSiNW_532nm_1800gr_BC200_50XLF_1s_4a_10.txt')
-OUT_PNG = 'R13_EV_Acacia_TwoSpectra.png'
-OUT_CSV = 'R13_EV_Acacia_PeakAssignments.csv'
+SAMPLE = sys.argv[3] if len(sys.argv) > 3 else 'S1'
+OUT_PNG = f'R13_EV_Acacia_{SAMPLE}_TwoSpectra.png'
+OUT_CSV = f'R13_EV_Acacia_{SAMPLE}_PeakAssignments.csv'
 
 # ----------------------------------------------------------------------------
 # SETTINGS
@@ -47,8 +48,11 @@ LOW_MIN, LOW_MAX = 400, 1800
 HIGH_MIN, HIGH_MAX = 2700, 3100
 SEARCH_HALF = 8          # cm-1 window to locate the measured maximum
 
-# (marked on manual plot, class, assignment, source)
-PEAKS = [
+# (nominal position, class, assignment, source)
+# S1: positions marked on the manual plot.
+# S2: peaks clearly above noise in the S2 AgSiNW spectrum (prominence > ~3.5x noise).
+PEAK_SETS = {}
+PEAK_SETS['S1'] = [
     (228,  'Ag substrate',  'Ag-adsorbate (Ag-N / Ag-O / Ag-Cl) low-frequency mode; substrate, not EV', '[T]'),
     (519,  'Si substrate',  'Crystalline silicon optical phonon (520.7 cm-1 Si band); from SiNW', '[P]'),
     (612,  'Protein',       'C-C twisting of phenylalanine (~621); weak Si 2nd-order phonon may overlap', '[M][T]'),
@@ -63,13 +67,26 @@ PEAKS = [
     (1625, 'Protein',       'Amide I low-frequency side / Trp-Tyr C=C (1617-1630)', '[M][T]'),
     (2936, 'Protein/Lipid', 'CH3 symmetric stretching (2930-2940), mainly proteins', '[P][M][C][G]'),
 ]
+PEAK_SETS['S2'] = [
+    (520,  'Si substrate',  'Crystalline silicon optical phonon (520.7 cm-1 Si band); from SiNW', '[P]'),
+    (831,  'Protein/NA',    'Tyrosine Fermi doublet (828/850) / O-P-O asymmetric stretch (828)', '[M][T]'),
+    (1003, 'Protein',       'Phenylalanine symmetric ring breathing (1002-1004)', '[M][T][G]'),
+    (1166, 'Protein',       'Tyrosine C-H in-plane bending (1170-1175) / C-C, C-N stretch of proteins', '[M][T]'),
+    (1255, 'Protein',       'Amide III (1230-1300)', '[M][T][G]'),
+    (1355, 'Protein/NA',    'Tryptophan (1340-1360) / adenine-guanine ring (1340); broad band', '[M][T]'),
+    (1581, 'Protein/NA',    'Phenylalanine C=C bending (1584) / adenine-guanine ring (1578)', '[M][T]'),
+    (1607, 'Protein',       'Phenylalanine / tyrosine ring C=C stretch (1605-1607)', '[M][T][G]'),
+    (1723, 'Lipid',         'C=O ester stretching of (phospho)lipids (1720-1745)', '[M][T][C]'),
+    (2927, 'Protein/Lipid', 'CH2/CH3 stretching (2925-2935)', '[P][M][C][G]'),
+]
+PEAKS = PEAK_SETS[SAMPLE]
 
 C_AG = '#E8383D'     # red  : EV on AgSiNW
 C_CAF2 = '#3A3A3A'   # dark grey : EV on CaF2
 CLASS_COL = {        # label colour by class
     'Protein': '#1F6FB4', 'Protein/NA': '#6A3D9A', 'Nucleic acid': '#8E44AD',
     'Protein/Carb.': '#1F6FB4', 'Lipid/Protein': '#D35400',
-    'Protein/Lipid': '#D35400', 'Ag substrate': '#7F7F7F', 'Si substrate': '#7F7F7F',
+    'Protein/Lipid': '#D35400', 'Lipid': '#C0392B', 'Ag substrate': '#7F7F7F', 'Si substrate': '#7F7F7F',
 }
 
 # ----------------------------------------------------------------------------
@@ -92,7 +109,7 @@ for marked, cls, assign, ref in PEAKS:
 
 with open(OUT_CSV, 'w', newline='') as fh:
     w = csv.writer(fh)
-    w.writerow(['Marked (cm-1)', 'Measured AgSiNW (cm-1)', 'Class', 'Assignment', 'Source'])
+    w.writerow(['Nominal (cm-1)', 'Measured AgSiNW (cm-1)', 'Class', 'Assignment', 'Source'])
     w.writerows(rows)
 
 # ----------------------------------------------------------------------------
