@@ -457,6 +457,9 @@ def stars(p):
 
 
 SPEC_RANGE = {'fingerprint': (400, 1790), 'ch': (2760, 3095)}   # x-range of panels (c), (f)
+# True = zoomed insets with arrows + grey bands marking the peak shifts in (c), (f);
+# False = plain mean +/- SD spectra (the shifts are still written to results_log.txt)
+SHOW_SHIFTS = False
 # bands checked for a peak shift: (search lo, hi, inset lo, hi, inset box in axes fraction)
 SHIFT_BANDS = {'fingerprint': [(1340, 1420, 1330, 1430, [0.05, 0.50, 0.25, 0.36]),
                                (1590, 1625, 1585, 1625, [0.38, 0.50, 0.25, 0.36])],
@@ -553,7 +556,7 @@ for row, (w, title, ref) in enumerate([('fingerprint', 'Fingerprint (250-1790 cm
         pe, pn, consistent = band_shift(w, lo, hi)
         log(f'Peak shift {lo}-{hi}: EV {pe:.1f}, NV {pn:.1f}, shift {pn - pe:+.1f} cm-1, '
             f'site ranges separated: {consistent}')
-        if not consistent:
+        if not consistent or not SHOW_SHIFTS:
             continue
         ins = ax.inset_axes(box)
         z = (g >= zlo) & (g <= zhi)
