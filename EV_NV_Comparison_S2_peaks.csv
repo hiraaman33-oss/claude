@@ -1,0 +1,20 @@
+Spectrum,Nominal (cm-1),Measured (cm-1),Class,Assignment
+EV,519,519.8,Si,Si substrate (crystalline silicon phonon)
+EV,836,831.3,Proteins,Tyr Fermi doublet
+EV,1001,1002.1,Proteins,Phe ring breathing
+EV,1034,1031.0,Proteins,Phe C-H in-plane bending
+EV,1167,1166.0,Proteins,Tyr C-H bending; carotenoid C-C
+EV,1355,1355.2,Proteins,Trp / CH deformation (broad)
+EV,1582,1583.0,,Phe C=C bending; COO- on Ag
+EV,1602,1606.3,,Phe/Tyr ring C=C stretching
+EV,1725,1723.6,Lipids,Ester C=O stretching (lipids)
+NV,519,518.3,Si,Si substrate (crystalline silicon phonon)
+NV,797,802.5,Nucleic Acids,O-P-O backbone stretching
+NV,826,825.1,Proteins,Tyr Fermi doublet
+NV,855,851.9,Proteins,Tyr Fermi doublet
+NV,1001,1002.1,Proteins,Phe ring breathing
+NV,1034,1030.5,Proteins,Phe C-H in-plane bending
+NV,1241,1240.8,Proteins,Amide III
+NV,1387,1384.8,Lipids/NA,CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag
+NV,1607,1608.3,,Phe/Tyr ring C=C stretching (protein)
+NV,1624,1623.9,,Tyr/Trp ring C=C stretching (protein)

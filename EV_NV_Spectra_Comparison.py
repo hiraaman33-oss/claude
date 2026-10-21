@@ -35,10 +35,13 @@ EV_FILE = Path(sys.argv[1] if len(sys.argv) > 1 else
                'S1-EV_ACACIA-AgSiNW_532nm_1800gr_BC200_50XLF_1s_4a_10%.txt')
 NV_FILE = Path(sys.argv[2] if len(sys.argv) > 2 else
                's4a-EV_nano_ACACIA-20ng-AgSiNW_532nm_1800gr_BC200_50XLF_1s_4a_10%.txt')
-OUT = 'EV_NV_Comparison'
+# which EV spectrum is used (S1 or S2), read from the EV file name
+EV_TAG = 'S2' if Path(EV_FILE).name.startswith('S2') else 'S1'
+OUT = 'EV_NV_Comparison' if EV_TAG == 'S1' else f'EV_NV_Comparison_{EV_TAG}'
 
 X_MIN, X_MAX = 450, 1800
-OFFSET = 560            # counts added to the NV spectrum (display only)
+# counts added to the NV spectrum (display only); None = just enough to separate
+OFFSET = {'S1': 560, 'S2': None}[EV_TAG]
 BOXES = [(775, 890), (1195, 1320), (1515, 1690)]   # dashed comparison regions
 
 # nominal position, label class (None = number only), assignment (CSV), placement
@@ -57,7 +60,7 @@ PEAKS = {
         (1607, None, 'Phe/Tyr ring C=C stretching (protein)', 'up-left'),
         (1624, None, 'Tyr/Trp ring C=C stretching (protein)', 'up-right'),
     ],
-    'EV': [
+    'EV_S1': [
         (1043, None, 'Phe C-H in-plane bending', 'up'),
         (1206, 'Proteins', 'Phe/Tyr C-C6H5 stretching', 'up'),
         (1284, None, 'Amide III', 'up'),
@@ -65,13 +68,28 @@ PEAKS = {
         (1604, None, 'Phe/Tyr ring C=C stretching', 'up-left'),
         (1628, None, 'Tyr/Trp ring C=C stretching (shoulder)', 'up-right'),
     ],
+    'EV_S2': [
+        (519, 'Si', 'Si substrate (crystalline silicon phonon)', 'up'),
+        (836, 'Proteins', 'Tyr Fermi doublet', 'up'),
+        (1001, 'Proteins', 'Phe ring breathing', 'up-left'),
+        (1034, 'Proteins', 'Phe C-H in-plane bending', 'up-right'),
+        (1167, 'Proteins', 'Tyr C-H bending; carotenoid C-C', 'up'),
+        (1355, 'Proteins', 'Trp / CH deformation (broad)', 'up'),
+        (1582, None, 'Phe C=C bending; COO- on Ag', 'up-left'),
+        (1602, None, 'Phe/Tyr ring C=C stretching', 'up-right'),
+        (1725, 'Lipids', 'Ester C=O stretching (lipids)', 'up'),
+    ],
 }
+PEAKS['EV'] = PEAKS[f'EV_{EV_TAG}']
 # extra class word written next to a group of numbers (as in the original figure)
 GROUP_LABELS = [('NV', 1712, 'Proteins')]
 # label text segments: (text, colour)
 CLASS_SEGMENTS = {'Proteins': [('Proteins', '#7030A0')],
                   'Nucleic Acids': [('Nucleic Acids', '#1F3864')],
-                  'Lipids/NA': [('Lipids/', '#2E75B6'), ('NA', 'k')]}
+                  'Lipids/NA': [('Lipids/', '#2E75B6'), ('NA', 'k')],
+                  'Lipids': [('Lipids', '#2E75B6')]}
+# extra class word next to a group of numbers, per EV spectrum
+GROUP_LABELS += {'S1': [], 'S2': [('EV', 1655, 'Proteins')]}[EV_TAG]
 C_EV, C_NV = 'k', '#FF0000'
 
 plt.rcParams.update({'font.family': 'sans-serif',
@@ -99,6 +117,8 @@ def measure(x, y, nominal):
 
 
 spectra = {'EV': load(EV_FILE), 'NV': load(NV_FILE)}
+if OFFSET is None:   # lowest NV point sits 60 counts above the highest EV point
+    OFFSET = int(np.ceil((spectra['EV'][1].max() - spectra['NV'][1].min() + 60) / 10) * 10)
 
 def segment_label(ax, xpos, ybase, segments, ha):
     """Vertical label made of coloured text segments stacked upwards."""
@@ -154,8 +174,10 @@ ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=13)
 ax.set_ylabel('Intensity (a.u.)', fontsize=13)
 ax.text(0.99, 1.012, 'Nanovesicles Acacia on Ag/SiNWs', transform=ax.transAxes,
         ha='right', va='bottom', color=C_NV, fontsize=11)
-ax.text(0.006, 0.20, 'EV Acacia on Ag/SiNWs', transform=ax.transAxes,
-        ha='left', va='bottom', color=C_EV, fontsize=11)
+ev_xy, ev_txt = {'S1': ((0.006, 0.20), 'EV Acacia on Ag/SiNWs'),
+                 'S2': ((0.105, 0.24), 'EV Acacia\non Ag/SiNWs')}[EV_TAG]
+ax.text(*ev_xy, ev_txt, transform=ax.transAxes, ha='left', va='bottom', color=C_EV,
+        fontsize=11)
 fig.tight_layout()
 fig.savefig(f'{OUT}.png', dpi=600)
 fig.savefig(f'{OUT}.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
