@@ -211,6 +211,8 @@ print('Saved in:', OUTPUT_DIR)
 # CH-STRETCHING REGION: mean +/- SD spectra with band positions
 # ============================================================================
 CH_OFFSET = 5.5                            # SNV units added to the NV spectrum (display only)
+# bands labelled (and shadowed) in the figure; all bands are written to the CSV
+CH_SHOW = [2935]                           # main CH band only
 # (nominal band, search half-width, 'max' or 'sh', class, assignment)
 CH_BANDS = [
     (2853, 10, 'sh', 'Lipids', 'CH2 symmetric stretching'),
@@ -260,7 +262,7 @@ for nominal, half, kind, cls, assign in CH_BANDS:      # consistent EV/NV differ
     resolved = None not in list(pos.values()) + site_pos[0] + site_pos[1]
     consistent = resolved and ((max(site_pos[0]) < min(site_pos[1])) or
                                (max(site_pos[1]) < min(site_pos[0])))
-    if consistent:
+    if consistent and nominal in CH_SHOW:
         ax.axvspan(min(pos.values()) - 4, max(pos.values()) + 4, color='0.92', lw=0, zorder=0)
     for c in (0, 1):
         sp = [v for v in site_pos[c] if v is not None]
@@ -273,7 +275,7 @@ for c, off, name in [(0, 0.0, 'EV Acacia on Ag/SiNWs'), (1, CH_OFFSET, 'Nanovesi
     ax.fill_between(g, mu - sd + off, mu + sd + off, color=COLS[c], alpha=0.22, lw=0)
     ax.plot(g, mu + off, color=COLS[c], lw=1.0, label=f'{name} (mean \u00b1 SD, n = {np.sum(y == c)})')
     for r in rows:
-        if r[0] != GROUPS[c] or r[3] == 'not resolved':     # unresolved bands: no label
+        if r[0] != GROUPS[c] or r[3] == 'not resolved' or r[1] not in CH_SHOW:
             continue
         pos = r[3]
         top = (mu + sd)[np.abs(g - pos) <= 6].max() + off
@@ -284,7 +286,7 @@ for xl, yb, yt in lines:                    # dotted line from the mean spectrum
     ax.plot([xl, xl], [yb, yt], ls=(0, (1, 2)), lw=0.7, color='0.35')
 ax.set_xlim(2760, 3095)
 ax.set_ylim((X[y == 0].mean(0) - X[y == 0].std(0, ddof=1)).min() - 0.3,
-            (X[y == 1].mean(0) + X[y == 1].std(0, ddof=1)).max() + CH_OFFSET + 6.2)
+            (X[y == 1].mean(0) + X[y == 1].std(0, ddof=1)).max() + CH_OFFSET + 4.4)
 for lab in labels:                          # after the axis limits are fixed
     segment_label(ax, *lab)
 ax.tick_params(axis='y', direction='in', length=5, labelleft=False)
