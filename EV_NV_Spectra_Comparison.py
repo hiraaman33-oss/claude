@@ -175,8 +175,12 @@ ax.tick_params(axis='y', direction='in', length=5, labelleft=False)
 ax.tick_params(axis='x', direction='in', length=5, top=False)
 ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=13)
 ax.set_ylabel('Intensity (a.u.)', fontsize=13)
-ax.text(0.99, 1.012, 'Nanovesicles Acacia on Ag/SiNWs', transform=ax.transAxes,
-        ha='right', va='bottom', color=C_NV, fontsize=11)
+# NV tag: above the frame (S1) or inside the frame, top-left (S2)
+nv_xy, nv_ha, nv_va, nv_txt = {
+    'S1': ((0.99, 1.012), 'right', 'bottom', 'Nanovesicles Acacia on Ag/SiNWs'),
+    'S2': ((0.012, 0.975), 'left', 'top', 'Nanovesicles Acacia\non Ag/SiNWs')}[EV_TAG]
+ax.text(*nv_xy, nv_txt, transform=ax.transAxes,
+        ha=nv_ha, va=nv_va, color=C_NV, fontsize=11)
 ev_xy, ev_txt = {'S1': ((0.006, 0.20), 'EV Acacia on Ag/SiNWs'),
                  'S2': ((0.105, 0.24), 'EV Acacia\non Ag/SiNWs')}[EV_TAG]
 ax.text(*ev_xy, ev_txt, transform=ax.transAxes, ha='left', va='bottom', color=C_EV,
