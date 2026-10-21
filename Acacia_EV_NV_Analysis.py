@@ -577,7 +577,7 @@ for row, (w, title, ref) in enumerate([('fingerprint', 'Fingerprint (250-1790 cm
         ins.set_yticks([])
         ins.set_xticks([zlo + 10, zhi - 10])
         ins.tick_params(labelsize=6, length=2, pad=1)
-        ins.set_title(f'{pe:.0f} → {pn:.0f}', fontsize=6.5, pad=2)
+        ins.set_title(f'{pe:.0f} \u2192 {pn:.0f}', fontsize=6.5, pad=2)
         for s_ in ['top', 'right']:
             ins.spines[s_].set_visible(True)
         ax.add_patch(plt.Rectangle((zlo, ax.get_ylim()[0]), zhi - zlo,
