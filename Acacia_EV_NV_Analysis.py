@@ -26,6 +26,8 @@
 #   per window: confusion matrices, LD1 histogram, PCA scores, PCA loadings
 #   Table_S1_bands.csv (Welch's t-test on site means, Bonferroni)
 #   Fig3_Acacia_MeanSpectra.png/.tiff, Fig4_Acacia_PCA_LDA.png/.tiff (600 dpi)
+#   (Fig. 4: (a,d) PCA scores, (b,e) LD1 box plots, (c,f) mean +/- SD spectra with
+#    zoomed insets of the peak shifts measured from the data)
 #   results_log.txt (every number used)
 #
 # HOW TO RUN (PyCharm Terminal):
@@ -449,13 +451,42 @@ fig.subplots_adjust(left=0.06, right=0.82, bottom=0.10, top=0.98)
 save(fig, 'Fig3_Acacia_MeanSpectra', paper=True)
 
 
-# --- Figure 4: scores, LD1 box plots, loadings
+# --- Figure 4: scores, LD1 box plots, mean +/- SD spectra with peak shifts
 def stars(p):
     return '***' if p < 0.001 else '**' if p < 0.01 else '*' if p < 0.05 else 'n.s.'
 
 
-fig, axs = plt.subplots(2, 3, figsize=(7.2, 5.2),
-                        gridspec_kw={'width_ratios': [1.15, 0.75, 1.35], 'wspace': 0.42, 'hspace': 0.45})
+SPEC_RANGE = {'fingerprint': (400, 1790), 'ch': (2760, 3095)}   # x-range of panels (c), (f)
+# bands checked for a peak shift: (search lo, hi, inset lo, hi, inset box in axes fraction)
+SHIFT_BANDS = {'fingerprint': [(1340, 1420, 1330, 1430, [0.05, 0.50, 0.25, 0.36]),
+                               (1590, 1625, 1585, 1625, [0.38, 0.50, 0.25, 0.36])],
+               'ch': [(2900, 2960, 2905, 2965, [0.06, 0.50, 0.30, 0.36])]}
+
+
+def peak_position(g, s, lo, hi):
+    """Wavenumber of the maximum in [lo, hi], refined by a parabola through 3 points."""
+    m = (g >= lo) & (g <= hi)
+    gg, ss = g[m], s[m]
+    i = int(np.argmax(ss))
+    if 0 < i < len(ss) - 1:
+        a, b, c = ss[i - 1], ss[i], ss[i + 1]
+        return gg[i] + 0.5 * (a - c) / (a - 2 * b + c) * (gg[1] - gg[0])
+    return gg[i]
+
+
+def band_shift(w, lo, hi):
+    """EV and NV peak positions of the mean spectra, and whether the six site-mean
+    peak positions of EVs and NVs are fully separated (consistent shift)."""
+    g, X = region(w, *REG[w])
+    pe = peak_position(g, X[y == 0].mean(0), lo, hi)
+    pn = peak_position(g, X[y == 1].mean(0), lo, hi)
+    se = [peak_position(g, X[sites == s].mean(0), lo, hi) for s in sorted(set(sites[y == 0]))]
+    sn = [peak_position(g, X[sites == s].mean(0), lo, hi) for s in sorted(set(sites[y == 1]))]
+    return pe, pn, max(se) < min(sn) or max(sn) < min(se)
+
+
+fig, axs = plt.subplots(2, 3, figsize=(7.5, 5.3),
+                        gridspec_kw={'width_ratios': [1.1, 0.7, 1.6], 'wspace': 0.42, 'hspace': 0.45})
 letters = iter('abcdef')
 for row, (w, title, ref) in enumerate([('fingerprint', 'Fingerprint (250-1790 cm$^{-1}$)', 1580),
                                        ('ch', 'CH-stretching (2760-3095 cm$^{-1}$)', 2960)]):
@@ -506,14 +537,52 @@ for row, (w, title, ref) in enumerate([('fingerprint', 'Fingerprint (250-1790 cm
             transform=ax.transAxes, ha='center', va='bottom', fontsize=6)
     log(f'Figure 4 {w}: LD1 site means, Welch p = {p:.2e}')
 
+    # --- mean +/- SD spectra (same SNV spectra as used in the models)
     ax = axs[row, 2]
-    ax.plot(g, pca.components_[0] * sgn, color=C_EV, lw=0.8, label='PC1')
-    ax.plot(g, pca.components_[1], color=C_NV, lw=0.8, label='PC2')
-    ax.axhline(0, color='k', lw=0.5)
-    ax.set_xlim(g[0], g[-1])
+    show = (g >= SPEC_RANGE[w][0]) & (g <= SPEC_RANGE[w][1])
+    for c in (0, 1):
+        m, s = X[y == c].mean(0), X[y == c].std(0)
+        ax.fill_between(g[show], (m - s)[show], (m + s)[show], color=COLS[c], alpha=0.2, lw=0)
+        ax.plot(g[show], m[show], color=COLS[c], lw=0.9, label=NAMES[c].split()[0] + 's')
+    ax.set_xlim(*SPEC_RANGE[w])
     ax.set_xlabel('Raman shift (cm$^{-1}$)')
-    ax.set_ylabel('Loading (a.u.)')
-    ax.legend(frameon=False, fontsize=7.5, loc='upper left', handlelength=1.2)
+    ax.set_ylabel('SNV intensity (a.u.)')
+    ax.legend(frameon=False, fontsize=7.5, loc='upper right', handlelength=1.2)
+    # zoomed insets with the measured peak shift (arrow drawn at true scale)
+    for lo, hi, zlo, zhi, box in SHIFT_BANDS[w]:
+        pe, pn, consistent = band_shift(w, lo, hi)
+        log(f'Peak shift {lo}-{hi}: EV {pe:.1f}, NV {pn:.1f}, shift {pn - pe:+.1f} cm-1, '
+            f'site ranges separated: {consistent}')
+        if not consistent:
+            continue
+        ins = ax.inset_axes(box)
+        z = (g >= zlo) & (g <= zhi)
+        tops = []
+        for c in (0, 1):
+            m, s = X[y == c].mean(0), X[y == c].std(0)
+            ins.fill_between(g[z], (m - s)[z], (m + s)[z], color=COLS[c], alpha=0.2, lw=0)
+            ins.plot(g[z], m[z], color=COLS[c], lw=0.9)
+            tops.append((m + s)[z].max())
+        ylo_i = min((X[y == c].mean(0) - X[y == c].std(0))[z].min() for c in (0, 1))
+        ya = max(tops) + 0.10 * (max(tops) - ylo_i)
+        for pk, c in [(pe, 0), (pn, 1)]:          # dotted lines at the measured maxima
+            ins.vlines(pk, ylo_i, ya, color=COLS[c], ls=':', lw=0.8)
+        ins.annotate('', xy=(pn, ya), xytext=(pe, ya),
+                     arrowprops=dict(arrowstyle='->', color='k', lw=0.9, shrinkA=0, shrinkB=0,
+                                     mutation_scale=7))
+        ins.text((pe + pn) / 2, ya + 0.07 * (max(tops) - ylo_i), f'{pn - pe:+.0f} cm$^{{-1}}$',
+                 ha='center', va='bottom', fontsize=6.5)
+        ins.set_xlim(zlo, zhi)
+        ins.set_ylim(ylo_i, ya + 0.32 * (max(tops) - ylo_i))
+        ins.set_yticks([])
+        ins.set_xticks([zlo + 10, zhi - 10])
+        ins.tick_params(labelsize=6, length=2, pad=1)
+        ins.set_title(f'{pe:.0f} → {pn:.0f}', fontsize=6.5, pad=2)
+        for s_ in ['top', 'right']:
+            ins.spines[s_].set_visible(True)
+        ax.add_patch(plt.Rectangle((zlo, ax.get_ylim()[0]), zhi - zlo,
+                                   ax.get_ylim()[1] - ax.get_ylim()[0],
+                                   color='0.92', lw=0, zorder=0))
     for ax in axs[row]:
         for s_ in ['top', 'right']:
             ax.spines[s_].set_visible(False)
