@@ -68,17 +68,20 @@ PEAK_SETS['S1'] = [
     (2936, 'Protein/Lipid', 'CH3 symmetric stretching (2930-2940), mainly proteins', '[P][M][C][G]'),
 ]
 PEAK_SETS['S2'] = [
-    (520,  'Si substrate',  'Crystalline silicon optical phonon (520.7 cm-1 Si band); from SiNW', '[P]'),
-    (831,  'Protein/NA',    'Tyrosine Fermi doublet (828/850) / O-P-O asymmetric stretch (828)', '[M][T]'),
-    (1003, 'Protein',       'Phenylalanine symmetric ring breathing (1002-1004)', '[M][T][G]'),
-    (1166, 'Protein',       'Tyrosine C-H in-plane bending (1170-1175) / C-C, C-N stretch of proteins', '[M][T]'),
-    (1255, 'Protein',       'Amide III (1230-1300)', '[M][T][G]'),
-    (1355, 'Protein/NA',    'Tryptophan (1340-1360) / adenine-guanine ring (1340); broad band', '[M][T]'),
-    (1581, 'Protein/NA',    'Phenylalanine C=C bending (1584) / adenine-guanine ring (1578)', '[M][T]'),
-    (1607, 'Protein',       'Phenylalanine / tyrosine ring C=C stretch (1605-1607)', '[M][T][G]'),
-    (1723, 'Lipid',         'C=O ester stretching of (phospho)lipids (1720-1745)', '[M][T][C]'),
-    (2927, 'Protein/Lipid', 'CH2/CH3 stretching (2925-2935)', '[P][M][C][G]'),
+    (519,  'Si substrate',  'Crystalline silicon optical phonon (520.7 cm-1 Si band); from SiNW', '[P]'),
+    (836,  'Protein/NA',    'Tyrosine Fermi doublet (828/850) / O-P-O asymmetric stretch (828)', '[M][T]'),
+    (1001, 'Protein',       'Phenylalanine symmetric ring breathing (1002-1004)', '[M][T][G]'),
+    (1034, 'Protein',       'Phenylalanine C-H in-plane bending (1030-1034)', '[M][T]'),
+    (1167, 'Protein',       'Tyrosine C-H in-plane bending (1170-1175)', '[M][T]'),
+    (1355, 'Protein',       'Tryptophan / CH deformation (1340-1380); broad band', '[M][T]'),
+    (1520, 'Carotenoid',    'C=C stretching of carotenoids (1510-1530); broad shoulder', '[M][T]'),
+    (1582, 'Protein',       'Phenylalanine C=C bending (1584)', '[M][T]'),
+    (1602, 'Protein',       'Phenylalanine / tyrosine ring C=C stretch (1600-1607)', '[M][T][G]'),
+    (1725, 'Lipid',         'C=O ester stretching of (phospho)lipids (1720-1745)', '[M][T][C]'),
+    (2931, 'Protein/Lipid', 'CH2/CH3 stretching (2925-2935)', '[P][M][C][G]'),
 ]
+# constant vertical shift of the AgSiNW trace, display only (stated in legend)
+AG_OFFSET = {'S1': 0, 'S2': 110}[SAMPLE]
 PEAKS = PEAK_SETS[SAMPLE]
 
 C_AG = '#E8383D'     # red  : EV on AgSiNW
@@ -86,7 +89,7 @@ C_CAF2 = '#3A3A3A'   # dark grey : EV on CaF2
 CLASS_COL = {        # label colour by class
     'Protein': '#1F6FB4', 'Protein/NA': '#6A3D9A', 'Nucleic acid': '#8E44AD',
     'Protein/Carb.': '#1F6FB4', 'Lipid/Protein': '#D35400',
-    'Protein/Lipid': '#D35400', 'Lipid': '#C0392B', 'Ag substrate': '#7F7F7F', 'Si substrate': '#7F7F7F',
+    'Protein/Lipid': '#D35400', 'Lipid': '#C0392B', 'Carotenoid': '#2E8B57', 'Ag substrate': '#7F7F7F', 'Si substrate': '#7F7F7F',
 }
 
 # ----------------------------------------------------------------------------
@@ -94,6 +97,7 @@ CLASS_COL = {        # label colour by class
 # ----------------------------------------------------------------------------
 caf2 = np.loadtxt(FILE_CAF2)
 ag = np.loadtxt(FILE_AG)
+ag[:, 1] += AG_OFFSET
 
 # measured peak positions (smoothing only used to locate the maximum)
 ag_s = savgol_filter(ag[:, 1], 11, 3)
@@ -123,13 +127,19 @@ fig, (axL, axR) = plt.subplots(
     gridspec_kw={'width_ratios': [LOW_MAX - LOW_MIN, HIGH_MAX - HIGH_MIN],
                  'wspace': 0.03})
 
-y_min = min(caf2[:, 1].min(), ag[:, 1].min())
-y_max = max(caf2[:, 1].max(), ag[:, 1].max())
+def in_view(d):
+    x = d[:, 0]
+    return d[((x >= LOW_MIN) & (x <= LOW_MAX)) | ((x >= HIGH_MIN) & (x <= HIGH_MAX)), 1]
+
+
+y_min = min(in_view(caf2).min(), in_view(ag).min())
+y_max = max(in_view(caf2).max(), in_view(ag).max())
 y_top = y_max + 0.45 * (y_max - y_min)       # head-room for the rotated labels
 
 for ax, lo, hi in [(axL, LOW_MIN, LOW_MAX), (axR, HIGH_MIN, HIGH_MAX)]:
     for d, col, lab in [(caf2, C_CAF2, 'EV Nano Acacia - CaF$_2$'),
-                        (ag, C_AG, 'EV Nano Acacia - AgSiNW')]:
+                        (ag, C_AG, 'EV Nano Acacia - AgSiNW'
+                         + (f' (+{AG_OFFSET})' if AG_OFFSET else ''))]:
         m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
         ax.plot(d[m, 0], d[m, 1], color=col, lw=0.6, label=lab)
     pos = [r[1] for r in rows]
