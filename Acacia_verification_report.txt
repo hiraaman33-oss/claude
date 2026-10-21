@@ -1,0 +1,25 @@
+[PASS] EV: two independent Excel readers give identical data  
+[PASS] EV: 6 sites x 20 spectra  n = 120
+[PASS] EV: no missing values  
+[PASS] EV: wavenumber axis increasing  
+[PASS] EV: positive counts  min = 99.7
+[PASS] EV: no duplicated spectra within a site  
+[PASS] NV: two independent Excel readers give identical data  
+[PASS] NV: 6 sites x 20 spectra  n = 120
+[PASS] NV: no missing values  
+[PASS] NV: wavenumber axis increasing  
+[PASS] NV: positive counts  min = 112.0
+[PASS] NV: no duplicated spectra within a site  
+[PASS] fingerprint: pre-processing reproduced independently  max |diff| = 8.7e-09
+[PASS] ch: pre-processing reproduced independently  max |diff| = 1.1e-08
+[PASS] no measurement site in both training and test fold  
+[PASS] every spectrum tested exactly once  
+[PASS] fingerprint: PCA variance, SVD = scikit-learn  [16.8  8.9] %
+[PASS] fingerprint: PCA-LDA, hand-written LDA = scikit-learn  accuracy 95.4 %
+       fingerprint: PC1/PC2 16.8/8.9 % (manuscript 16.8/8.9); PCA-LDA 95.4 % (manuscript 95.4); PLS-DA 95.4 % (manuscript 95.4)
+[PASS] fingerprint: site-label permutation gives chance-level accuracy  mean 49.7 %, max 80.4 % (50 permutations)
+[PASS] ch: PCA variance, SVD = scikit-learn  [33.3 14. ] %
+[PASS] ch: PCA-LDA, hand-written LDA = scikit-learn  accuracy 97.1 %
+       ch: PC1/PC2 33.3/14.0 % (manuscript 33.6/13.8); PCA-LDA 97.1 % (manuscript 97.1); PLS-DA 98.8 % (manuscript 97.9)
+[PASS] ch: site-label permutation gives chance-level accuracy  mean 49.0 %, max 80.8 % (50 permutations)
+[PASS] Table S1: manual Welch t-test = scipy for all 17 bands  

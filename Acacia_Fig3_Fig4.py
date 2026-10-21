@@ -40,7 +40,7 @@ OUT_TXT = 'Acacia_Fig3_Fig4_values.txt'
 
 C_EV = '#0B5A7E'     # same palette as the manuscript figures
 C_NV = '#B5541C'
-C_SUB = '#8C8C8C'
+C_SUB = '#7F7F7F'
 BAND = '#D3D3D3'
 NAMES = {0: 'EVs', 1: 'NVs'}
 COLS = {0: C_EV, 1: C_NV}
@@ -95,24 +95,24 @@ for ax, w in [(axL, 'fingerprint'), (axR, 'ch')]:
         ax.fill_between(g, m - s + OFF[c], m + s + OFF[c], color=COLS[c], alpha=0.18, lw=0)
         ax.plot(g, m + OFF[c], color=COLS[c], lw=0.9)
     diff = means[w][0][0] - means[w][1][0]
-    ax.plot(g, diff + OFF['sub'], color=C_SUB, lw=0.8)
-    ax.axhline(OFF['sub'], color='0.55', lw=0.6)
-    # grey bands: significant Table S1 bands in this window. As in Roda et al.,
-    # the bands cover the subtraction spectrum only, labels slanted underneath.
+    ax.plot(g, diff + OFF['sub'], color=C_SUB, lw=0.9)
+    ax.axhline(OFF['sub'], color='k', lw=0.5)
+    # grey bands: significant Table S1 bands in this window
     sw = sig[sig.window == w]
-    gap = 50 if w == 'fingerprint' else 50 / 1.6      # same distance on paper
-    band_top = OFF['sub'] + 0.45 * span
-    band_bot = OFF['sub'] - 0.30 * span
+    gap = 34 if w == 'fingerprint' else 34 / 1.6      # same distance on paper
+    y_band = OFF['sub'] - 0.30 * span
     for (_, b), lx in zip(sw.iterrows(), spread(list(sw.band.astype(float)), gap)):
-        ax.fill_between([b.lo, b.hi], band_bot, band_top, color=BAND, alpha=0.8,
-                        lw=0, zorder=0)
-        ax.text(lx, band_bot - 0.03 * span, f'{b.band} cm$^{{-1}}$', rotation=60,
-                rotation_mode='anchor', ha='right', va='center', fontsize=7.5)
+        c = (b.lo + b.hi) / 2
+        ax.axvspan(b.lo, b.hi, ymin=0.0, color=BAND, alpha=0.7, lw=0, zorder=0)
+        ax.plot([c, c, lx], [y_band, y_band - 0.06 * span, y_band - 0.14 * span],
+                color='0.35', lw=0.5)
+        ax.text(lx, y_band - 0.17 * span, f'{b.band} cm$^{{-1}}$',
+                rotation=90, ha='center', va='top', fontsize=7.5)
 
 axL.set_xlim(250, 1790)
 axR.set_xlim(2760, 3095)
 for ax in (axL, axR):
-    ax.set_ylim(-0.30 * span, OFF[0] + 1.0 * span)
+    ax.set_ylim(-0.62 * span, OFF[0] + 1.0 * span)
     ax.set_yticks([])
     for s_ in ['top', 'right']:
         ax.spines[s_].set_visible(False)
