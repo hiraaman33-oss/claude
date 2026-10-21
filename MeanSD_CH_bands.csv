@@ -1,0 +1,11 @@
+Group,Nominal (cm-1),Method,Position (cm-1),6 sites (min-max),Shift NV-EV (cm-1),Consistent (shadowed),Class,Assignment
+EVs,2853,shoulder (2nd derivative),2852.0,2849.3-2856.5 (6 of 6 sites),,False,Lipids,CH2 symmetric stretching
+NVs,2853,shoulder (2nd derivative),2846.3,2844.8-2860.9 (5 of 6 sites),,False,Lipids,CH2 symmetric stretching
+EVs,2880,shoulder (2nd derivative),2873.7,2871.1-2878.5 (6 of 6 sites),9.4,True,Lipids,CH2 asymmetric stretching
+NVs,2880,shoulder (2nd derivative),2883.0,2879.5-2885.3 (6 of 6 sites),9.4,True,Lipids,CH2 asymmetric stretching
+EVs,2935,maximum,2932.6,2931.2-2933.1 (6 of 6 sites),4.1,True,Proteins,CH3 symmetric stretching
+NVs,2935,maximum,2936.7,2933.9-2937.5 (6 of 6 sites),4.1,True,Proteins,CH3 symmetric stretching
+EVs,2960,shoulder (2nd derivative),not resolved,2957.8-2961.8 (3 of 6 sites),,False,Proteins/Lipids,CH3 asymmetric stretching
+NVs,2960,shoulder (2nd derivative),2962.5,2959.7-2967.1 (6 of 6 sites),,False,Proteins/Lipids,CH3 asymmetric stretching
+EVs,3065,maximum,3067.6,3066.7-3068.9 (6 of 6 sites),,False,Proteins,Aromatic =C-H stretching
+NVs,3065,maximum,3073.1,3066.4-3072.3 (5 of 6 sites),,False,Proteins,Aromatic =C-H stretching
