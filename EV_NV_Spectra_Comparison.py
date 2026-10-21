@@ -10,8 +10,9 @@
 #
 # Every peak label is measured from the data: the maximum of the lightly
 # smoothed spectrum (Savitzky-Golay 11 pts, 3rd order; used ONLY to locate the
-# maximum) after removing a straight local background over +/-30 cm-1. A label
-# is drawn only if the peak rises > 2.5 x the noise of that spectrum.
+# maximum) after removing a straight local background over +/-30 cm-1.
+# Peaks rising > 2.5 x the noise of that spectrum are labelled normally; weaker
+# features are labelled in italics with '~' (tentative), as stated on the figure.
 # All measured values are written to EV_NV_Comparison_peaks.csv.
 #
 # HOW TO RUN (PyCharm):
@@ -38,15 +39,18 @@ OUT = 'EV_NV_Comparison'
 
 X_MIN, X_MAX = 450, 1800
 OFFSET = 560            # counts added to the NV spectrum (display only)
-SNR_MIN = 2.5           # minimum peak height / noise for a label
-BOXES = [(788, 875), (1195, 1300), (1560, 1665)]   # dashed comparison regions
+SNR_MIN = 2.5           # below this peak height / noise a label is marked '~' (weak)
+BOXES = [(775, 875), (1195, 1300), (1560, 1665)]   # dashed comparison regions
 
 # nominal position, class shown on the figure, assignment (for the CSV)
-# where = 'up', 'up-left' or 'up-right': label above the peak (shifted aside for close pairs)
+# where = 'up', 'up-left' or 'up-right': label above the peak (shifted aside for close pairs);
+# 'pair-1' + 'pair-2': two bands of a doublet drawn as one label (e.g. 825/852)
 PEAKS = {
     'NV': [
         (519, 'Si', 'Si substrate (crystalline silicon phonon)', 'up'),
-        (797, 'Nucleic acids', 'O-P-O backbone stretching', 'up'),
+        (797, 'Nucleic acids', 'O-P-O backbone stretching', 'up-left'),
+        (826, 'Proteins', 'Tyr Fermi doublet', 'pair-1'),
+        (855, 'Proteins', 'Tyr Fermi doublet', 'pair-2'),
         (1001, 'Proteins', 'Phe ring breathing', 'up'),
         (1034, 'Proteins', 'Phe C-H in-plane bending', 'up'),
         (1241, 'Proteins', 'Amide III', 'up'),
@@ -57,6 +61,7 @@ PEAKS = {
     'EV': [
         (519, 'Si', 'Si substrate (crystalline silicon phonon)', 'up'),
         (1001, 'Proteins', 'Phe ring breathing', 'up'),
+        (1043, 'Proteins', 'Phe C-H in-plane bending', 'up'),
         (1206, 'Proteins', 'Phe/Tyr C-C6H5 stretching', 'up'),
         (1284, 'Proteins', 'Amide III', 'up'),
         (1380, 'Lipids/NA', 'CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag', 'up'),
@@ -111,18 +116,23 @@ for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
     for nominal, cls, assign, where in PEAKS[s]:
         sh = '(shoulder)' in assign
         pos, h, snr = measure(x, y, nominal, noise[s], shoulder=sh)
-        drawn = snr >= SNR_MIN
+        weak = snr < SNR_MIN
         rows.append([s, nominal, round(pos, 1), round(h, 1), round(snr, 1), cls, assign,
-                     'yes' if drawn else 'no (below SNR limit)'])
-        if not drawn:
-            continue
+                     'weak - tentative (~)' if weak else 'yes'])
         top = y[np.abs(x - pos) <= 4].max() + off
-        txt = f'{pos:.0f}' if cls == 'Si' else f'{pos:.0f}{" sh" if sh else ""} - {cls}'
+        txt = f'{"~" if weak else ""}{pos:.0f}{" sh" if sh else ""}'
+        if where == 'pair-1':              # first band of a doublet: drawn with the second
+            pair = (pos, txt, top, weak)
+            continue
+        if where == 'pair-2':
+            txt = f'{pair[1]}/{txt}'
+            pos, top, weak, where = (pair[0] + pos) / 2, max(pair[2], top), pair[3] or weak, 'up'
+        txt += '' if cls == 'Si' else f' - {cls}'
         top = y[np.abs(x - pos) <= 25].max() + off if where != 'up' else top
         dx = {'up': 0, 'up-left': -4, 'up-right': 4}[where]
         ax.text(pos + dx, top + 8, txt, rotation=90, va='bottom', fontsize=10,
                 ha={'up': 'center', 'up-left': 'right', 'up-right': 'left'}[where],
-                color=CLASS_COL[cls])
+                color=CLASS_COL[cls], style='italic' if weak else 'normal')
 
 y_lo = spectra['EV'][1].min() - 15
 y_hi = spectra['NV'][1].max() + OFFSET + 190
@@ -141,6 +151,9 @@ ax.text(0.01, 0.985, 'Acacia NVs (s4a) - Ag/SiNWs - 532 nm', transform=ax.transA
 ax.text(0.99, 0.015, 'Acacia EVs (S1) - Ag/SiNWs - 532 nm', transform=ax.transAxes,
         ha='right', va='bottom', color=C_EV, fontsize=11,
         bbox=dict(fc='#FFFF00', ec='none', pad=2))
+ax.text(0.01, 0.60, f'~ weak band (< {SNR_MIN} x noise), tentative;  sh = shoulder',
+        transform=ax.transAxes, ha='left', va='top', fontsize=9, style='italic',
+        bbox=dict(fc='white', ec='none', pad=1), zorder=5)
 fig.tight_layout()
 fig.savefig(f'{OUT}.png', dpi=600)
 fig.savefig(f'{OUT}.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
