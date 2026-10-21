@@ -1,0 +1,11 @@
+Nominal (cm-1),Measured Ag/SiNW (cm-1),Class,Assignment,Source,Prominence / noise SD
+519,520,Si substrate,Crystalline silicon optical phonon (520.7 cm-1 Si band); from SiNW,[P],13.8
+831,831,Protein/NA,Tyrosine Fermi doublet (828/850) / O-P-O asymmetric stretch (828),[M][T],3.8
+1001,1002,Protein,Phenylalanine symmetric ring breathing (1002-1004),[M][T][G],8.4
+1031,1031,Protein,Phenylalanine C-H in-plane bending (1030-1034),[M][T],1.9
+1166,1166,Protein,Tyrosine C-H in-plane bending (1170-1175),[M][T],6.6
+1355,1355,Protein,Tryptophan / CH deformation (1340-1380); broad band,[M][T],3.7
+1582,1583,Protein,Phenylalanine C=C bending (1584),[M][T],6.4
+1604,1606,Protein,Phenylalanine / tyrosine ring C=C stretch (1600-1607),[M][T][G],7.3
+1724,1724,Lipid,C=O ester stretching of (phospho)lipids (1720-1745),[M][T][C],6.2
+2929,2927,Protein/Lipid,CH2/CH3 stretching (2925-2935),[P][M][C][G],2.2
