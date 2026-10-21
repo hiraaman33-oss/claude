@@ -10,7 +10,8 @@
 # NV shifted up by a constant (display only) so both can be labelled.
 # Every label is the position of the maximum of the mean spectrum near the
 # nominal band (parabolic refinement on the 2 cm-1 grid). Positions are written
-# to MeanSD_400-1790_peaks.csv.
+# to MeanSD_400-1790_peaks.csv. Grey shadows mark the bands whose peak shift
+# between EVs and NVs is consistent across all sites (MeanSD_400-1790_shifts.csv).
 #
 # HOW TO RUN (PyCharm):
 #   pip install numpy pandas scipy matplotlib openpyxl
@@ -41,6 +42,13 @@ SITES = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6']
 X_MIN, X_MAX = 400, 1790
 C_EV, C_NV = '#0B5A7E', '#B5541C'          # same colours as Figure 4
 OFFSET = 8.5                               # SNV units added to the NV spectrum (display only)
+
+# bands compared for a peak shift: (EV nominal, NV nominal). A light grey shadow is
+# drawn over a band only when the shift is consistent: the six site-mean peak
+# positions of EVs and of NVs do not overlap.
+SHIFT_PAIRS = [(519, 519), (809, 799), (931, 927), (1001, 1001), (1161, 1169),
+               (1249, 1245), (1373, 1385), (1603, 1607)]
+SHADOW_PAD = 4                             # cm-1 added on each side of the two peaks
 
 # nominal band, class, assignment (CSV), placement ('up', 'up-left', 'up-right')
 PEAKS = {
@@ -114,7 +122,7 @@ def als_baseline(y, lam=1e5, p=0.01, niter=10):
 
 def load_snv(path):
     grid = np.arange(205, 1796, 2.0)
-    out = []
+    out, site_ids = [], []
     for site in SITES:
         df = pd.read_excel(path, sheet_name=site, header=2)
         x = df.iloc[:, 0].to_numpy(float)
@@ -123,7 +131,8 @@ def load_snv(path):
             ys = savgol_filter(np.interp(grid, x[m], despike(y[m])), 11, 3)
             c = ys - als_baseline(ys)
             out.append((c - c.mean()) / c.std())
-    return grid, np.array(out)
+            site_ids.append(site)
+    return grid, np.array(out), np.array(site_ids)
 
 
 def peak_position(g, s, lo, hi):
@@ -150,12 +159,23 @@ def segment_label(ax, xpos, ybase, segments, ha):
 # ----------------------------------------------------------------------------
 # FIGURE
 # ----------------------------------------------------------------------------
-g, X_ev = load_snv(EV_FILE)
-_, X_nv = load_snv(NV_FILE)
+g, X_ev, s_ev = load_snv(EV_FILE)
+_, X_nv, s_nv = load_snv(NV_FILE)
 show = (g >= X_MIN) & (g <= X_MAX)
 gs = g[show]
 
 fig, ax = plt.subplots(figsize=(8.5, 6.5))
+shifts = []
+for ev_nom, nv_nom in SHIFT_PAIRS:
+    pe = peak_position(g, X_ev.mean(0), ev_nom - 12, ev_nom + 12)
+    pn = peak_position(g, X_nv.mean(0), nv_nom - 12, nv_nom + 12)
+    se = [peak_position(g, X_ev[s_ev == k].mean(0), ev_nom - 12, ev_nom + 12) for k in SITES]
+    sn = [peak_position(g, X_nv[s_nv == k].mean(0), nv_nom - 12, nv_nom + 12) for k in SITES]
+    consistent = max(se) < min(sn) or max(sn) < min(se)
+    shifts.append([round(pe, 1), round(pn, 1), round(pn - pe, 1), consistent])
+    if consistent:                         # light shadow over the shifted band
+        ax.axvspan(min(pe, pn) - SHADOW_PAD, max(pe, pn) + SHADOW_PAD, color='0.92', lw=0,
+                   zorder=0)
 rows, labels, lines = [], [], []
 for s, X, col, off, name in [('EV', X_ev, C_EV, 0.0, 'EV Acacia on Ag/SiNWs'),
                              ('NV', X_nv, C_NV, OFFSET, 'Nanovesicles Acacia on Ag/SiNWs')]:
@@ -188,7 +208,8 @@ ax.tick_params(axis='y', direction='in', length=5, labelleft=False)
 ax.tick_params(axis='x', direction='in', length=5)
 ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=13)
 ax.set_ylabel('SNV Intensity (a.u.)', fontsize=13)
-ax.legend(frameon=False, fontsize=10, loc='upper left', handlelength=1.5)
+ax.legend(frameon=True, facecolor='white', edgecolor='none', framealpha=1, fontsize=10,
+          loc='upper left', handlelength=1.5)
 fig.tight_layout()
 fig.savefig(OUTPUT_DIR / 'Fig_MeanSD_400-1790.png', dpi=600)
 fig.savefig(OUTPUT_DIR / 'Fig_MeanSD_400-1790.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
@@ -198,6 +219,11 @@ with open(OUTPUT_DIR / 'MeanSD_400-1790_peaks.csv', 'w', newline='') as fh:
     w.writerow(['Spectrum', 'Nominal (cm-1)', 'Measured (cm-1)', 'Mean SNV', 'SD', 'Class',
                 'Assignment'])
     w.writerows(rows)
-for r in rows:
+with open(OUTPUT_DIR / 'MeanSD_400-1790_shifts.csv', 'w', newline='') as fh:
+    w = csv.writer(fh)
+    w.writerow(['EV peak (cm-1)', 'NV peak (cm-1)', 'Shift NV-EV (cm-1)',
+                'Consistent (site ranges separated, shadowed)'])
+    w.writerows(shifts)
+for r in rows + shifts:
     print(r)
 print('Saved in:', OUTPUT_DIR)
