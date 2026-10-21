@@ -208,7 +208,7 @@ for lab in labels:                          # after the axis limits are fixed
 ax.tick_params(axis='y', direction='in', length=5, labelleft=False)
 ax.tick_params(axis='x', direction='in', length=5)
 ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=13)
-ax.set_ylabel('SNV Intensity (a.u.)', fontsize=13)
+ax.set_ylabel('Intensity (a.u.)', fontsize=13)
 ax.legend(frameon=True, facecolor='white', edgecolor='none', framealpha=1, fontsize=10,
           loc='upper left', handlelength=1.5)
 fig.tight_layout()
