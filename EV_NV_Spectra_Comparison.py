@@ -4,8 +4,9 @@
 #   S1-EV_ACACIA-AgSiNW ...txt              -> Acacia EVs  (black)
 #   s4a-EV_nano_ACACIA-20ng-AgSiNW ...txt   -> Acacia NVs  (red)
 #
-# Raw counts are plotted (no smoothing, no baseline, no normalisation). The NV
-# spectrum is shifted up by a constant (OFFSET) so the two traces do not
+# Raw counts are plotted with light Savitzky-Golay smoothing only (SMOOTH_WINDOW
+# points, SMOOTH_ORDER polynomial): no baseline correction, no normalisation.
+# The NV spectrum is shifted up by a constant (OFFSET) so the two traces do not
 # overlap; the y-axis therefore has no numbers, as usual for stacked spectra.
 #
 # Every peak label is measured from the data: the maximum of the lightly
@@ -39,6 +40,7 @@ OUT = 'EV_NV_Comparison'
 
 X_MIN, X_MAX = 450, 1800
 OFFSET = 560            # counts added to the NV spectrum (display only)
+SMOOTH_WINDOW, SMOOTH_ORDER = 7, 2   # light smoothing of the plotted traces
 SNR_MIN = 2.5           # below this peak height / noise a label is marked '~' (weak)
 BOXES = [(775, 890), (1195, 1320), (1515, 1690)]   # dashed comparison regions
 
@@ -126,14 +128,15 @@ rows, labels = [], []
 fig, ax = plt.subplots(figsize=(8.5, 6.5))
 for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
     x, y = spectra[s]
-    ax.plot(x, y + off, color=col, lw=0.7)
+    ys_plot = savgol_filter(y, SMOOTH_WINDOW, SMOOTH_ORDER)
+    ax.plot(x, ys_plot + off, color=col, lw=0.8)
     for nominal, cls, assign, where in PEAKS[s]:
         sh = '(shoulder)' in assign
         pos, h, snr = measure(x, y, nominal, noise[s], shoulder=sh)
         weak = snr < SNR_MIN
         rows.append([s, nominal, round(pos, 1), round(h, 1), round(snr, 1), cls, assign,
                      'weak - tentative (~)' if weak else 'yes'])
-        top = y[np.abs(x - pos) <= 4].max() + off
+        top = ys_plot[np.abs(x - pos) <= 4].max() + off
         txt = f'{"~" if weak else ""}{pos:.0f}{" sh" if sh else ""}'
         if where == 'pair-1':              # first band of a doublet: drawn with the second
             pair = (pos, txt, top, weak)
@@ -141,7 +144,7 @@ for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
         if where == 'pair-2':
             txt = f'{pair[1]}/{txt}'
             pos, top, weak, where = (pair[0] + pos) / 2, max(pair[2], top), pair[3] or weak, 'up'
-        top = y[np.abs(x - pos) <= 25].max() + off if where != 'up' else top
+        top = ys_plot[np.abs(x - pos) <= 25].max() + off if where != 'up' else top
         dx = {'up': 0, 'up-left': -4, 'up-right': 4}[where]
         labels.append((pos + dx, top + 8, txt, cls,
                        {'up': 'center', 'up-left': 'right', 'up-right': 'left'}[where], weak))
