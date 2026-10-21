@@ -162,11 +162,9 @@ ax.tick_params(axis='x', direction='in', length=5, top=False)
 ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=13)
 ax.set_ylabel('Intensity (a.u.)', fontsize=13)
 ax.text(0.99, 1.012, 'Nanovesicles Acacia on Ag/SiNWs', transform=ax.transAxes,
-        ha='right', va='bottom', color=C_NV, fontsize=12,
-        bbox=dict(fc='#FFFF00', ec='none', pad=2))
+        ha='right', va='bottom', color=C_NV, fontsize=12)
 ax.text(0.99, 0.015, 'EV Acacia on Ag/SiNWs', transform=ax.transAxes,
-        ha='right', va='bottom', color=C_EV, fontsize=12,
-        bbox=dict(fc='#FFFF00', ec='none', pad=2))
+        ha='right', va='bottom', color=C_EV, fontsize=12)
 ax.text(0.01, 0.60, f'~ weak band (< {SNR_MIN} x noise), tentative;  sh = shoulder',
         transform=ax.transAxes, ha='left', va='top', fontsize=9, style='italic',
         bbox=dict(fc='white', ec='none', pad=1), zorder=5)
