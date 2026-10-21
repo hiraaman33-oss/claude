@@ -4,8 +4,8 @@
 #   S1-EV_ACACIA-AgSiNW ...txt              -> Acacia EVs  (black)
 #   s4a-EV_nano_ACACIA-20ng-AgSiNW ...txt   -> Acacia NVs  (red)
 #
-# Raw counts are plotted with light Savitzky-Golay smoothing only (SMOOTH_WINDOW
-# points, SMOOTH_ORDER polynomial): no baseline correction, no normalisation.
+# Raw counts are plotted exactly as recorded: no smoothing, no baseline
+# correction, no normalisation.
 # The NV spectrum is shifted up by a constant (OFFSET) so the two traces do not
 # overlap; the y-axis therefore has no numbers, as usual for stacked spectra.
 #
@@ -40,7 +40,6 @@ OUT = 'EV_NV_Comparison'
 
 X_MIN, X_MAX = 450, 1800
 OFFSET = 560            # counts added to the NV spectrum (display only)
-SMOOTH_WINDOW, SMOOTH_ORDER = 7, 2   # light smoothing of the plotted traces
 SNR_MIN = 2.5           # below this peak height / noise a label is marked '~' (weak)
 BOXES = [(775, 890), (1195, 1320), (1515, 1690)]   # dashed comparison regions
 
@@ -128,8 +127,8 @@ rows, labels = [], []
 fig, ax = plt.subplots(figsize=(8.5, 6.5))
 for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
     x, y = spectra[s]
-    ys_plot = savgol_filter(y, SMOOTH_WINDOW, SMOOTH_ORDER)
-    ax.plot(x, ys_plot + off, color=col, lw=0.8)
+    ys_plot = y                        # raw counts, plotted unchanged
+    ax.plot(x, ys_plot + off, color=col, lw=0.7)
     for nominal, cls, assign, where in PEAKS[s]:
         sh = '(shoulder)' in assign
         pos, h, snr = measure(x, y, nominal, noise[s], shoulder=sh)
