@@ -6,7 +6,8 @@
 #   cosmic-ray removal (modified z-score, threshold 7) -> 2 cm-1 grid ->
 #   Savitzky-Golay (11 pts, 3rd order) -> ALS baseline (lambda 1e5, p 0.01) ->
 #   SNV over 205-1795 cm-1
-# Plotted: mean spectrum (line) +/- 1 standard deviation (shaded) of each group,
+# Plotted: mean spectrum (line) +/- 1 sample standard deviation (n - 1, shaded) of
+# each group,
 # NV shifted up by a constant (display only) so both can be labelled.
 # Every label is the position of the maximum of the mean spectrum near the
 # nominal band (parabolic refinement on the 2 cm-1 grid). Positions are written
@@ -179,7 +180,7 @@ for ev_nom, nv_nom in SHIFT_PAIRS:
 rows, labels, lines = [], [], []
 for s, X, col, off, name in [('EV', X_ev, C_EV, 0.0, 'EV Acacia on Ag/SiNWs'),
                              ('NV', X_nv, C_NV, OFFSET, 'Nanovesicles Acacia on Ag/SiNWs')]:
-    mu, sd = X.mean(0)[show], X.std(0)[show]
+    mu, sd = X.mean(0)[show], X.std(0, ddof=1)[show]          # sample SD (n - 1)
     ax.fill_between(gs, mu - sd + off, mu + sd + off, color=col, alpha=0.22, lw=0)
     ax.plot(gs, mu + off, color=col, lw=1.0, label=f'{name} (mean \u00b1 SD, n = {len(X)})')
     for nominal, cls, assign, where in PEAKS[s]:
@@ -200,8 +201,8 @@ for s, X, col, off, name in [('EV', X_ev, C_EV, 0.0, 'EV Acacia on Ag/SiNWs'),
 for xl, yb, yt in lines:                    # dotted line from the mean peak to its label
     ax.plot([xl, xl], [yb, yt], ls=(0, (1, 2)), lw=0.7, color='0.35')
 ax.set_xlim(X_MIN, X_MAX)
-ax.set_ylim((X_ev.mean(0) - X_ev.std(0))[show].min() - 0.3,
-            (X_nv.mean(0) + X_nv.std(0))[show].max() + OFFSET + 4.3)
+ax.set_ylim((X_ev.mean(0) - X_ev.std(0, ddof=1))[show].min() - 0.3,
+            (X_nv.mean(0) + X_nv.std(0, ddof=1))[show].max() + OFFSET + 4.3)
 for lab in labels:                          # after the axis limits are fixed
     segment_label(ax, *lab)
 ax.tick_params(axis='y', direction='in', length=5, labelleft=False)
