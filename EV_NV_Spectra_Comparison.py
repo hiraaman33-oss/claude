@@ -42,7 +42,10 @@ OUT = 'EV_NV_Comparison' if EV_TAG == 'S1' else f'EV_NV_Comparison_{EV_TAG}'
 X_MIN, X_MAX = 450, 1800
 # counts added to the NV spectrum (display only); None = just enough to separate
 OFFSET = {'S1': 560, 'S2': None}[EV_TAG]
-BOXES = [(775, 890), (1195, 1320), (1515, 1690)]   # dashed comparison regions
+# dashed comparison regions (boxes around the compared bands), per EV spectrum
+BOXES = {'S1': [(775, 890), (1195, 1320), (1515, 1690)],
+         'S2': [(758, 880), (962, 1070), (1148, 1184), (1335, 1405), (1550, 1658),
+                (1700, 1752)]}[EV_TAG]
 
 # nominal position, label class (None = number only), assignment (CSV), placement
 # placement: 'up' / 'up-left' / 'up-right' = above the peak;
@@ -82,14 +85,14 @@ PEAKS = {
 }
 PEAKS['EV'] = PEAKS[f'EV_{EV_TAG}']
 # extra class word written next to a group of numbers (as in the original figure)
-GROUP_LABELS = [('NV', 1712, 'Proteins')]
+GROUP_LABELS = [('NV', {'S1': 1712, 'S2': 1682}[EV_TAG], 'Proteins')]
 # label text segments: (text, colour)
 CLASS_SEGMENTS = {'Proteins': [('Proteins', '#7030A0')],
                   'Nucleic Acids': [('Nucleic Acids', '#1F3864')],
                   'Lipids/NA': [('Lipids/', '#2E75B6'), ('NA', 'k')],
                   'Lipids': [('Lipids', '#2E75B6')]}
 # extra class word next to a group of numbers, per EV spectrum
-GROUP_LABELS += {'S1': [], 'S2': [('EV', 1655, 'Proteins')]}[EV_TAG]
+GROUP_LABELS += {'S1': [], 'S2': [('EV', 1682, 'Proteins')]}[EV_TAG]
 C_EV, C_NV = 'k', '#FF0000'
 
 plt.rcParams.update({'font.family': 'sans-serif',
