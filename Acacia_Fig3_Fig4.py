@@ -136,7 +136,8 @@ axR.plot((-d, d), (-d * 1.5, d * 1.5), transform=axR.transAxes,
 fig.text(0.47, 0.025, 'Raman shift (cm$^{-1}$)', ha='center', fontsize=10)
 fig.subplots_adjust(left=0.06, right=0.82, bottom=0.10, top=0.98)
 for ext in ('png', 'tiff'):
-    fig.savefig(f'{OUT_FIG3}.{ext}', dpi=600)
+    fig.savefig(f'{OUT_FIG3}.{ext}', dpi=600,
+                pil_kwargs={'compression': 'tiff_lzw'} if ext == 'tiff' else None)
 plt.close(fig)
 
 log.append('FIGURE 3')
@@ -253,7 +254,8 @@ for row, (w, title) in enumerate([('fingerprint', 'Fingerprint (250-1790 cm$^{-1
 
 fig.subplots_adjust(left=0.08, right=0.99, bottom=0.09, top=0.93)
 for ext in ('png', 'tiff'):
-    fig.savefig(f'{OUT_FIG4}.{ext}', dpi=600)
+    fig.savefig(f'{OUT_FIG4}.{ext}', dpi=600,
+                pil_kwargs={'compression': 'tiff_lzw'} if ext == 'tiff' else None)
 plt.close(fig)
 
 log.append('\nCross-validation: StratifiedGroupKFold(5, shuffle=True, random_state=0), '
