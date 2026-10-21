@@ -40,7 +40,7 @@ OUT = 'EV_NV_Comparison'
 X_MIN, X_MAX = 450, 1800
 OFFSET = 560            # counts added to the NV spectrum (display only)
 SNR_MIN = 2.5           # below this peak height / noise a label is marked '~' (weak)
-BOXES = [(775, 875), (1195, 1300), (1560, 1665)]   # dashed comparison regions
+BOXES = [(775, 890), (1195, 1320), (1515, 1690)]   # dashed comparison regions
 
 # nominal position, class shown on the figure, assignment (for the CSV)
 # where = 'up', 'up-left' or 'up-right': label above the peak (shifted aside for close pairs);
@@ -108,7 +108,21 @@ def measure(x, y, nominal, noise, shoulder=False):
 spectra = {'EV': load(EV_FILE), 'NV': load(NV_FILE)}
 noise = {s: np.std(np.diff(y)) / np.sqrt(2) for s, (x, y) in spectra.items()}
 
-rows = []
+def two_colour_label(ax, xpos, ybase, num, cls, ha, weak):
+    """Vertical label: wavenumber in black, then '-Class' in the class colour."""
+    style = 'italic' if weak else 'normal'
+    t = ax.text(xpos, ybase, num, rotation=90, va='bottom', ha=ha, fontsize=10,
+                color='k', style=style)
+    if cls == 'Si':
+        return
+    ax.figure.canvas.draw()
+    bb = t.get_window_extent().transformed(ax.transData.inverted())
+    gap = 0.004 * (ax.get_ylim()[1] - ax.get_ylim()[0])   # remove the font's end padding
+    ax.text(xpos, bb.y1 - gap, f'-{cls}', rotation=90, va='bottom', ha=ha, fontsize=10,
+            color=CLASS_COL[cls], style=style)
+
+
+rows, labels = [], []
 fig, ax = plt.subplots(figsize=(8.5, 6.5))
 for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
     x, y = spectra[s]
@@ -127,12 +141,10 @@ for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
         if where == 'pair-2':
             txt = f'{pair[1]}/{txt}'
             pos, top, weak, where = (pair[0] + pos) / 2, max(pair[2], top), pair[3] or weak, 'up'
-        txt += '' if cls == 'Si' else f' - {cls}'
         top = y[np.abs(x - pos) <= 25].max() + off if where != 'up' else top
         dx = {'up': 0, 'up-left': -4, 'up-right': 4}[where]
-        ax.text(pos + dx, top + 8, txt, rotation=90, va='bottom', fontsize=10,
-                ha={'up': 'center', 'up-left': 'right', 'up-right': 'left'}[where],
-                color=CLASS_COL[cls], style='italic' if weak else 'normal')
+        labels.append((pos + dx, top + 8, txt, cls,
+                       {'up': 'center', 'up-left': 'right', 'up-right': 'left'}[where], weak))
 
 y_lo = spectra['EV'][1].min() - 15
 y_hi = spectra['NV'][1].max() + OFFSET + 190
@@ -141,15 +153,17 @@ for lo, hi in BOXES:
                            ls='--', lw=0.8, ec='#1F3864'))
 ax.set_xlim(X_MIN, X_MAX)
 ax.set_ylim(y_lo, y_hi)
+for lab in labels:                       # after the axis limits are fixed
+    two_colour_label(ax, *lab)
 ax.set_yticks([])
-ax.tick_params(axis='x', direction='in', length=5)
+ax.tick_params(axis='x', direction='in', length=5, top=False)
 ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=13)
 ax.set_ylabel('Intensity (a.u.)', fontsize=13)
-ax.text(0.01, 0.985, 'Acacia NVs (s4a) - Ag/SiNWs - 532 nm', transform=ax.transAxes,
-        ha='left', va='top', color=C_NV, fontsize=11,
+ax.text(0.99, 1.012, 'S4a-EV-NanoACACIA-AgSiNWs-532nm', transform=ax.transAxes,
+        ha='right', va='bottom', color=C_NV, fontsize=12,
         bbox=dict(fc='#FFFF00', ec='none', pad=2))
-ax.text(0.99, 0.015, 'Acacia EVs (S1) - Ag/SiNWs - 532 nm', transform=ax.transAxes,
-        ha='right', va='bottom', color=C_EV, fontsize=11,
+ax.text(0.99, 0.015, 'S1-EV-ACACIA-Ag/SiNWs-532nm', transform=ax.transAxes,
+        ha='right', va='bottom', color=C_EV, fontsize=12,
         bbox=dict(fc='#FFFF00', ec='none', pad=2))
 ax.text(0.01, 0.60, f'~ weak band (< {SNR_MIN} x noise), tentative;  sh = shoulder',
         transform=ax.transAxes, ha='left', va='top', fontsize=9, style='italic',
