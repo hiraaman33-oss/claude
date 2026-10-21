@@ -9,12 +9,11 @@
 # The NV spectrum is shifted up by a constant (OFFSET) so the two traces do not
 # overlap; the y-axis therefore has no numbers, as usual for stacked spectra.
 #
-# Every peak label is measured from the data: the maximum of the lightly
-# smoothed spectrum (Savitzky-Golay 11 pts, 3rd order; used ONLY to locate the
-# maximum) after removing a straight local background over +/-30 cm-1.
-# Labels follow the layout of the user's original figure. Bands rising less than
-# 2.5 x the noise are flagged as weak in EV_NV_Comparison_peaks.csv (all measured
-# values are written there).
+# Every peak label is the position of the local maximum of the spectrum within
+# +/-12 cm-1 of the nominal band (found on a lightly smoothed copy, Savitzky-Golay
+# 11 pts, 3rd order, used ONLY to locate the maximum; the plotted data are raw).
+# Labels follow the layout of the user's original figure. The measured positions
+# are written to EV_NV_Comparison_peaks.csv.
 #
 # HOW TO RUN (PyCharm):
 #   pip install numpy scipy matplotlib
@@ -40,7 +39,6 @@ OUT = 'EV_NV_Comparison'
 
 X_MIN, X_MAX = 450, 1800
 OFFSET = 560            # counts added to the NV spectrum (display only)
-SNR_MIN = 2.5           # below this peak height / noise a band is flagged 'weak' in the CSV
 BOXES = [(775, 890), (1195, 1320), (1515, 1690)]   # dashed comparison regions
 
 # nominal position, label class (None = number only), assignment (CSV), placement
@@ -87,13 +85,9 @@ def load(path):
     return d[m, 0], d[m, 1]
 
 
-def measure(x, y, nominal, noise, shoulder=False):
-    """Measured peak position, height above local line and SNR.
-    Position = most prominent local maximum of the smoothed spectrum within
-    +/-12 cm-1 of the nominal value (works for peaks and shoulders on a slope).
-    Height = smoothed value at that position minus a straight local background
-    drawn between the spectrum at -30 and +30 cm-1; for a shoulder (on the flank
-    of a larger band) the prominence of the local maximum is used instead."""
+def measure(x, y, nominal):
+    """Peak position: most prominent local maximum of the smoothed spectrum within
+    +/-12 cm-1 of the nominal value (works for peaks and shoulders)."""
     ys = savgol_filter(y, 11, 3)
     k = np.abs(x - nominal) <= 12
     pk, pr = find_peaks(ys[k], prominence=0)
@@ -101,16 +95,10 @@ def measure(x, y, nominal, noise, shoulder=False):
         i = np.flatnonzero(k)[pk[np.argmax(pr['prominences'])]]
     else:
         i = np.flatnonzero(k)[np.argmax(ys[k])]
-    w = np.abs(x - x[i]) <= 30
-    xw, yw = x[w], ys[w]
-    h = ys[i] - np.interp(x[i], [xw[0], xw[-1]], [yw[:6].mean(), yw[-6:].mean()])
-    if shoulder:      # on the flank of a larger band: use the prominence of the local maximum
-        h = float(pr['prominences'].max()) if len(pk) else 0.0
-    return float(x[i]), float(h), float(h / noise)
+    return float(x[i])
 
 
 spectra = {'EV': load(EV_FILE), 'NV': load(NV_FILE)}
-noise = {s: np.std(np.diff(y)) / np.sqrt(2) for s, (x, y) in spectra.items()}
 
 def segment_label(ax, xpos, ybase, segments, ha):
     """Vertical label made of coloured text segments stacked upwards."""
@@ -129,19 +117,16 @@ for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
     ys_plot = y                        # raw counts, plotted unchanged
     ax.plot(x, ys_plot + off, color=col, lw=0.7)
     for nominal, cls, assign, where in PEAKS[s]:
-        sh = '(shoulder)' in assign
-        pos, h, snr = measure(x, y, nominal, noise[s], shoulder=sh)
-        weak = snr < SNR_MIN
-        rows.append([s, nominal, round(pos, 1), round(h, 1), round(snr, 1), cls, assign,
-                     'weak - tentative (~)' if weak else 'yes'])
+        pos = measure(x, y, nominal)
+        rows.append([s, nominal, round(pos, 1), cls, assign])
         top = ys_plot[np.abs(x - pos) <= 4].max() + off
         txt = f'{pos:.1f}' if cls == 'Si' else f'{pos:.0f}'
         if where == 'pair-1':              # first band of a doublet: drawn with the second
-            pair = (pos, txt, top, weak)
+            pair = (pos, txt, top)
             continue
         if where == 'pair-2':
             txt = f'{pair[1]}/{txt[-2:]}'           # e.g. 825/52, written as in the original
-            pos, top, weak, where = (pair[0] + pos) / 2, max(pair[2], top), pair[3] or weak, 'up'
+            pos, top, where = (pair[0] + pos) / 2, max(pair[2], top), 'up'
         top = ys_plot[np.abs(x - pos) <= 25].max() + off if where != 'up' else top
         dx = {'up': 0, 'up-left': -4, 'up-right': 4}[where]
         segs = [(txt, 'k')]
@@ -177,9 +162,7 @@ fig.savefig(f'{OUT}.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
 
 with open(f'{OUT}_peaks.csv', 'w', newline='') as fh:
     w = csv.writer(fh)
-    w.writerow(['Spectrum', 'Nominal (cm-1)', 'Measured (cm-1)', 'Height above local line (counts)',
-                'Height / noise', 'Class', 'Assignment', 'Labelled'])
+    w.writerow(['Spectrum', 'Nominal (cm-1)', 'Measured (cm-1)', 'Class', 'Assignment'])
     w.writerows(rows)
-print(f'noise: EV {noise["EV"]:.1f}, NV {noise["NV"]:.1f} counts')
 for r in rows:
     print(r)

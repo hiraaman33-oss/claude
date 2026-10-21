@@ -1,17 +1,17 @@
-Spectrum,Nominal (cm-1),Measured (cm-1),Height above local line (counts),Height / noise,Class,Assignment,Labelled
-EV,1043,1041.9,5.5,1.0,,Phe C-H in-plane bending,weak - tentative (~)
-EV,1206,1206.0,81.7,15.5,Proteins,Phe/Tyr C-C6H5 stretching,yes
-EV,1284,1285.8,29.3,5.6,,Amide III,yes
-EV,1380,1386.5,38.8,7.4,,CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag,yes
-EV,1604,1603.7,112.1,21.3,,Phe/Tyr ring C=C stretching,yes
-EV,1628,1628.2,13.3,2.5,,Tyr/Trp ring C=C stretching (shoulder),yes
-NV,519,518.3,41.1,8.5,Si,Si substrate (crystalline silicon phonon),yes
-NV,797,802.5,12.0,2.5,Nucleic Acids,O-P-O backbone stretching,weak - tentative (~)
-NV,826,825.1,8.3,1.7,Proteins,Tyr Fermi doublet,weak - tentative (~)
-NV,855,851.9,7.7,1.6,Proteins,Tyr Fermi doublet,weak - tentative (~)
-NV,1001,1002.1,13.1,2.7,Proteins,Phe ring breathing,yes
-NV,1034,1030.5,8.3,1.7,Proteins,Phe C-H in-plane bending,weak - tentative (~)
-NV,1241,1240.8,24.2,5.0,Proteins,Amide III,yes
-NV,1387,1384.8,47.4,9.8,Lipids/NA,CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag,yes
-NV,1607,1608.3,57.7,11.9,,Phe/Tyr ring C=C stretching (protein),yes
-NV,1624,1623.9,68.9,14.2,,Tyr/Trp ring C=C stretching (protein),yes
+Spectrum,Nominal (cm-1),Measured (cm-1),Class,Assignment
+EV,1043,1041.9,,Phe C-H in-plane bending
+EV,1206,1206.0,Proteins,Phe/Tyr C-C6H5 stretching
+EV,1284,1285.8,,Amide III
+EV,1380,1386.5,,CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag
+EV,1604,1603.7,,Phe/Tyr ring C=C stretching
+EV,1628,1628.2,,Tyr/Trp ring C=C stretching (shoulder)
+NV,519,518.3,Si,Si substrate (crystalline silicon phonon)
+NV,797,802.5,Nucleic Acids,O-P-O backbone stretching
+NV,826,825.1,Proteins,Tyr Fermi doublet
+NV,855,851.9,Proteins,Tyr Fermi doublet
+NV,1001,1002.1,Proteins,Phe ring breathing
+NV,1034,1030.5,Proteins,Phe C-H in-plane bending
+NV,1241,1240.8,Proteins,Amide III
+NV,1387,1384.8,Lipids/NA,CH3 deformation (lipids) / nucleic-acid bases; COO- on Ag
+NV,1607,1608.3,,Phe/Tyr ring C=C stretching (protein)
+NV,1624,1623.9,,Tyr/Trp ring C=C stretching (protein)
