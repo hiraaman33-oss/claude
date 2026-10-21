@@ -82,6 +82,8 @@ PEAK_SETS['S2'] = [
 ]
 # constant vertical shift of the AgSiNW trace, display only (stated in legend)
 AG_OFFSET = {'S1': 0, 'S2': 110}[SAMPLE]
+# sample name used in the legend (from the raw file names)
+SAMPLE_NAME = {'S1': 'EV Nano Acacia', 'S2': 'EV Acacia'}[SAMPLE]
 PEAKS = PEAK_SETS[SAMPLE]
 
 C_AG = '#E8383D'     # red  : EV on AgSiNW
@@ -137,8 +139,8 @@ y_max = max(in_view(caf2).max(), in_view(ag).max())
 y_top = y_max + 0.45 * (y_max - y_min)       # head-room for the rotated labels
 
 for ax, lo, hi in [(axL, LOW_MIN, LOW_MAX), (axR, HIGH_MIN, HIGH_MAX)]:
-    for d, col, lab in [(caf2, C_CAF2, 'EV Nano Acacia - CaF$_2$'),
-                        (ag, C_AG, 'EV Nano Acacia - AgSiNW'
+    for d, col, lab in [(caf2, C_CAF2, f'{SAMPLE_NAME} - CaF$_2$'),
+                        (ag, C_AG, f'{SAMPLE_NAME} - AgSiNW'
                          + (f' (+{AG_OFFSET})' if AG_OFFSET else ''))]:
         m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
         ax.plot(d[m, 0], d[m, 1], color=col, lw=0.6, label=lab)
