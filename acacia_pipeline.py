@@ -132,7 +132,7 @@ def region(data, win):
 # MULTIVARIATE ANALYSIS
 # ----------------------------------------------------------------------------
 def pca_fit(X, n=5):
-    pca = PCA(n_components=n).fit(X)
+    pca = PCA(n_components=n, svd_solver='full').fit(X)
     return pca, pca.transform(X)
 
 
@@ -147,10 +147,10 @@ def cv_pca_lda(X, y, groups, folds, refit=False, n=5):
     """PCA-LDA accuracy; PCA on pooled data (refit=False) or per training fold."""
     pred = np.empty(len(y), int)
     if not refit:
-        T = PCA(n_components=n).fit_transform(X)
+        T = PCA(n_components=n, svd_solver='full').fit_transform(X)
     for tr, te in folds:
         if refit:
-            pca = PCA(n_components=n).fit(X[tr])
+            pca = PCA(n_components=n, svd_solver='full').fit(X[tr])
             Ttr, Tte = pca.transform(X[tr]), pca.transform(X[te])
         else:
             Ttr, Tte = T[tr], T[te]
@@ -169,7 +169,7 @@ def cv_plsda(X, y, folds, n=5):
 
 def lda_scores(X, y, n=5):
     """LD1 scores of all spectra from PCA (pooled) + LDA fitted on all data."""
-    T = PCA(n_components=n).fit_transform(X)
+    T = PCA(n_components=n, svd_solver='full').fit_transform(X)
     return LinearDiscriminantAnalysis().fit(T, y).transform(T).ravel()
 
 

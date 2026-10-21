@@ -150,7 +150,7 @@ fig, axs = plt.subplots(2, 2, figsize=(5.0, 5.3),
 letters = iter('abcd')
 for row, w in enumerate(['fingerprint', 'ch']):
     X, g = data[w], WINDOWS[w]['g']
-    pca = PCA(n_components=N_COMP).fit(X)
+    pca = PCA(n_components=N_COMP, svd_solver='full').fit(X)
     T = pca.transform(X)
     T[:, 0] *= np.sign(pca.components_[0][np.argmin(np.abs(g - PC1_REF[w]))])
     ev1, ev2 = pca.explained_variance_ratio_[:2] * 100

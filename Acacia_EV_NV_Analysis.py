@@ -221,7 +221,7 @@ folds = list(StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=CV_SEED
 
 def cv_pca_lda(X):
     n = min(N_COMP, X.shape[1])
-    T = PCA(n_components=n).fit_transform(X)
+    T = PCA(n_components=n, svd_solver='full').fit_transform(X)
     pred = np.empty(len(y), int)
     for tr, te in folds:
         pred[te] = LinearDiscriminantAnalysis().fit(T[tr], y[tr]).predict(T[te])
@@ -263,7 +263,7 @@ acc_rows = []
 for key, (label, _) in ANALYSES.items():
     g, X = get_matrix(key)
     log(f'\n--- {label}  ({X.shape[1]} variables) ---')
-    pca = PCA(n_components=min(N_COMP, X.shape[1])).fit(X)
+    pca = PCA(n_components=min(N_COMP, X.shape[1]), svd_solver='full').fit(X)
     v1, v2 = pca.explained_variance_ratio_[:2] * 100
     log(f'PCA: PC1 {v1:.1f} %, PC2 {v2:.1f} %')
     for model, pred in [('PCA+LDA', cv_pca_lda(X)), ('PLS-DA', cv_plsda(X))]:
@@ -494,7 +494,7 @@ letters = iter('abcdef')
 for row, (w, title, ref) in enumerate([('fingerprint', 'Fingerprint (250-1790 cm$^{-1}$)', 1580),
                                        ('ch', 'CH-stretching (2760-3095 cm$^{-1}$)', 2960)]):
     g, X = region(w, *REG[w])
-    pca = PCA(n_components=N_COMP).fit(X)
+    pca = PCA(n_components=N_COMP, svd_solver='full').fit(X)
     T = pca.transform(X)
     sgn = np.sign(pca.components_[0][np.argmin(np.abs(g - ref))])   # orientation as in the text
     T[:, 0] *= sgn
