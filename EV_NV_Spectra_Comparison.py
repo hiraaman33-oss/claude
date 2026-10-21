@@ -43,9 +43,9 @@ X_MIN, X_MAX = 450, 1800
 # counts added to the NV spectrum (display only); None = just enough to separate
 OFFSET = {'S1': 560, 'S2': None}[EV_TAG]
 # dashed comparison regions (boxes around the compared bands), per EV spectrum
-BOXES = {'S1': [(775, 890), (1195, 1320), (1515, 1690)],
-         'S2': [(758, 880), (962, 1070), (1148, 1184), (1335, 1405), (1550, 1658),
-                (1700, 1752)]}[EV_TAG]
+BOXES = {'S1': [(775, 890), (1195, 1320), (1515, 1690)], 'S2': []}[EV_TAG]
+# dotted vertical line at every labelled peak, from the trace up to its label
+PEAK_LINES = {'S1': False, 'S2': True}[EV_TAG]
 
 # nominal position, label class (None = number only), assignment (CSV), placement
 # placement: 'up' / 'up-left' / 'up-right' = above the peak;
@@ -133,7 +133,7 @@ def segment_label(ax, xpos, ybase, segments, ha):
         y = t.get_window_extent().transformed(ax.transData.inverted()).y1 - gap
 
 
-rows, labels = [], []
+rows, labels, lines = [], [], []
 fig, ax = plt.subplots(figsize=(8.5, 6.5))
 for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
     x, y = spectra[s]
@@ -142,6 +142,8 @@ for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
     for nominal, cls, assign, where in PEAKS[s]:
         pos = measure(x, y, nominal)
         rows.append([s, nominal, round(pos, 1), cls, assign])
+        if PEAK_LINES:   # from just below the trace (local minimum) to the label
+            lines.append([pos, ys_plot[np.abs(x - pos) <= 15].min() + off - 20, None])
         top = ys_plot[np.abs(x - pos) <= 4].max() + off
         txt = f'{pos:.1f}' if cls == 'Si' else f'{pos:.0f}'
         if where == 'pair-1':              # first band of a doublet: drawn with the second
@@ -155,6 +157,9 @@ for s, col, off in [('EV', C_EV, 0), ('NV', C_NV, OFFSET)]:
         segs = [(txt, 'k')]
         if cls not in (None, 'Si'):
             segs = [(txt + '- ', 'k')] + CLASS_SEGMENTS[cls]
+        for ln in lines:                   # line(s) of this label end just below it
+            if ln[2] is None:
+                ln[2] = top + 3
         labels.append((pos + dx, top + 8, segs,
                        {'up': 'center', 'up-left': 'right', 'up-right': 'left'}[where]))
 
@@ -163,6 +168,8 @@ y_hi = spectra['NV'][1].max() + OFFSET + 190
 for lo, hi in BOXES:
     ax.add_patch(Rectangle((lo, y_lo + 5), hi - lo, y_hi - y_lo - 20, fill=False,
                            ls='--', lw=0.8, ec='#1F3864'))
+for xl, yb, yt in lines:
+    ax.plot([xl, xl], [yb, yt], ls=(0, (1, 2)), lw=0.8, color='#1F3864')
 ax.set_xlim(X_MIN, X_MAX)
 ax.set_ylim(y_lo, y_hi)
 for lab in labels:                       # after the axis limits are fixed
