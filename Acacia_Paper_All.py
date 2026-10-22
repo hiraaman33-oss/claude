@@ -383,9 +383,10 @@ CH_BANDS = [(2853, 10, 'sh', 'Lipids', 'CH2 symmetric stretching'),
             (2935, 12, 'max', 'Proteins', 'CH3 symmetric stretching'),
             (2960, 10, 'sh', 'Proteins/Lipids', 'CH3 asymmetric stretching'),
             (3065, 12, 'max', 'Proteins', 'Aromatic =C-H stretching')]
-# bands labelled in Fig 2b, per group (all bands go to Table S4): the CH2 band at
-# ~2883 cm-1 is a distinct shoulder only in NVs (in EVs a weak, unresolved wing)
-CH_SHOW = {0: [2935], 1: [2880, 2935]}
+# bands labelled in Fig 2b, per group (all bands go to Table S4): the CH2 shoulder
+# is found in both groups (2nd derivative, mean spectrum and all 6 sites of each
+# group): weaker in EVs (~2874 cm-1), stronger and shifted in NVs (~2883 cm-1)
+CH_SHOW = {0: [2880, 2935], 1: [2880, 2935]}
 NAME_LONG = {0: 'EV Acacia on Ag/SiNWs', 1: 'Nanovesicles Acacia on Ag/SiNWs'}
 shift_table = []
 
