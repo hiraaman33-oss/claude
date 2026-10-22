@@ -1,0 +1,13 @@
+Region,Band (cm-1),NV - EV (SNV),2 SE,Relatively stronger in
+fingerprint,1033,0.802,0.104,NVs
+fingerprint,1161,-0.664,0.129,EVs
+fingerprint,1355,-0.783,0.132,EVs
+fingerprint,1391,1.074,0.188,NVs
+fingerprint,1497,-0.624,0.242,EVs
+fingerprint,1589,-1.532,0.222,EVs
+fingerprint,1609,0.834,0.621,NVs
+fingerprint,1629,0.745,0.38,NVs
+ch,2885,0.522,0.057,NVs
+ch,2925,-0.509,0.067,EVs
+ch,2957,0.773,0.07,NVs
+ch,3067,-0.381,0.075,EVs

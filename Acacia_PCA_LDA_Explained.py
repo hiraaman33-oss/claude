@@ -7,8 +7,14 @@
 #   (b) LDA canonical variable 1, fingerprint region
 #   (c) PCA score plot, CH-stretching region    (2760-3095 cm-1)
 #   (d) LDA canonical variable 1, CH-stretching region
-# and a second figure with the cross-validated confusion matrices (PCA-LDA and
-# PLS-DA, fingerprint and CH-stretching) - STEP 5.
+# and further figures/tables (all from the same data):
+#   STEP 5  cross-validated confusion matrices (PCA-LDA and PLS-DA)
+#   STEP 6  PCA loadings: which bands drive PC1 and PC2
+#   STEP 7  difference spectrum NV - EV with its site-to-site uncertainty
+#   STEP 8  exact label-shuffling (permutation) test over all 924 ways of
+#           calling 6 of the 12 sites "EV"
+#   STEP 9  RESULTS_for_manuscript.txt: the actual results written as text,
+#           every number filled in from this run
 #
 # Everything is calculated from your original data:
 #   CODE 005\EV Acacia\EV_Acacia_Raman_Data.xlsx              (120 spectra)
@@ -28,7 +34,14 @@
 #   PCA_LDA_scores_CH.csv                (open in Excel to check any point)
 #   Fig_ConfusionMatrices.png / .tiff    cross-validated confusion matrices (600 dpi)
 #   CV_accuracy.csv                      accuracy, sensitivity, specificity
+#   Fig_Loadings.png / .tiff             PC1 and PC2 loadings, both regions
+#   Fig_Difference.png / .tiff           NV - EV difference spectra, both regions
+#   Fig_Permutation.png / .tiff          shuffled-label accuracies vs real accuracy
+#   Loadings_main_bands.csv, Difference_main_bands.csv, Permutation_test.csv
 #   PCA_LDA_summary.txt                  all numbers printed by the script
+#   RESULTS_for_manuscript.txt           the results in words (STEP 9)
+# The permutation test (STEP 8) repeats the whole cross-validation 924 times per
+# region and takes several minutes; set N_PERM_MODE = 'skip' below to leave it out.
 # =============================================================================
 
 import sys
@@ -49,6 +62,7 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.metrics import confusion_matrix
+from itertools import combinations
 
 # ----------------------------------------------------------------------------
 # SETTINGS
@@ -67,6 +81,7 @@ GROUPS = {0: 'EVs', 1: 'NVs'}               # class 0 = EVs, class 1 = NVs
 COLS = {0: '#0B5A7E', 1: '#B5541C'}         # same colours as Figure 4
 N_COMP = 5                                  # number of principal components given to LDA
 CV_SEED = 0                                 # random split of the sites into 5 folds
+N_PERM_MODE = 'exact'                       # 'exact' = all 924 site labelings, 'skip' = no test
 # spectral windows: raw range read, 2 cm-1 grid, region used in PCA
 WINDOWS = {'fingerprint': {'raw': (200, 1800), 'grid': (205, 1795), 'region': (250, 1790)},
            'ch': {'raw': (2700, 3100), 'grid': (2705, 3095), 'region': (2760, 3095)}}
@@ -197,6 +212,7 @@ def stars(p):
 fig, axs = plt.subplots(2, 2, figsize=(10, 9),
                         gridspec_kw={'width_ratios': [1.35, 1], 'wspace': 0.32, 'hspace': 0.42})
 letters = iter('abcd')
+RES = {}                                    # results of every step, used in STEP 9
 for row, w in enumerate(['fingerprint', 'ch']):
     X, g = data[w], WINDOWS[w]['g']
     report(f'\n========== {TITLES[w].replace("$^{-1}$", "-1")} ==========')
@@ -229,8 +245,8 @@ for row, w in enumerate(['fingerprint', 'ch']):
     # relative to the spread within the groups). With two groups there is one
     # such axis, "canonical variable 1" (LD1). Each spectrum's LD1 value is a
     # dot in panel b/d. LDA is fitted here on all spectra, to DISPLAY the
-    # separation; the classification accuracy of the paper comes from the
-    # cross-validation in Acacia_EV_NV_Analysis.py (whole sites left out).
+    # separation; the classification accuracy comes from the cross-validation
+    # in STEP 5 (whole sites left out).
     lda = LinearDiscriminantAnalysis().fit(T, y)
     ld = lda.transform(T).ravel()
     ld *= np.sign(ld[y == 1].mean())                         # NVs on the positive side
@@ -259,6 +275,10 @@ for row, w in enumerate(['fingerprint', 'ch']):
         out[f'PC{i + 1}'] = T[:, i]
     out['LD1'] = ld
     out.to_csv(OUTPUT_DIR / f'PCA_LDA_scores_{FILE_TAG[w]}.csv', index=False)
+    load = pca.components_[:2].copy()
+    load[0] *= sign                                          # same orientation as the scores
+    RES[w] = {'var': var, 'p_ld1': p, 'ld_median': {c: np.median(ld[y == c]) for c in (0, 1)},
+              'pc1_mean': {c: T[y == c, 0].mean() for c in (0, 1)}, 'loadings': load}
 
     # ------------------------------------------------------------------------
     # PANEL: PCA score plot with 2-SD ellipses
@@ -337,25 +357,31 @@ folds = list(StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=CV_SEED
              .split(np.zeros(len(y)), y, sites))
 
 
-def cv_pca_lda(X, refit=False):
-    """refit=True: PCA is also re-fitted inside each training fold (stricter check)."""
-    T = PCA(n_components=N_COMP, svd_solver='full').fit_transform(X)
-    pred = np.empty(len(y), int)
-    for tr, te in folds:
+def cv_pca_lda(X, refit=False, labels=None, folds_=None, T=None):
+    """refit=True: PCA is also re-fitted inside each training fold (stricter check).
+    labels / folds_ / T are only given in the permutation test (STEP 8)."""
+    labels = y if labels is None else labels
+    folds_ = folds if folds_ is None else folds_
+    if T is None:
+        T = PCA(n_components=N_COMP, svd_solver='full').fit_transform(X)
+    pred = np.empty(len(labels), int)
+    for tr, te in folds_:
         if refit:
             pca_f = PCA(n_components=N_COMP, svd_solver='full').fit(X[tr])
             Ttr, Tte = pca_f.transform(X[tr]), pca_f.transform(X[te])
         else:
             Ttr, Tte = T[tr], T[te]
-        pred[te] = LinearDiscriminantAnalysis().fit(Ttr, y[tr]).predict(Tte)
+        pred[te] = LinearDiscriminantAnalysis().fit(Ttr, labels[tr]).predict(Tte)
     return pred
 
 
-def cv_plsda(X):
-    pred = np.empty(len(y), int)
-    for tr, te in folds:
+def cv_plsda(X, labels=None, folds_=None):
+    labels = y if labels is None else labels
+    folds_ = folds if folds_ is None else folds_
+    pred = np.empty(len(labels), int)
+    for tr, te in folds_:
         sc = StandardScaler().fit(X[tr])
-        pls = PLSRegression(n_components=N_COMP, scale=False).fit(sc.transform(X[tr]), y[tr])
+        pls = PLSRegression(n_components=N_COMP, scale=False).fit(sc.transform(X[tr]), labels[tr])
         pred[te] = (pls.predict(sc.transform(X[te])).ravel() > 0.5).astype(int)
     return pred
 
@@ -378,6 +404,7 @@ for row, w in enumerate(['fingerprint', 'ch']):
                         'Specificity EV (%)': round(spec, 1),
                         'EV correct': f'{cm[0, 0]}/{cm[0].sum()}',
                         'NV correct': f'{cm[1, 1]}/{cm[1].sum()}'})
+        RES[w].setdefault('cv', {})[model] = {'acc': acc, 'sens': sens, 'spec': spec, 'cm': cm}
         report(f'  {w:11s} {model}: accuracy {acc:.1f} %, sensitivity {sens:.1f} %, '
                f'specificity {spec:.1f} %  (EV {cm[0, 0]}/120, NV {cm[1, 1]}/120)')
         ax = axs2[row, col]
@@ -396,9 +423,247 @@ for row, w in enumerate(['fingerprint', 'ch']):
                      f'accuracy {acc:.1f}%', fontsize=12)
         ax.text(-0.32, 1.12, f'({next(letters)})', transform=ax.transAxes, fontsize=14, va='bottom')
     report(f'  {w:11s} PCA-LDA with PCA re-fitted in each fold (stricter check): {strict:.1f} %')
+    RES[w]['strict'] = strict
 pd.DataFrame(cv_rows).to_csv(OUTPUT_DIR / 'CV_accuracy.csv', index=False)
 fig2.tight_layout()
 save_figure(fig2, 'Fig_ConfusionMatrices')
+
+
+def main_bands(g, curve, n, min_gap=20):
+    """The n largest local extrema (by absolute value) of a curve, at least
+    min_gap cm-1 apart. Returns [(wavenumber, value), ...] sorted by wavenumber."""
+    i = np.flatnonzero((np.abs(curve[1:-1]) >= np.abs(curve[:-2])) &
+                       (np.abs(curve[1:-1]) >= np.abs(curve[2:]))) + 1
+    chosen = []
+    for k in i[np.argsort(-np.abs(curve[i]))]:
+        if all(abs(g[k] - g[j]) >= min_gap for j in chosen):
+            chosen.append(k)
+        if len(chosen) == n:
+            break
+    return [(g[k], curve[k]) for k in sorted(chosen)]
+
+
+N_BANDS = {'fingerprint': 8, 'ch': 4}       # how many bands are labelled per region
+
+
+# ============================================================================
+# STEP 6 - PCA loadings: which bands make PC1 and PC2
+# ============================================================================
+# A loading tells how much each wavenumber contributes to a PC. A spectrum with
+# a high PC1 score is relatively strong at the bands with positive PC1 loading
+# and weak at the bands with negative loading. Because the group means of the
+# PC1 scores have opposite signs (STEP 2), the PC1 loading shows which bands are
+# relatively stronger in EVs and which in NVs (relative, because of SNV).
+report('\nSTEP 6 - PCA loadings (largest PC1 bands)')
+fig3, axs3 = plt.subplots(1, 2, figsize=(12, 4.6), gridspec_kw={'width_ratios': [3, 1.3]})
+load_rows = []
+for ax, w, letter in zip(axs3, ['fingerprint', 'ch'], 'ab'):
+    g, L, var = WINDOWS[w]['g'], RES[w]['loadings'], RES[w]['var']
+    hi_group = GROUPS[0] if RES[w]['pc1_mean'][0] > 0 else GROUPS[1]   # group on the PC1 > 0 side
+    lo_group = GROUPS[1] if hi_group == GROUPS[0] else GROUPS[0]
+    ax.axhline(0, color='k', lw=0.6)
+    ax.plot(g, L[0], color='#0B5A7E', lw=1.2, label=f'PC1 ({var[0]:.1f}%)')
+    ax.plot(g, L[1], color='#B5541C', lw=1.0, alpha=0.8, label=f'PC2 ({var[1]:.1f}%)')
+    bands = main_bands(g, L[0], N_BANDS[w])
+    RES[w]['load_bands'] = bands
+    span = np.ptp(np.r_[L[0], L[1]])
+    for wn, v in bands:
+        ax.text(wn, v + (0.03 if v > 0 else -0.03) * span, f'{wn:.0f}', ha='center',
+                va='bottom' if v > 0 else 'top', fontsize=9, rotation=90)
+        load_rows.append({'Region': w, 'Band (cm-1)': round(wn), 'PC1 loading': round(v, 4),
+                          'Relatively stronger in': hi_group if v > 0 else lo_group})
+    report(f'  {w}: PC1 > 0 = {hi_group} side.  Main PC1 bands: ' +
+           ', '.join(f'{wn:.0f} ({"+" if v > 0 else "-"}, {hi_group if v > 0 else lo_group})'
+                     for wn, v in bands))
+    ax.set_xlim(g[0], g[-1])
+    ax.set_ylim(L[:2].min() - 0.18 * span, L[:2].max() + 0.22 * span)
+    ax.set_xlabel('Raman shift (cm$^{-1}$)')
+    ax.set_ylabel('Loading (a.u.)')
+    ax.set_title(f'{TITLES[w]}\nPC1 > 0: {hi_group} side', fontsize=11, loc='left')
+    ax.legend(frameon=False, fontsize=10, loc='lower left')
+    ax.text(-0.10 if w == 'fingerprint' else -0.25, 1.06, f'({letter})', transform=ax.transAxes,
+            fontsize=14, va='bottom')
+fig3.tight_layout()
+save_figure(fig3, 'Fig_Loadings')
+pd.DataFrame(load_rows).to_csv(OUTPUT_DIR / 'Loadings_main_bands.csv', index=False)
+
+
+# ============================================================================
+# STEP 7 - difference spectrum NV - EV
+# ============================================================================
+# 1. mean SNV spectrum of each site (20 spectra)  -> 6 EV and 6 NV site spectra
+# 2. difference = mean of the 6 NV site spectra - mean of the 6 EV site spectra
+# 3. uncertainty from the site-to-site variation: SE = sqrt(SD_EV^2/6 + SD_NV^2/6)
+#    (SD over the 6 site spectra); the shaded band is difference +/- 2 SE.
+#    Where the band does not include zero, the difference is consistent
+#    across sites. Positive = relatively stronger in NVs, negative = in EVs.
+report('\nSTEP 7 - difference spectrum NV - EV (site means, +/- 2 SE)')
+fig4, axs4 = plt.subplots(1, 2, figsize=(12, 4.6), gridspec_kw={'width_ratios': [3, 1.3]})
+diff_rows = []
+for ax, w, letter in zip(axs4, ['fingerprint', 'ch'], 'ab'):
+    X, g = data[w], WINDOWS[w]['g']
+    S = {c: np.array([X[sites == s].mean(0) for s in sorted(set(sites[y == c]))]) for c in (0, 1)}
+    d = S[1].mean(0) - S[0].mean(0)
+    se = np.sqrt(S[0].var(0, ddof=1) / len(S[0]) + S[1].var(0, ddof=1) / len(S[1]))
+    sig = np.abs(d) > 2 * se
+    ax.axhline(0, color='k', lw=0.6)
+    ax.fill_between(g, d - 2 * se, d + 2 * se, color='0.75', lw=0, label='$\\pm$2 SE (6 + 6 sites)')
+    ax.plot(g, d, color='k', lw=1.0, label='NV $-$ EV')
+    bands = [b for b in main_bands(g, np.where(sig, d, 0), N_BANDS[w]) if b[1] != 0]
+    RES[w]['diff_bands'] = bands
+    RES[w]['diff_sig_frac'] = sig.mean() * 100
+    span = np.ptp(np.r_[d - 2 * se, d + 2 * se])
+    for wn, v in bands:
+        ax.text(wn, v + (0.04 if v > 0 else -0.04) * span, f'{wn:.0f}', ha='center',
+                va='bottom' if v > 0 else 'top', fontsize=9, rotation=90)
+        diff_rows.append({'Region': w, 'Band (cm-1)': round(wn), 'NV - EV (SNV)': round(v, 3),
+                          '2 SE': round(float(np.interp(wn, g, 2 * se)), 3),
+                          'Relatively stronger in': GROUPS[1] if v > 0 else GROUPS[0]})
+    report(f'  {w}: |difference| > 2 SE at {sig.mean() * 100:.0f} % of the wavenumbers. '
+           'Largest consistent differences: ' +
+           ', '.join(f'{wn:.0f} ({"NVs" if v > 0 else "EVs"} higher)' for wn, v in bands))
+    ax.set_xlim(g[0], g[-1])
+    ax.set_ylim((d - 2 * se).min() - 0.15 * span, (d + 2 * se).max() + 0.2 * span)
+    ax.set_xlabel('Raman shift (cm$^{-1}$)')
+    ax.set_ylabel('$\\Delta$ SNV intensity, NV $-$ EV')
+    ax.set_title(TITLES[w], fontsize=11, loc='left')
+    ax.legend(frameon=False, fontsize=10, loc='lower left' if w == 'fingerprint' else 'upper left')
+    ax.text(-0.10 if w == 'fingerprint' else -0.25, 1.06, f'({letter})', transform=ax.transAxes,
+            fontsize=14, va='bottom')
+fig4.tight_layout()
+save_figure(fig4, 'Fig_Difference')
+pd.DataFrame(diff_rows).to_csv(OUTPUT_DIR / 'Difference_main_bands.csv', index=False)
+
+
+# ============================================================================
+# STEP 8 - exact label-shuffling (permutation) test
+# ============================================================================
+# Question: could an accuracy this high appear by chance, given that only 12
+# sites were measured? Every one of the 924 ways of calling 6 of the 12 sites
+# "EV" (and the other 6 "NV") is tried; for each, the complete cross-validation
+# of STEP 5 is repeated (new folds, new models). The real labeling is one of the
+# 924. p = (number of labelings with accuracy >= real accuracy) / 924.
+# The smallest possible p with 6 + 6 sites is 1/924 = 0.0011 (or 2/924 = 0.0022
+# if the mirror labeling, EV<->NV swapped, scores the same).
+site_ids = np.array(sorted(set(sites)))
+perm_rows = []
+if N_PERM_MODE == 'exact':
+    report('\nSTEP 8 - exact permutation test (924 site labelings x 2 models x 2 regions)')
+    labelings = list(combinations(range(len(site_ids)), 6))
+    fig5, axs5 = plt.subplots(2, 2, figsize=(9, 7))
+    letters = iter('abcd')
+    for row, w in enumerate(['fingerprint', 'ch']):
+        X = data[w]
+        T_all = PCA(n_components=N_COMP, svd_solver='full').fit_transform(X)
+        accs = {'PCA-LDA': [], 'PLS-DA': []}
+        for k, ev_sites in enumerate(labelings):
+            lab_site = dict(zip(site_ids, [0 if i in ev_sites else 1 for i in range(len(site_ids))]))
+            yp = np.array([lab_site[s] for s in sites])
+            fp = list(StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=CV_SEED)
+                      .split(np.zeros(len(yp)), yp, sites))
+            accs['PCA-LDA'].append((cv_pca_lda(X, labels=yp, folds_=fp, T=T_all) == yp).mean() * 100)
+            accs['PLS-DA'].append((cv_plsda(X, labels=yp, folds_=fp) == yp).mean() * 100)
+            if (k + 1) % 100 == 0:
+                print(f'  {w}: {k + 1}/{len(labelings)} labelings done')
+        for col, model in enumerate(['PCA-LDA', 'PLS-DA']):
+            a = np.array(accs[model])
+            obs = RES[w]['cv'][model]['acc']
+            p_perm = np.mean(a >= obs - 1e-9)
+            RES[w].setdefault('perm', {})[model] = {'p': p_perm, 'median': np.median(a),
+                                                    'p95': np.percentile(a, 95), 'n': len(a)}
+            perm_rows.append({'Region': w, 'Model': model, 'Real accuracy (%)': round(obs, 1),
+                              'Shuffled: median (%)': round(np.median(a), 1),
+                              'Shuffled: 95th percentile (%)': round(np.percentile(a, 95), 1),
+                              'Shuffled: maximum (%)': round(a.max(), 1),
+                              'Labelings >= real': int(np.sum(a >= obs - 1e-9)),
+                              'Labelings tested': len(a), 'p (exact)': round(p_perm, 4)})
+            report(f'  {w:11s} {model}: real {obs:.1f} %; shuffled median {np.median(a):.1f} %, '
+                   f'95th percentile {np.percentile(a, 95):.1f} %, max {a.max():.1f} %; '
+                   f'{np.sum(a >= obs - 1e-9)} of {len(a)} labelings >= real -> p = {p_perm:.4f}')
+            ax = axs5[row, col]
+            ax.hist(a, bins=np.arange(0, 102.5, 2.5), color='0.6', edgecolor='white')
+            ax.axvline(obs, color='#B5541C', lw=2)
+            ax.text(obs - 1, ax.get_ylim()[1] * 0.92, f'real\n{obs:.1f}%', ha='right', va='top',
+                    color='#B5541C', fontsize=10)
+            ax.set_xlim(0, 100)
+            ax.set_xlabel('Cross-validated accuracy (%)')
+            ax.set_ylabel('Number of site labelings')
+            ax.set_title(f'{model} - {"Fingerprint" if w == "fingerprint" else "CH-stretching"}'
+                         f'\np = {p_perm:.4f} ({len(a)} labelings)', fontsize=11)
+            ax.text(-0.18, 1.08, f'({next(letters)})', transform=ax.transAxes, fontsize=14,
+                    va='bottom')
+    fig5.tight_layout()
+    save_figure(fig5, 'Fig_Permutation')
+    pd.DataFrame(perm_rows).to_csv(OUTPUT_DIR / 'Permutation_test.csv', index=False)
+else:
+    report('\nSTEP 8 - permutation test skipped (N_PERM_MODE = "skip")')
+
+
+# ============================================================================
+# STEP 9 - the results in words (every number comes from this run)
+# ============================================================================
+def region_name(w):
+    return 'fingerprint region (250-1790 cm-1)' if w == 'fingerprint' else \
+        'CH-stretching region (2760-3095 cm-1)'
+
+
+txt = ['RESULTS - Acacia EVs vs NVs on Ag/SiNWs (generated by Acacia_PCA_LDA_Explained.py)',
+       '=' * 78, '',
+       f'Data: {np.sum(y == 0)} EV and {np.sum(y == 1)} NV SERS spectra, 6 measurement sites per '
+       f'group, 20 spectra per site. Pre-processing: cosmic-ray removal, 2 cm-1 grid, '
+       f'Savitzky-Golay (11 pts, 3rd order), ALS baseline, SNV.', '']
+for w in ['fingerprint', 'ch']:
+    r = RES[w]
+    v = r['var']
+    pc1_side = GROUPS[0] if r['pc1_mean'][0] > 0 else GROUPS[1]
+    txt += [f'--- {region_name(w).upper()} ---', '',
+            f'1. Unsupervised PCA. PC1 and PC2 explain {v[0]:.1f}% and {v[1]:.1f}% of the variance '
+            f'(PC1-PC5: {v[:N_COMP].sum():.1f}%). The groups separate mainly along PC1 '
+            f'(mean PC1 score: EVs {r["pc1_mean"][0]:+.2f}, NVs {r["pc1_mean"][1]:+.2f}), '
+            f'although the labels were not used.',
+            '   PC1 loading, main bands (cm-1; relatively stronger in): ' +
+            ', '.join(f'{wn:.0f} ({pc1_side if val > 0 else ({GROUPS[0], GROUPS[1]} - {pc1_side}).pop()})'
+                      for wn, val in r['load_bands']) + '.',
+            '',
+            f'2. Difference spectrum NV - EV (site means, +/- 2 SE): the difference exceeds 2 SE '
+            f'at {r["diff_sig_frac"]:.0f}% of the wavenumbers. Largest consistent differences: ' +
+            ', '.join(f'{wn:.0f} ({"NVs" if val > 0 else "EVs"} higher)'
+                      for wn, val in r['diff_bands']) + '.',
+            '   (Relative intensities after SNV normalisation, not absolute amounts.)', '',
+            f'3. PCA-LDA (5 PCs), displayed on all spectra: median canonical variable 1 '
+            f'{r["ld_median"][0]:+.2f} (EVs) vs {r["ld_median"][1]:+.2f} (NVs); Welch t-test on '
+            f'the 6 + 6 site means p = {r["p_ld1"]:.1e}. Descriptive only (LDA fitted on the same '
+            f'spectra).', '',
+            '4. Classification of new sites (5-fold cross-validation, whole sites left out):']
+    for model in ['PCA-LDA', 'PLS-DA']:
+        c = r['cv'][model]
+        txt.append(f'   {model}: accuracy {c["acc"]:.1f}% ({c["cm"][0, 0] + c["cm"][1, 1]}/'
+                   f'{c["cm"].sum()} spectra), sensitivity (NV) {c["sens"]:.1f}%, specificity (EV) '
+                   f'{c["spec"]:.1f}%; EVs {c["cm"][0, 0]}/120, NVs {c["cm"][1, 1]}/120 correct.')
+    txt.append(f'   Stricter check (PCA re-fitted inside each training fold): PCA-LDA '
+               f'{r["strict"]:.1f}%.')
+    if 'perm' in r:
+        txt += ['', '5. Exact permutation test (all 924 assignments of 6 of the 12 sites to "EV"):']
+        for model in ['PCA-LDA', 'PLS-DA']:
+            q = r['perm'][model]
+            txt.append(f'   {model}: shuffled labels give a median accuracy of {q["median"]:.1f}% '
+                       f'(95th percentile {q["p95"]:.1f}%); p = {q["p"]:.4f}.')
+    txt.append('')
+txt += ['--- WHAT THESE RESULTS DO AND DO NOT SHOW ---',
+        '* The EV and NV spectra differ reproducibly: a model trained on some sites classifies the '
+        'spectra of sites it has never seen with the accuracies above, far above the accuracies '
+        'obtained with shuffled labels.',
+        '* The independent unit is the measurement site (6 per group), not the spectrum (120 per '
+        'group). With 6 + 6 sites the smallest possible permutation p is 2/924 = 0.0022 (the real '
+        'labeling and its EV<->NV mirror image give the same accuracy); p = 0.0022 means that no '
+        'other way of splitting the 12 sites reaches the real accuracy.',
+        '* If all EV spectra come from one preparation and all NV spectra from another, the '
+        'comparison cannot separate EV-vs-NV biology from preparation or measurement-session '
+        'effects; independent replicate preparations would address this.',
+        '* After SNV, band intensities are relative (composition), not absolute amounts.']
+(OUTPUT_DIR / 'RESULTS_for_manuscript.txt').write_text('\n'.join(txt) + '\n', encoding='utf-8')
+print('\n' + '\n'.join(txt))
+
 (OUTPUT_DIR / 'PCA_LDA_summary.txt').write_text('\n'.join(SUMMARY) + '\n', encoding='utf-8')
 print(f'\nSaved in: {OUTPUT_DIR}')
 if SHOW_WINDOW:

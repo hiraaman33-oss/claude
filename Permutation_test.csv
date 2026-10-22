@@ -1,0 +1,5 @@
+Region,Model,Real accuracy (%),Shuffled: median (%),Shuffled: 95th percentile (%),Shuffled: maximum (%),Labelings >= real,Labelings tested,p (exact)
+fingerprint,PCA-LDA,95.4,50.4,78.3,95.4,2,924,0.0022
+fingerprint,PLS-DA,95.4,49.6,69.2,95.4,2,924,0.0022
+ch,PCA-LDA,97.1,53.5,80.4,97.1,2,924,0.0022
+ch,PLS-DA,98.8,49.2,75.0,98.8,2,924,0.0022
