@@ -379,7 +379,7 @@ CH_BANDS = [(2853, 10, 'sh', 'Lipids', 'CH2 symmetric stretching'),
             (2935, 12, 'max', 'Proteins', 'CH3 symmetric stretching'),
             (2960, 10, 'sh', 'Proteins/Lipids', 'CH3 asymmetric stretching'),
             (3065, 12, 'max', 'Proteins', 'Aromatic =C-H stretching')]
-CH_SHOW = [2935]                            # labelled in Fig 2b (all bands go to Table S4)
+CH_SHOW = [2880, 2935]                      # labelled in Fig 2b: CH2 lipid band + main CH3 band (all bands go to Table S4)
 NAME_LONG = {0: 'EV Acacia on Ag/SiNWs', 1: 'Nanovesicles Acacia on Ag/SiNWs'}
 shift_table = []
 
