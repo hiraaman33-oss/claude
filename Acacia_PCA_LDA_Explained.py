@@ -7,6 +7,8 @@
 #   (b) LDA canonical variable 1, fingerprint region
 #   (c) PCA score plot, CH-stretching region    (2760-3095 cm-1)
 #   (d) LDA canonical variable 1, CH-stretching region
+# and a second figure with the cross-validated confusion matrices (PCA-LDA and
+# PLS-DA, fingerprint and CH-stretching) - STEP 5.
 #
 # Everything is calculated from your original data:
 #   CODE 005\EV Acacia\EV_Acacia_Raman_Data.xlsx              (120 spectra)
@@ -24,6 +26,8 @@
 #   Fig_PCA_LDA_large.png / .tiff        the figure (600 dpi)
 #   PCA_LDA_scores_fingerprint.csv       PC1-PC5 and LD1 score of every spectrum
 #   PCA_LDA_scores_CH.csv                (open in Excel to check any point)
+#   Fig_ConfusionMatrices.png / .tiff    cross-validated confusion matrices (600 dpi)
+#   CV_accuracy.csv                      accuracy, sensitivity, specificity
 #   PCA_LDA_summary.txt                  all numbers printed by the script
 # =============================================================================
 
@@ -41,6 +45,10 @@ from scipy.signal import savgol_filter
 from scipy.stats import ttest_ind
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import StratifiedGroupKFold
+from sklearn.metrics import confusion_matrix
 
 # ----------------------------------------------------------------------------
 # SETTINGS
@@ -58,6 +66,7 @@ SITES = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6']
 GROUPS = {0: 'EVs', 1: 'NVs'}               # class 0 = EVs, class 1 = NVs
 COLS = {0: '#0B5A7E', 1: '#B5541C'}         # same colours as Figure 4
 N_COMP = 5                                  # number of principal components given to LDA
+CV_SEED = 0                                 # random split of the sites into 5 folds
 # spectral windows: raw range read, 2 cm-1 grid, region used in PCA
 WINDOWS = {'fingerprint': {'raw': (200, 1800), 'grid': (205, 1795), 'region': (250, 1790)},
            'ch': {'raw': (2700, 3100), 'grid': (2705, 3095), 'region': (2760, 3095)}}
@@ -289,6 +298,92 @@ for row, w in enumerate(['fingerprint', 'ch']):
 fig.subplots_adjust(left=0.09, right=0.98, bottom=0.07, top=0.94)
 fig.savefig(OUTPUT_DIR / 'Fig_PCA_LDA_large.png', dpi=600)
 fig.savefig(OUTPUT_DIR / 'Fig_PCA_LDA_large.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
+
+
+# ============================================================================
+# STEP 5 - cross-validated classification and confusion matrices
+# ============================================================================
+# Panels b and d only SHOW the separation (LDA fitted on all spectra). Whether
+# a NEW spectrum can be classified correctly is tested by cross-validation:
+#   - the 12 sites (6 EV, 6 NV) are split into 5 folds; all 20 spectra of a site
+#     always stay together, so a site is never in training and test at once
+#   - the model is trained on 4 folds and predicts the spectra of the 5th fold;
+#     repeated 5 times, so every spectrum is predicted once, by a model that
+#     never saw its site
+#   PCA-LDA: PCA scores of all spectra (unsupervised, no labels), LDA trained on
+#            the training folds only (as in Acacia_EV_NV_Analysis.py)
+#   PLS-DA : autoscaling + PLS (5 latent variables) trained on the training folds
+#            only; predicted value > 0.5 = NV
+# Confusion matrix: rows = true group, columns = predicted group.
+#   sensitivity = NVs correctly called NV, specificity = EVs correctly called EV
+#   (NV is taken as the "positive" class)
+folds = list(StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=CV_SEED)
+             .split(np.zeros(len(y)), y, sites))
+
+
+def cv_pca_lda(X, refit=False):
+    """refit=True: PCA is also re-fitted inside each training fold (stricter check)."""
+    T = PCA(n_components=N_COMP, svd_solver='full').fit_transform(X)
+    pred = np.empty(len(y), int)
+    for tr, te in folds:
+        if refit:
+            pca_f = PCA(n_components=N_COMP, svd_solver='full').fit(X[tr])
+            Ttr, Tte = pca_f.transform(X[tr]), pca_f.transform(X[te])
+        else:
+            Ttr, Tte = T[tr], T[te]
+        pred[te] = LinearDiscriminantAnalysis().fit(Ttr, y[tr]).predict(Tte)
+    return pred
+
+
+def cv_plsda(X):
+    pred = np.empty(len(y), int)
+    for tr, te in folds:
+        sc = StandardScaler().fit(X[tr])
+        pls = PLSRegression(n_components=N_COMP, scale=False).fit(sc.transform(X[tr]), y[tr])
+        pred[te] = (pls.predict(sc.transform(X[te])).ravel() > 0.5).astype(int)
+    return pred
+
+
+report('\nSTEP 5 - cross-validation (5 folds, whole sites left out)')
+for k, (tr, te) in enumerate(folds, 1):
+    report(f'  fold {k}: test sites ' + ', '.join(sorted(set(sites[te]))))
+cv_rows = []
+fig2, axs2 = plt.subplots(2, 2, figsize=(8, 7.6))
+letters = iter('abcd')
+for row, w in enumerate(['fingerprint', 'ch']):
+    X = data[w]
+    strict = (cv_pca_lda(X, refit=True) == y).mean() * 100
+    for col, (model, pred) in enumerate([('PCA-LDA', cv_pca_lda(X)), ('PLS-DA', cv_plsda(X))]):
+        cm = confusion_matrix(y, pred)
+        acc = (pred == y).mean() * 100
+        sens, spec = cm[1, 1] / cm[1].sum() * 100, cm[0, 0] / cm[0].sum() * 100
+        cv_rows.append({'Region': TITLES[w].replace('$^{-1}$', '-1'), 'Model': model,
+                        'Accuracy (%)': round(acc, 1), 'Sensitivity NV (%)': round(sens, 1),
+                        'Specificity EV (%)': round(spec, 1),
+                        'EV correct': f'{cm[0, 0]}/{cm[0].sum()}',
+                        'NV correct': f'{cm[1, 1]}/{cm[1].sum()}'})
+        report(f'  {w:11s} {model}: accuracy {acc:.1f} %, sensitivity {sens:.1f} %, '
+               f'specificity {spec:.1f} %  (EV {cm[0, 0]}/120, NV {cm[1, 1]}/120)')
+        ax = axs2[row, col]
+        ax.imshow(cm, cmap='Blues', vmin=0, vmax=120)
+        for i in range(2):
+            for j in range(2):
+                ax.text(j, i, f'{cm[i, j]}\n({cm[i, j] / cm[i].sum() * 100:.1f}%)', ha='center',
+                        va='center', fontsize=13, color='white' if cm[i, j] > 60 else 'black')
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels(['EVs', 'NVs'])
+        ax.set_yticks([0, 1])
+        ax.set_yticklabels(['EVs', 'NVs'])
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('True')
+        ax.set_title(f'{model} - {"Fingerprint" if w == "fingerprint" else "CH-stretching"}\n'
+                     f'accuracy {acc:.1f}%', fontsize=12)
+        ax.text(-0.32, 1.12, f'({next(letters)})', transform=ax.transAxes, fontsize=14, va='bottom')
+    report(f'  {w:11s} PCA-LDA with PCA re-fitted in each fold (stricter check): {strict:.1f} %')
+pd.DataFrame(cv_rows).to_csv(OUTPUT_DIR / 'CV_accuracy.csv', index=False)
+fig2.tight_layout()
+fig2.savefig(OUTPUT_DIR / 'Fig_ConfusionMatrices.png', dpi=600)
+fig2.savefig(OUTPUT_DIR / 'Fig_ConfusionMatrices.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
 (OUTPUT_DIR / 'PCA_LDA_summary.txt').write_text('\n'.join(SUMMARY) + '\n', encoding='utf-8')
 print(f'\nSaved in: {OUTPUT_DIR}')
 if SHOW_WINDOW:

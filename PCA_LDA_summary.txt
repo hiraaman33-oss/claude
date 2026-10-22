@@ -40,3 +40,16 @@ STEP 4 - Welch t-test on the 6 site means of LD1
   EVs site means: -2.67, -2.58, -2.43, -2.58, -2.71, -2.65
   NVs site means: +2.70, +2.76, +2.63, +2.67, +2.64, +2.22
   p = 2.25e-11  (***)
+
+STEP 5 - cross-validation (5 folds, whole sites left out)
+  fold 1: test sites EVs-m2, EVs-m6, NVs-m1
+  fold 2: test sites EVs-m1, NVs-m4, NVs-m6
+  fold 3: test sites EVs-m5, NVs-m3
+  fold 4: test sites EVs-m4, NVs-m5
+  fold 5: test sites EVs-m3, NVs-m2
+  fingerprint PCA-LDA: accuracy 95.4 %, sensitivity 95.0 %, specificity 95.8 %  (EV 115/120, NV 114/120)
+  fingerprint PLS-DA: accuracy 95.4 %, sensitivity 95.0 %, specificity 95.8 %  (EV 115/120, NV 114/120)
+  fingerprint PCA-LDA with PCA re-fitted in each fold (stricter check): 96.2 %
+  ch          PCA-LDA: accuracy 97.1 %, sensitivity 99.2 %, specificity 95.0 %  (EV 114/120, NV 119/120)
+  ch          PLS-DA: accuracy 98.8 %, sensitivity 99.2 %, specificity 98.3 %  (EV 118/120, NV 119/120)
+  ch          PCA-LDA with PCA re-fitted in each fold (stricter check): 96.7 %
