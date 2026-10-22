@@ -1,0 +1,5 @@
+Region,Model,Accuracy (%),Sensitivity NV (%),Specificity EV (%),EVs correct,NVs correct,Permutation p (924 labelings)
+Fingerprint (250-1790 cm-1),PCA-LDA,95.4,95.0,95.8,115/120,114/120,0.0022
+Fingerprint (250-1790 cm-1),PLS-DA,95.4,95.0,95.8,115/120,114/120,0.0022
+CH-stretching (2760-3095 cm-1),PCA-LDA,97.1,99.2,95.0,114/120,119/120,0.0022
+CH-stretching (2760-3095 cm-1),PLS-DA,98.8,99.2,98.3,118/120,119/120,0.0022

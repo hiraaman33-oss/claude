@@ -1,0 +1,25 @@
+Source,Region,Band (cm-1),Value,Relatively stronger in
+PC1 loading,fingerprint,1033,-0.0591,NVs
+PC1 loading,fingerprint,1159,0.0503,EVs
+PC1 loading,fingerprint,1353,0.0576,EVs
+PC1 loading,fingerprint,1389,-0.1184,NVs
+PC1 loading,fingerprint,1499,0.0713,EVs
+PC1 loading,fingerprint,1587,0.1428,EVs
+PC1 loading,fingerprint,1609,-0.0937,NVs
+PC1 loading,fingerprint,1629,-0.081,NVs
+NV - EV difference,fingerprint,1033,0.802,NVs
+NV - EV difference,fingerprint,1161,-0.664,EVs
+NV - EV difference,fingerprint,1355,-0.783,EVs
+NV - EV difference,fingerprint,1391,1.074,NVs
+NV - EV difference,fingerprint,1497,-0.624,EVs
+NV - EV difference,fingerprint,1589,-1.532,EVs
+NV - EV difference,fingerprint,1609,0.834,NVs
+NV - EV difference,fingerprint,1629,0.745,NVs
+PC1 loading,ch,2887,0.1265,NVs
+PC1 loading,ch,2925,-0.071,EVs
+PC1 loading,ch,2963,0.182,NVs
+PC1 loading,ch,3063,-0.1334,EVs
+NV - EV difference,ch,2885,0.522,NVs
+NV - EV difference,ch,2925,-0.509,EVs
+NV - EV difference,ch,2957,0.773,NVs
+NV - EV difference,ch,3067,-0.381,EVs

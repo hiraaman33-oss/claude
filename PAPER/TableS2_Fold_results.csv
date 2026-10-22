@@ -1,0 +1,21 @@
+Region,Model,Fold,Test sites,Test spectra,Correct,Accuracy (%)
+Fingerprint (250-1790 cm-1),PCA-LDA,1,"EVs-m2, EVs-m6, NVs-m1",60,58,96.7
+Fingerprint (250-1790 cm-1),PCA-LDA,2,"EVs-m1, NVs-m4, NVs-m6",60,59,98.3
+Fingerprint (250-1790 cm-1),PCA-LDA,3,"EVs-m5, NVs-m3",40,35,87.5
+Fingerprint (250-1790 cm-1),PCA-LDA,4,"EVs-m4, NVs-m5",40,38,95.0
+Fingerprint (250-1790 cm-1),PCA-LDA,5,"EVs-m3, NVs-m2",40,39,97.5
+Fingerprint (250-1790 cm-1),PLS-DA,1,"EVs-m2, EVs-m6, NVs-m1",60,57,95.0
+Fingerprint (250-1790 cm-1),PLS-DA,2,"EVs-m1, NVs-m4, NVs-m6",60,57,95.0
+Fingerprint (250-1790 cm-1),PLS-DA,3,"EVs-m5, NVs-m3",40,38,95.0
+Fingerprint (250-1790 cm-1),PLS-DA,4,"EVs-m4, NVs-m5",40,38,95.0
+Fingerprint (250-1790 cm-1),PLS-DA,5,"EVs-m3, NVs-m2",40,39,97.5
+CH-stretching (2760-3095 cm-1),PCA-LDA,1,"EVs-m2, EVs-m6, NVs-m1",60,56,93.3
+CH-stretching (2760-3095 cm-1),PCA-LDA,2,"EVs-m1, NVs-m4, NVs-m6",60,59,98.3
+CH-stretching (2760-3095 cm-1),PCA-LDA,3,"EVs-m5, NVs-m3",40,39,97.5
+CH-stretching (2760-3095 cm-1),PCA-LDA,4,"EVs-m4, NVs-m5",40,40,100.0
+CH-stretching (2760-3095 cm-1),PCA-LDA,5,"EVs-m3, NVs-m2",40,39,97.5
+CH-stretching (2760-3095 cm-1),PLS-DA,1,"EVs-m2, EVs-m6, NVs-m1",60,60,100.0
+CH-stretching (2760-3095 cm-1),PLS-DA,2,"EVs-m1, NVs-m4, NVs-m6",60,59,98.3
+CH-stretching (2760-3095 cm-1),PLS-DA,3,"EVs-m5, NVs-m3",40,39,97.5
+CH-stretching (2760-3095 cm-1),PLS-DA,4,"EVs-m4, NVs-m5",40,39,97.5
+CH-stretching (2760-3095 cm-1),PLS-DA,5,"EVs-m3, NVs-m2",40,40,100.0

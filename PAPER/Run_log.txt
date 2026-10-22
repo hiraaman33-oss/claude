@@ -1,0 +1,53 @@
+1. DATA
+  EV_Acacia_Raman_Data.xlsx: 6 sites x 20 = 120 spectra
+  NV_Acacia_Raman_Data.xlsx: 6 sites x 20 = 120 spectra
+  Fingerprint (250-1790 cm-1): 770 wavenumbers (2 cm-1 grid)
+  CH-stretching (2760-3095 cm-1): 168 wavenumbers (2 cm-1 grid)
+
+2. FIGURE 1 - single spectra on CaF2 and Ag/SiNWs
+  saved Fig1a_EV_CaF2_vs_AgSiNW
+  saved Fig1b_NV_CaF2_vs_AgSiNW
+
+3. FIGURE 2 - mean +/- SD spectra
+  saved Fig2a_MeanSD_Fingerprint
+  saved Fig2b_MeanSD_CH
+  consistent shift (fingerprint): 809.0 -> 799.4 cm-1 (-9.7)
+  consistent shift (fingerprint): 1161.8 -> 1168.7 cm-1 (+6.8)
+  consistent shift (fingerprint): 1372.6 -> 1384.6 cm-1 (+12.0)
+  consistent shift (fingerprint): 1603.0 -> 1607.0 cm-1 (+4.0)
+  consistent shift (ch): 2873.7 -> 2883.0 cm-1 (+9.4)
+  consistent shift (ch): 2932.6 -> 2936.7 cm-1 (+4.1)
+
+4. FIGURE 3 - PCA and LDA
+  Fingerprint (250-1790 cm-1): PC1 16.8 %, PC2 8.9 %, PC1-5 41.0 %; LD1 site means p = 3.94e-08
+  CH-stretching (2760-3095 cm-1): PC1 33.3 %, PC2 14.0 %, PC1-5 66.9 %; LD1 site means p = 2.25e-11
+  saved Fig3_PCA_LDA
+
+5. FIGURE 4 - loadings and difference spectrum
+  Fingerprint (250-1790 cm-1): PC1 > 0 = EVs; difference > 2 SE at 65 % of wavenumbers
+  CH-stretching (2760-3095 cm-1): PC1 > 0 = NVs; difference > 2 SE at 79 % of wavenumbers
+  saved Fig4_Loadings_Difference
+
+6. FIGURE 5 - cross-validation
+  fold 1: test sites EVs-m2, EVs-m6, NVs-m1
+  fold 2: test sites EVs-m1, NVs-m4, NVs-m6
+  fold 3: test sites EVs-m5, NVs-m3
+  fold 4: test sites EVs-m4, NVs-m5
+  fold 5: test sites EVs-m3, NVs-m2
+  Fingerprint (250-1790 cm-1) PCA-LDA: accuracy 95.4 %, sensitivity 95.0 %, specificity 95.8 %
+  Fingerprint (250-1790 cm-1) PLS-DA: accuracy 95.4 %, sensitivity 95.0 %, specificity 95.8 %
+  Fingerprint (250-1790 cm-1) PCA-LDA, PCA re-fitted in each fold: 96.2 %
+  CH-stretching (2760-3095 cm-1) PCA-LDA: accuracy 97.1 %, sensitivity 99.2 %, specificity 95.0 %
+  CH-stretching (2760-3095 cm-1) PLS-DA: accuracy 98.8 %, sensitivity 99.2 %, specificity 98.3 %
+  CH-stretching (2760-3095 cm-1) PCA-LDA, PCA re-fitted in each fold: 96.7 %
+  saved Fig5_ConfusionMatrices
+
+7. FIGURE S1 - permutation test (924 site labelings)
+  Fingerprint (250-1790 cm-1) PCA-LDA: shuffled median 50.4 %, 95th percentile 78.3 %; 2/924 >= real -> p = 0.0022
+  Fingerprint (250-1790 cm-1) PLS-DA: shuffled median 49.6 %, 95th percentile 69.2 %; 2/924 >= real -> p = 0.0022
+  CH-stretching (2760-3095 cm-1) PCA-LDA: shuffled median 53.5 %, 95th percentile 80.4 %; 2/924 >= real -> p = 0.0022
+  CH-stretching (2760-3095 cm-1) PLS-DA: shuffled median 49.2 %, 95th percentile 75.0 %; 2/924 >= real -> p = 0.0022
+  saved FigS1_Permutation
+
+8. TABLES
+  Table 1, Tables S1-S5 and the score tables saved

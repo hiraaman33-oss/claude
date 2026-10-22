@@ -1,0 +1,52 @@
+Figure,Group,Nominal (cm-1),Measured (cm-1),Class,Assignment,Prominence / noise SD,Mean SNV,SD
+"1 (EV, single spectrum on Ag/SiNWs)",EV,519,520.0,Si substrate,Si optical phonon,13.8,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,831,831.0,Protein/NA,Tyr Fermi doublet / O-P-O,3.8,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,1001,1002.0,Protein,Phe ring breathing,8.4,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,1031,1031.0,Protein,Phe C-H in-plane bending,1.9,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,1166,1166.0,Protein,Tyr C-H in-plane bending,6.6,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,1355,1355.0,Protein,Trp / CH deformation,3.7,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,1582,1583.0,Protein,Phe C=C bending,6.4,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,1604,1606.0,Protein,Phe/Tyr ring C=C stretching,7.3,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,1724,1724.0,Lipid,C=O ester stretching,6.2,,
+"1 (EV, single spectrum on Ag/SiNWs)",EV,2929,2927.0,Protein/Lipid,CH2/CH3 stretching,2.2,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,519,518.0,Si substrate,Si optical phonon,9.5,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,612,612.0,Protein,Phe C-C twisting,3.9,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,797,803.0,Nucleic acid,O-P-O backbone stretching,2.4,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,826,825.0,Protein/NA,Tyr Fermi doublet / O-P-O,2.6,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,921,920.0,Protein/Carb.,C-C proline / glucose,6.2,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,1001,1002.0,Protein,Phe ring breathing,4.3,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,1031,1030.0,Protein,Phe C-H in-plane bending,3.8,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,1240,1241.0,Protein,Amide III,4.0,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,1386,1385.0,Lipid/Protein,CH3 deformation / COO-,4.5,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,1607,1608.0,Protein,Phe/Tyr ring C=C stretching,3.5,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,1624,1624.0,Protein,"Trp/Tyr C=C, amide I side",4.3,,
+"1 (NV, single spectrum on Ag/SiNWs)",NV,2936,2934.0,Protein/Lipid,CH3 symmetric stretching,2.4,,
+2a (mean spectrum),EVs,519,518.5,Si,Si substrate (crystalline silicon phonon),,1.17,0.837
+2a (mean spectrum),EVs,809,809.0,Nucleic Acids,O-P-O backbone stretching,,0.103,0.249
+2a (mean spectrum),EVs,855,855.4,Proteins,Tyr ring breathing (Fermi doublet),,-0.131,0.28
+2a (mean spectrum),EVs,931,932.0,Proteins,"C-C stretching, protein backbone",,-0.051,0.27
+2a (mean spectrum),EVs,1001,1001.6,Proteins,Phe ring breathing,,0.241,0.29
+2a (mean spectrum),EVs,1161,1161.8,Proteins,Tyr C-H bending / C-C stretching,,0.354,0.66
+2a (mean spectrum),EVs,1249,1248.6,Proteins,Amide III,,0.751,0.704
+2a (mean spectrum),EVs,1373,1372.6,Lipids/NA,CH3 deformation (lipids) / nucleic-acid bases,,1.823,0.736
+2a (mean spectrum),EVs,1603,1603.0,Proteins,Phe/Tyr ring C=C stretching,,4.537,0.957
+2a (mean spectrum),NVs,519,518.1,Si,Si substrate (crystalline silicon phonon),,0.903,0.899
+2a (mean spectrum),NVs,799,799.4,Nucleic Acids,O-P-O backbone stretching,,0.103,0.295
+2a (mean spectrum),NVs,829,829.4,Proteins,Tyr ring breathing (Fermi doublet),,0.187,0.299
+2a (mean spectrum),NVs,927,926.8,Proteins,"C-C stretching, protein backbone",,-0.193,0.215
+2a (mean spectrum),NVs,1001,1001.1,Proteins,Phe ring breathing,,-0.067,0.493
+2a (mean spectrum),NVs,1033,1033.2,Proteins,Phe C-H in-plane bending,,0.347,0.556
+2a (mean spectrum),NVs,1169,1168.7,Proteins,Tyr C-H bending / C-C stretching,,-0.266,0.348
+2a (mean spectrum),NVs,1245,1244.0,Proteins,Amide III,,0.41,0.532
+2a (mean spectrum),NVs,1385,1384.6,Lipids/NA,CH3 deformation (lipids) / nucleic-acid bases,,2.615,0.781
+2a (mean spectrum),NVs,1607,1607.0,Proteins,Phe/Tyr ring C=C stretching,,5.069,1.184
+2a (mean spectrum),NVs,1729,1728.0,Lipids,Ester C=O stretching (lipids),,-0.338,0.686
+2b (mean spectrum),EVs,2853,2852.0,Lipids,CH2 symmetric stretching,,,
+2b (mean spectrum),NVs,2853,2846.3,Lipids,CH2 symmetric stretching,,,
+2b (mean spectrum),EVs,2880,2873.7,Lipids,CH2 asymmetric stretching,,,
+2b (mean spectrum),NVs,2880,2883.0,Lipids,CH2 asymmetric stretching,,,
+2b (mean spectrum),EVs,2935,2932.6,Proteins,CH3 symmetric stretching,,,
+2b (mean spectrum),NVs,2935,2936.7,Proteins,CH3 symmetric stretching,,,
+2b (mean spectrum),NVs,2960,2962.5,Proteins/Lipids,CH3 asymmetric stretching,,,
+2b (mean spectrum),EVs,3065,3067.6,Proteins,Aromatic =C-H stretching,,,
+2b (mean spectrum),NVs,3065,3073.1,Proteins,Aromatic =C-H stretching,,,
