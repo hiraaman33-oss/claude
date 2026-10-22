@@ -20,14 +20,15 @@
 #   Fig4_Loadings_Difference    PC1/PC2 loadings (a, b), NV - EV difference (c, d)
 #   Fig5_ConfusionMatrices      cross-validated, PCA-LDA and PLS-DA (a-d)
 #   FigS1_Permutation           exact label-shuffling test (a-d)
-#   FigS2_PeakFit_CH            CH-region band fitting, EV and NV, 3 line shapes
+#   Fig2c_PeakFit_CH_GL         CH-region band fitting, EV and NV, Gaussian-Lorentzian sum
+#   FigS2_PeakFit_CH            the same fitting with all 3 line shapes (robustness)
 #   Table1_Model_performance.csv     accuracy, sensitivity, specificity, p
 #   TableS1_Band_statistics.csv      17 bands, Welch on site means, Bonferroni
 #   TableS2_Fold_results.csv         every cross-validation fold
 #   TableS3_Peak_positions.csv       labelled peaks of Fig 1 and Fig 2
 #   TableS4_Peak_shifts.csv          EV/NV peak positions per site, shifts
 #   TableS5_Main_bands.csv           main loading and difference bands
-#   TableS6_PeakFit_CH.csv           fitted bands: position, FWHM, % area, fit quality
+#   TableS6_PeakFit_CH.csv           fitted bands: position, FWHM, % area, fit quality (R2, AIC, BIC)
 #   Scores_fingerprint.csv, Scores_CH.csv   PC1-PC5 and LD1 of every spectrum
 #   Model_details.txt                every setting of every model + results
 #   RESULTS_for_manuscript.txt       the results in words, numbers filled in
@@ -567,6 +568,7 @@ g = WINDOWS['ch']['g']
 fr = (g >= FIT_RANGE[0]) & (g <= FIT_RANGE[1])
 gx = g[fr]
 fit_rows = []
+FITS = {}                                   # (group, line shape) -> fitted curves
 plt.rcParams.update({'font.size': 10})
 fig = plt.figure(figsize=(13, 7.6))
 outer = fig.add_gridspec(2, 3, hspace=0.38, wspace=0.28)
@@ -579,6 +581,11 @@ for row, c in enumerate((0, 1)):
         height = (total - base).max()
         res = (yv - total) / height * 100
         r2 = 1 - np.sum((yv - total) ** 2) / np.sum((yv - yv.mean()) ** 2)
+        # AIC / BIC (lower = better; penalise the extra mixing parameter of GL)
+        n_par, rss = len(p), np.sum((yv - total) ** 2)
+        aic = len(yv) * np.log(rss / len(yv)) + 2 * n_par
+        bic = len(yv) * np.log(rss / len(yv)) + n_par * np.log(len(yv))
+        FITS[(c, shape)] = (p, base, comps, eta, res, height)
         areas = np.array([band_area(p[2 + 3 * k], p[4 + 3 * k], eta) for k in range(len(FIT_BANDS))])
         for k, (nominal, roman, assign) in enumerate(FIT_BANDS):
             fit_rows.append({'Group': GROUPS[c], 'Line shape': FIT_SHAPES[shape], 'Band': roman,
@@ -587,7 +594,8 @@ for row, c in enumerate((0, 1)):
                              'FWHM at limit (60)': p[4 + 3 * k] > 59.9,
                              'Area (% of CH bands)': round(areas[k] / areas.sum() * 100, 1),
                              'GL Lorentzian fraction': round(eta, 2), 'R2': round(r2, 4),
-                             'Max |residual| (%)': round(np.abs(res).max(), 1)})
+                             'Max |residual| (%)': round(np.abs(res).max(), 1),
+                             'AIC': round(aic, 1), 'BIC': round(bic, 1)})
         report(f'  {GROUPS[c]} {shape}: R2 {r2:.4f}, max|res| {np.abs(res).max():.1f} %; band II at '
                f'{p[3 + 3]:.0f} cm-1, FWHM {p[4 + 3]:.0f}, {areas[1] / areas.sum() * 100:.1f} % of area')
         inner = outer[row, col].subgridspec(2, 1, height_ratios=[1, 3.2], hspace=0.05)
@@ -615,6 +623,41 @@ for row, c in enumerate((0, 1)):
         ax_r.text(-0.14, 1.25, f'({next(letters)})', transform=ax_r.transAxes, fontsize=13, va='bottom')
 fig.subplots_adjust(left=0.05, right=0.99, bottom=0.07, top=0.93)
 save_figure(fig, 'FigS2_PeakFit_CH')
+
+# main figure: Gaussian-Lorentzian sum only (best or equal-best fit for both groups
+# by AIC/BIC; for NVs the fitted Lorentzian fraction is 0, i.e. Gaussian)
+fig = plt.figure(figsize=(11, 5.6))
+outer = fig.add_gridspec(1, 2, wspace=0.18)
+for col, c in enumerate((0, 1)):
+    yv = data['ch'][y == c].mean(0)[fr]
+    p, base, comps, eta, res, height = FITS[(c, 'GL')]
+    total = base + sum(comps)
+    inner = outer[col].subgridspec(2, 1, height_ratios=[1, 3.4], hspace=0.05)
+    ax_r = fig.add_subplot(inner[0])
+    ax = fig.add_subplot(inner[1], sharex=ax_r)
+    ax_r.plot(gx, res, color='k', lw=0.8)
+    ax_r.axhline(0, color='k', ls='--', lw=0.6)
+    ax_r.set_ylim(-8, 8)
+    ax_r.set_yticks([-8, 0, 8])
+    ax_r.set_yticklabels(['-8%', '0', '8%'], fontsize=9)
+    ax_r.set_ylabel('Residuals', fontsize=10)
+    ax_r.tick_params(labelbottom=False)
+    ax_r.set_title(f'{NAME_LONG[c]}', fontsize=11)
+    ax.plot(gx, yv - base, color='k', lw=2.2, label='Mean spectrum')
+    ax.plot(gx, total - base, color='0.6', lw=1.4, label=f'GL fit (Lorentzian fraction {eta:.2f})')
+    for k, comp in enumerate(comps):
+        ax.plot(gx, comp, color='k', lw=0.6)
+        ax.text(p[3 + 3 * k], comp.max() + 0.04 * height, f'{FIT_BANDS[k][1]}\n{p[3 + 3 * k]:.0f}',
+                ha='center', va='bottom', fontsize=9, family='serif', linespacing=0.95)
+    ax.set_xlim(*FIT_RANGE)
+    ax.set_ylim(0, height * 1.22)
+    ax.set_xlabel('Raman shift (cm$^{-1}$)')
+    ax.set_ylabel('Intensity (a.u.)')
+    ax.tick_params(axis='y', labelleft=False)
+    ax.legend(frameon=False, fontsize=9, loc='upper right')
+    ax_r.text(-0.10, 1.25, f'({"ab"[col]})', transform=ax_r.transAxes, fontsize=13, va='bottom')
+fig.subplots_adjust(left=0.05, right=0.99, bottom=0.10, top=0.90)
+save_figure(fig, 'Fig2c_PeakFit_CH_GL')
 plt.rcParams.update({'font.size': 10})
 
 

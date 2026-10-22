@@ -26,6 +26,7 @@
   NVs GL: R2 0.9997, max|res| 2.2 %; band II at 2886 cm-1, FWHM 43, 22.5 % of area
   NVs L: R2 0.9983, max|res| 3.5 %; band II at 2884 cm-1, FWHM 34, 10.0 % of area
   saved FigS2_PeakFit_CH
+  saved Fig2c_PeakFit_CH_GL
 
 4. FIGURE 3 - PCA and LDA
   Fingerprint (250-1790 cm-1): PC1 16.8 %, PC2 8.9 %, PC1-5 41.0 %; LD1 site means p = 3.94e-08
