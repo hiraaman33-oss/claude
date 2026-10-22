@@ -492,7 +492,7 @@ for c, off in [(0, 0.0), (1, 5.5)]:
         if cc != c or pos is None or nominal not in CH_SHOW[c]:
             continue
         top = (mu + sd)[np.abs(g - pos) <= 6].max() + off
-        txt = f'{pos:.0f}' + (' (sh)' if kind == 'sh' else '')
+        txt = f'{pos:.0f}'
         lines.append((pos, np.interp(pos, g, mu) + off, top + 0.08))
         labels.append((pos, top + 0.12, [(txt + '- ', 'k')] + CLASS_SEGMENTS[cls]))
 for xl, yb, yt in lines:
