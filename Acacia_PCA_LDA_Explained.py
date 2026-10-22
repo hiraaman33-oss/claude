@@ -83,6 +83,23 @@ plt.rcParams.update({'font.family': 'sans-serif',
 SUMMARY = []
 
 
+def save_figure(fig_, name):
+    """Save PNG + TIFF (600 dpi). If Windows refuses to overwrite a file (usually
+    because the old image is still open in Photos / PyCharm / another viewer),
+    the figure is saved under a new name instead of stopping the script."""
+    for ext, kw in [('png', {}), ('tiff', {'pil_kwargs': {'compression': 'tiff_lzw'}})]:
+        target = OUTPUT_DIR / f'{name}.{ext}'
+        for k in range(1, 50):
+            try:
+                fig_.savefig(target, dpi=600, **kw)
+                break
+            except OSError as err:
+                print(f'  could not write {target.name} ({err.strerror}) - is it open in '
+                      f'another program? Saving as a new file instead.')
+                target = OUTPUT_DIR / f'{name}_{k}.{ext}'
+        print(f'  saved {target}')
+
+
 def report(*a):
     s = ' '.join(str(v) for v in a)
     print(s)
@@ -296,8 +313,7 @@ for row, w in enumerate(['fingerprint', 'ch']):
                 transform=ax.transAxes, fontsize=14, va='bottom')
 
 fig.subplots_adjust(left=0.09, right=0.98, bottom=0.07, top=0.94)
-fig.savefig(OUTPUT_DIR / 'Fig_PCA_LDA_large.png', dpi=600)
-fig.savefig(OUTPUT_DIR / 'Fig_PCA_LDA_large.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
+save_figure(fig, 'Fig_PCA_LDA_large')
 
 
 # ============================================================================
@@ -382,8 +398,7 @@ for row, w in enumerate(['fingerprint', 'ch']):
     report(f'  {w:11s} PCA-LDA with PCA re-fitted in each fold (stricter check): {strict:.1f} %')
 pd.DataFrame(cv_rows).to_csv(OUTPUT_DIR / 'CV_accuracy.csv', index=False)
 fig2.tight_layout()
-fig2.savefig(OUTPUT_DIR / 'Fig_ConfusionMatrices.png', dpi=600)
-fig2.savefig(OUTPUT_DIR / 'Fig_ConfusionMatrices.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
+save_figure(fig2, 'Fig_ConfusionMatrices')
 (OUTPUT_DIR / 'PCA_LDA_summary.txt').write_text('\n'.join(SUMMARY) + '\n', encoding='utf-8')
 print(f'\nSaved in: {OUTPUT_DIR}')
 if SHOW_WINDOW:
