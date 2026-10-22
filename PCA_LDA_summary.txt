@@ -1,0 +1,42 @@
+STEP 1 - reading and pre-processing the spectra
+  EV_Acacia_Raman_Data.xlsx    sheet m1: 20 spectra
+  EV_Acacia_Raman_Data.xlsx    sheet m2: 20 spectra
+  EV_Acacia_Raman_Data.xlsx    sheet m3: 20 spectra
+  EV_Acacia_Raman_Data.xlsx    sheet m4: 20 spectra
+  EV_Acacia_Raman_Data.xlsx    sheet m5: 20 spectra
+  EV_Acacia_Raman_Data.xlsx    sheet m6: 20 spectra
+  NV_Acacia_Raman_Data.xlsx    sheet m1: 20 spectra
+  NV_Acacia_Raman_Data.xlsx    sheet m2: 20 spectra
+  NV_Acacia_Raman_Data.xlsx    sheet m3: 20 spectra
+  NV_Acacia_Raman_Data.xlsx    sheet m4: 20 spectra
+  NV_Acacia_Raman_Data.xlsx    sheet m5: 20 spectra
+  NV_Acacia_Raman_Data.xlsx    sheet m6: 20 spectra
+  total: 240 spectra (EVs 120, NVs 120), 12 measurement sites
+  fingerprint: 770 wavenumber points (251-1789 cm-1, every 2 cm-1)
+  ch: 168 wavenumber points (2761-3095 cm-1, every 2 cm-1)
+
+========== Fingerprint (250-1790 cm-1) ==========
+STEP 2 - PCA on all 240 spectra (labels not used)
+  explained variance: PC1 16.8 %, PC2 8.9 %, PC3 5.8 %, PC4 5.2 %, PC5 4.3 %  (PC1-PC5 together 41.0 %)
+  EVs: mean PC1 score +4.76, mean PC2 score +0.14
+  NVs: mean PC1 score -4.76, mean PC2 score -0.14
+STEP 3 - LDA on PC1-PC5 (labels used), canonical variable 1 = LD1
+  EVs: LD1 median -2.06 (quartiles -2.55 to -1.33), range -4.88 to +2.88
+  NVs: LD1 median +2.05 (quartiles +1.44 to +2.56), range -1.37 to +4.30
+STEP 4 - Welch t-test on the 6 site means of LD1
+  EVs site means: -1.47, -1.76, -2.12, -2.00, -1.48, -2.71
+  NVs site means: +2.28, +1.84, +1.31, +1.99, +1.85, +2.28
+  p = 3.94e-08  (***)
+
+========== CH-stretching (2760-3095 cm-1) ==========
+STEP 2 - PCA on all 240 spectra (labels not used)
+  explained variance: PC1 33.3 %, PC2 14.0 %, PC3 8.4 %, PC4 5.9 %, PC5 5.2 %  (PC1-PC5 together 66.9 %)
+  EVs: mean PC1 score -1.88, mean PC2 score +0.67
+  NVs: mean PC1 score +1.88, mean PC2 score -0.67
+STEP 3 - LDA on PC1-PC5 (labels used), canonical variable 1 = LD1
+  EVs: LD1 median -2.49 (quartiles -3.37 to -1.92), range -6.14 to +1.33
+  NVs: LD1 median +2.64 (quartiles +2.21 to +3.04), range +0.56 to +4.35
+STEP 4 - Welch t-test on the 6 site means of LD1
+  EVs site means: -2.67, -2.58, -2.43, -2.58, -2.71, -2.65
+  NVs site means: +2.70, +2.76, +2.63, +2.67, +2.64, +2.22
+  p = 2.25e-11  (***)
