@@ -18,6 +18,15 @@
   consistent shift (ch): 2873.7 -> 2883.0 cm-1 (+9.4)
   consistent shift (ch): 2932.6 -> 2936.7 cm-1 (+4.1)
 
+3b. FIGURE S2 - CH band fitting
+  EVs G: R2 0.9973, max|res| 3.8 %; band II at 2887 cm-1, FWHM 60, 23.0 % of area
+  EVs GL: R2 0.9978, max|res| 2.9 %; band II at 2881 cm-1, FWHM 60, 15.9 % of area
+  EVs L: R2 0.9977, max|res| 3.0 %; band II at 2875 cm-1, FWHM 60, 10.2 % of area
+  NVs G: R2 0.9997, max|res| 2.2 %; band II at 2886 cm-1, FWHM 43, 22.5 % of area
+  NVs GL: R2 0.9997, max|res| 2.2 %; band II at 2886 cm-1, FWHM 43, 22.5 % of area
+  NVs L: R2 0.9983, max|res| 3.5 %; band II at 2884 cm-1, FWHM 34, 10.0 % of area
+  saved FigS2_PeakFit_CH
+
 4. FIGURE 3 - PCA and LDA
   Fingerprint (250-1790 cm-1): PC1 16.8 %, PC2 8.9 %, PC1-5 41.0 %; LD1 site means p = 3.94e-08
   CH-stretching (2760-3095 cm-1): PC1 33.3 %, PC2 14.0 %, PC1-5 66.9 %; LD1 site means p = 2.25e-11

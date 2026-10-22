@@ -35,6 +35,16 @@ VALIDATION
   Permutation test: all 924 assignments of 6 of the 12 sites to "EV", full cross-validation repeated for each; p = labelings with accuracy >= real / 924.
   Sensitivity = NVs correctly classified; specificity = EVs correctly classified.
 
+CH BAND FITTING (Figure S2, Table S6)
+  mean spectrum of each group, 2780-3095 cm-1; straight baseline + 5 bands (start 2850, 2880, 2935, 2965, 3065 cm-1), position +/-12 cm-1, FWHM 12-60 cm-1, non-linear least squares (scipy least_squares);
+  line shapes: Gaussian, Gaussian-Lorentzian sum (one mixing fraction per spectrum), Lorentzian.
+    band II, EVs, Gaussian: 2886.9 cm-1, FWHM 60.0 (limit), 23.0 % of area, R2 0.9973
+    band II, EVs, Gaussian-Lorentzian sum: 2880.8 cm-1, FWHM 60.0 (limit), 15.9 % of area, R2 0.9978
+    band II, EVs, Lorentzian: 2875.2 cm-1, FWHM 60.0 (limit), 10.2 % of area, R2 0.9977
+    band II, NVs, Gaussian: 2886.4 cm-1, FWHM 43.2, 22.5 % of area, R2 0.9997
+    band II, NVs, Gaussian-Lorentzian sum: 2886.4 cm-1, FWHM 43.2, 22.5 % of area, R2 0.9997
+    band II, NVs, Lorentzian: 2883.7 cm-1, FWHM 33.7, 10.0 % of area, R2 0.9983
+
 RESULTS
   Fingerprint (250-1790 cm-1): explained variance PC1-PC5 = 16.8, 8.9, 5.8, 5.2, 4.3 % (sum 41.0 %)
     PCA-LDA: accuracy 95.4 %, sensitivity 95.0 %, specificity 95.8 %, confusion [[115 5] [6 114]], permutation p = 0.0022

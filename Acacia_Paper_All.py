@@ -20,12 +20,14 @@
 #   Fig4_Loadings_Difference    PC1/PC2 loadings (a, b), NV - EV difference (c, d)
 #   Fig5_ConfusionMatrices      cross-validated, PCA-LDA and PLS-DA (a-d)
 #   FigS1_Permutation           exact label-shuffling test (a-d)
+#   FigS2_PeakFit_CH            CH-region band fitting, EV and NV, 3 line shapes
 #   Table1_Model_performance.csv     accuracy, sensitivity, specificity, p
 #   TableS1_Band_statistics.csv      17 bands, Welch on site means, Bonferroni
 #   TableS2_Fold_results.csv         every cross-validation fold
 #   TableS3_Peak_positions.csv       labelled peaks of Fig 1 and Fig 2
 #   TableS4_Peak_shifts.csv          EV/NV peak positions per site, shifts
 #   TableS5_Main_bands.csv           main loading and difference bands
+#   TableS6_PeakFit_CH.csv           fitted bands: position, FWHM, % area, fit quality
 #   Scores_fingerprint.csv, Scores_CH.csv   PC1-PC5 and LD1 of every spectrum
 #   Model_details.txt                every setting of every model + results
 #   RESULTS_for_manuscript.txt       the results in words, numbers filled in
@@ -50,6 +52,7 @@ from matplotlib.patches import Ellipse
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 from scipy.signal import savgol_filter, find_peaks
+from scipy.optimize import least_squares
 from scipy.stats import ttest_ind
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -379,7 +382,9 @@ CH_BANDS = [(2853, 10, 'sh', 'Lipids', 'CH2 symmetric stretching'),
             (2935, 12, 'max', 'Proteins', 'CH3 symmetric stretching'),
             (2960, 10, 'sh', 'Proteins/Lipids', 'CH3 asymmetric stretching'),
             (3065, 12, 'max', 'Proteins', 'Aromatic =C-H stretching')]
-CH_SHOW = [2880, 2935]                      # labelled in Fig 2b: CH2 lipid band + main CH3 band (all bands go to Table S4)
+# bands labelled in Fig 2b, per group (all bands go to Table S4): the CH2 band at
+# ~2883 cm-1 is a distinct shoulder only in NVs (in EVs a weak, unresolved wing)
+CH_SHOW = {0: [2935], 1: [2880, 2935]}
 NAME_LONG = {0: 'EV Acacia on Ag/SiNWs', 1: 'Nanovesicles Acacia on Ag/SiNWs'}
 shift_table = []
 
@@ -469,7 +474,7 @@ for nominal, half, kind, cls, assign in CH_BANDS:
                         'EV 6 sites': f'{min(sp[0]):.1f}-{max(sp[0]):.1f} ({len(sp[0])}/6)' if sp[0] else '',
                         'NV 6 sites': f'{min(sp[1]):.1f}-{max(sp[1]):.1f} ({len(sp[1])}/6)' if sp[1] else '',
                         'Consistent': consistent})
-    if consistent and nominal in CH_SHOW:
+    if consistent and nominal in CH_SHOW[0] and nominal in CH_SHOW[1]:
         ax.axvspan(min(pos.values()) - 4, max(pos.values()) + 4, color='0.92', lw=0, zorder=0)
     for c in (0, 1):
         if pos[c] is not None:
@@ -482,7 +487,7 @@ for c, off in [(0, 0.0), (1, 5.5)]:
     ax.plot(g, mu + off, color=COLS[c], lw=1.0,
             label=f'{NAME_LONG[c]} (mean \u00b1 SD, n = {np.sum(y == c)})')
     for cc, nominal, kind, pos, cls in ch_rows:
-        if cc != c or pos is None or nominal not in CH_SHOW:
+        if cc != c or pos is None or nominal not in CH_SHOW[c]:
             continue
         top = (mu + sd)[np.abs(g - pos) <= 6].max() + off
         txt = f'{pos:.0f}' + (' (sh)' if kind == 'sh' else '')
@@ -507,6 +512,110 @@ for r in shift_table:
     if r['Consistent']:
         report(f"  consistent shift ({r['Region']}): {r['EV (cm-1)']} -> {r['NV (cm-1)']} cm-1 "
                f"({r['Shift NV-EV (cm-1)']:+})")
+
+
+# ----------------------------------------------------------------------------
+# FIGURE S2 - band fitting of the CH-stretching region (mean spectra)
+# ----------------------------------------------------------------------------
+# The mean SNV spectrum of each group (2780-3095 cm-1) is described as a straight
+# baseline + 5 bands (I-V, starting values below). Each band has a free height,
+# position (+/-12 cm-1) and FWHM (12-60 cm-1); least-squares fit (scipy). Three
+# line shapes are compared, as is usual for band fitting:
+#   G     Gaussian
+#   GL    Gaussian-Lorentzian sum (pseudo-Voigt), one mixing fraction per spectrum
+#   L     Lorentzian
+# Overlapping bands do not have a unique decomposition, so the % areas depend on
+# the line shape; conclusions should rest on what is the same for all three.
+# Residual = data - fit, in % of the fitted band height.
+FIT_RANGE = (2780, 3095)
+FIT_BANDS = [(2850, 'I', 'CH$_2$ sym.'), (2880, 'II', 'CH$_2$ asym.'), (2935, 'III', 'CH$_3$ sym.'),
+             (2965, 'IV', 'CH$_3$ asym.'), (3065, 'V', '=C-H arom.')]
+FIT_SHAPES = {'G': 'Gaussian', 'GL': 'Gaussian-Lorentzian sum', 'L': 'Lorentzian'}
+
+
+def band_profile(x, c, w, eta):
+    return eta / (1 + 4 * ((x - c) / w) ** 2) + (1 - eta) * np.exp(-4 * np.log(2) * ((x - c) / w) ** 2)
+
+
+def band_area(h, w, eta):
+    return h * w * (eta * np.pi / 2 + (1 - eta) * np.sqrt(np.pi / (4 * np.log(2))))
+
+
+def fit_bands(x, yv, shape):
+    nb = len(FIT_BANDS)
+    p0, lo, hi = [yv.min(), 0.0], [-5, -5], [5, 5]
+    for c, _, _ in FIT_BANDS:
+        p0 += [1.0, c, 30]
+        lo += [0, c - 12, 12]
+        hi += [20, c + 12, 60]
+    if shape == 'GL':
+        p0, lo, hi = p0 + [0.5], lo + [0], hi + [1]
+
+    def model(p):
+        eta = {'G': 0.0, 'L': 1.0}.get(shape, p[-1])
+        base = p[0] + p[1] * (x - 2940) / 100
+        comps = [p[2 + 3 * k] * band_profile(x, p[3 + 3 * k], p[4 + 3 * k], eta) for k in range(nb)]
+        return base, comps, eta
+
+    r = least_squares(lambda p: model(p)[0] + sum(model(p)[1]) - yv, p0, bounds=(lo, hi))
+    base, comps, eta = model(r.x)
+    return r.x, base, comps, eta
+
+
+report('\n3b. FIGURE S2 - CH band fitting')
+g = WINDOWS['ch']['g']
+fr = (g >= FIT_RANGE[0]) & (g <= FIT_RANGE[1])
+gx = g[fr]
+fit_rows = []
+plt.rcParams.update({'font.size': 10})
+fig = plt.figure(figsize=(13, 7.6))
+outer = fig.add_gridspec(2, 3, hspace=0.38, wspace=0.28)
+letters = iter('abcdef')
+for row, c in enumerate((0, 1)):
+    yv = data['ch'][y == c].mean(0)[fr]
+    for col, shape in enumerate(FIT_SHAPES):
+        p, base, comps, eta = fit_bands(gx, yv, shape)
+        total = base + sum(comps)
+        height = (total - base).max()
+        res = (yv - total) / height * 100
+        r2 = 1 - np.sum((yv - total) ** 2) / np.sum((yv - yv.mean()) ** 2)
+        areas = np.array([band_area(p[2 + 3 * k], p[4 + 3 * k], eta) for k in range(len(FIT_BANDS))])
+        for k, (nominal, roman, assign) in enumerate(FIT_BANDS):
+            fit_rows.append({'Group': GROUPS[c], 'Line shape': FIT_SHAPES[shape], 'Band': roman,
+                             'Assignment': assign.replace('$_2$', '2').replace('$_3$', '3'),
+                             'Position (cm-1)': round(p[3 + 3 * k], 1), 'FWHM (cm-1)': round(p[4 + 3 * k], 1),
+                             'FWHM at limit (60)': p[4 + 3 * k] > 59.9,
+                             'Area (% of CH bands)': round(areas[k] / areas.sum() * 100, 1),
+                             'GL Lorentzian fraction': round(eta, 2), 'R2': round(r2, 4),
+                             'Max |residual| (%)': round(np.abs(res).max(), 1)})
+        report(f'  {GROUPS[c]} {shape}: R2 {r2:.4f}, max|res| {np.abs(res).max():.1f} %; band II at '
+               f'{p[3 + 3]:.0f} cm-1, FWHM {p[4 + 3]:.0f}, {areas[1] / areas.sum() * 100:.1f} % of area')
+        inner = outer[row, col].subgridspec(2, 1, height_ratios=[1, 3.2], hspace=0.05)
+        ax_r = fig.add_subplot(inner[0])
+        ax = fig.add_subplot(inner[1], sharex=ax_r)
+        ax_r.plot(gx, res, color='k', lw=0.8)
+        ax_r.axhline(0, color='k', ls='--', lw=0.6)
+        ax_r.set_ylim(-8, 8)
+        ax_r.set_yticks([-8, 0, 8])
+        ax_r.set_yticklabels(['-8%', '0', '8%'], fontsize=8)
+        ax_r.set_ylabel('Residuals', fontsize=9)
+        ax_r.tick_params(labelbottom=False)
+        ax_r.set_title(f'{NAME_LONG[c].split(" on")[0]}: {FIT_SHAPES[shape]} ({shape})', fontsize=10)
+        ax.plot(gx, yv - base, color='k', lw=2.2, label='data')
+        ax.plot(gx, total - base, color='0.6', lw=1.4, label='fit')
+        for k, comp in enumerate(comps):
+            ax.plot(gx, comp, color='k', lw=0.6)
+            ax.text(p[3 + 3 * k], comp.max() + 0.04 * height, FIT_BANDS[k][1], ha='center',
+                    va='bottom', fontsize=10, family='serif')
+        ax.set_xlim(*FIT_RANGE)
+        ax.set_ylim(0, height * 1.12)
+        ax.set_xlabel('Raman shift (cm$^{-1}$)')
+        ax.set_ylabel('Intensity (a.u.)')
+        ax.tick_params(axis='y', labelleft=False)
+        ax_r.text(-0.14, 1.25, f'({next(letters)})', transform=ax_r.transAxes, fontsize=13, va='bottom')
+fig.subplots_adjust(left=0.05, right=0.99, bottom=0.07, top=0.93)
+save_figure(fig, 'FigS2_PeakFit_CH')
+plt.rcParams.update({'font.size': 10})
 
 
 # ============================================================================
@@ -839,6 +948,7 @@ S1.to_csv(OUTPUT_DIR / 'TableS1_Band_statistics.csv', index=False)
 pd.DataFrame(peak_table).to_csv(OUTPUT_DIR / 'TableS3_Peak_positions.csv', index=False)
 pd.DataFrame(shift_table).to_csv(OUTPUT_DIR / 'TableS4_Peak_shifts.csv', index=False)
 pd.DataFrame(band_rows).to_csv(OUTPUT_DIR / 'TableS5_Main_bands.csv', index=False)
+pd.DataFrame(fit_rows).to_csv(OUTPUT_DIR / 'TableS6_PeakFit_CH.csv', index=False)
 report('  Table 1, Tables S1-S5 and the score tables saved')
 
 
@@ -881,7 +991,16 @@ md += ['  Stricter check: PCA re-fitted inside every training fold.',
        '  Permutation test: all 924 assignments of 6 of the 12 sites to "EV", full '
        'cross-validation repeated for each; p = labelings with accuracy >= real / 924.',
        '  Sensitivity = NVs correctly classified; specificity = EVs correctly classified.',
-       '', 'RESULTS']
+       '', 'CH BAND FITTING (Figure S2, Table S6)',
+       f'  mean spectrum of each group, {FIT_RANGE[0]}-{FIT_RANGE[1]} cm-1; straight baseline + '
+       f'{len(FIT_BANDS)} bands (start ' + ', '.join(str(b[0]) for b in FIT_BANDS) + ' cm-1), '
+       'position +/-12 cm-1, FWHM 12-60 cm-1, non-linear least squares (scipy least_squares);',
+       '  line shapes: Gaussian, Gaussian-Lorentzian sum (one mixing fraction per spectrum), Lorentzian.']
+for r_ in [r for r in fit_rows if r['Band'] == 'II']:
+    md.append(f"    band II, {r_['Group']}, {r_['Line shape']}: {r_['Position (cm-1)']} cm-1, FWHM "
+              f"{r_['FWHM (cm-1)']}{' (limit)' if r_['FWHM at limit (60)'] else ''}, "
+              f"{r_['Area (% of CH bands)']} % of area, R2 {r_['R2']}")
+md += ['', 'RESULTS']
 for w in ['fingerprint', 'ch']:
     r = RES[w]
     md.append(f'  {PLAIN[w]}: explained variance PC1-PC{N_COMP} = ' +
