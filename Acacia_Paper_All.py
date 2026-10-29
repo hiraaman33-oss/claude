@@ -285,6 +285,7 @@ def figure1(tag):
                            'Class': cls, 'Assignment': assign,
                            'Prominence / noise SD': round(float(pr['prominences'][j] / noise), 1)})
     lo1, hi1, lo2, hi2 = 400, 1800, 2700, 3100
+    fs_peak, fs_name, fs_axis, fs_tick = 12, 15, 17, 15     # readable at one-column width
     fig, (axL, axR) = plt.subplots(1, 2, sharey=True, figsize=(9, 6.5),
                                    gridspec_kw={'width_ratios': [hi1 - lo1, hi2 - lo2], 'wspace': 0.03})
 
@@ -294,27 +295,27 @@ def figure1(tag):
 
     y_min = min(in_view(caf2).min(), in_view(ag).min())
     y_max = max(in_view(caf2).max(), in_view(ag).max())
-    y_top = y_max + 0.45 * (y_max - y_min)
+    y_top = y_max + 0.70 * (y_max - y_min)
     axL.set_ylim(y_min - 0.12 * (y_max - y_min), y_top)
     for ax, lo, hi in [(axL, lo1, hi1), (axR, lo2, hi2)]:
         for d, col in [(caf2, '#3A3A3A'), (ag, '#E8383D')]:
             m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
-            ax.plot(d[m, 0], d[m, 1], color=col, lw=0.6)
+            ax.plot(d[m, 0], d[m, 1], color=col, lw=0.8)
         ax.set_xlim(lo, hi)
         pos = [r[0] for r in rows]
         for k, (measured, cls) in enumerate(rows):
             if not lo <= measured <= hi:
                 continue
-            near_left = k > 0 and measured - pos[k - 1] < 35
+            near_left = k > 0 and measured - pos[k - 1] < 45
             ha = 'left' if (near_left or measured - lo < 30) else 'right'
             t = ax.text(measured, y_top - 0.01 * (y_top - y_min), f'{measured}  {cls}', rotation=90,
-                        ha=ha, va='top', fontsize=7.5, color=SINGLE_COL[cls])
+                        ha=ha, va='top', fontsize=fs_peak, color=SINGLE_COL[cls])
             fig.canvas.draw()
             bottom = t.get_window_extent().transformed(ax.transData.inverted()).y0
             peak_top = ag[np.abs(ag[:, 0] - measured) <= 3, 1].max()
             ax.plot([measured, measured], [peak_top + 0.01 * (y_top - y_min), bottom],
-                    color='k', ls=':', lw=0.8)
-        ax.tick_params(direction='in', top=True)
+                    color='k', ls=':', lw=1.0)
+        ax.tick_params(direction='in', top=True, length=6, width=1.0, labelsize=fs_tick)
     axL.spines['right'].set_visible(False)
     axR.spines['left'].set_visible(False)
     axL.tick_params(labelleft=False)
@@ -324,17 +325,17 @@ def figure1(tag):
     for d_, col, txt in [(ag, '#E8383D', f'{SINGLE_NAME[tag]} on Ag/SiNWs'),
                          (caf2, '#3A3A3A', f'{SINGLE_NAME[tag]} on CaF$_2$')]:
         m = (d_[:, 0] >= 420) & (d_[:, 0] <= 760)
-        axL.text(420, d_[m, 1].min() - 0.015 * (y_top - y_min), txt, color=col, fontsize=10,
+        axL.text(420, d_[m, 1].min() - 0.015 * (y_top - y_min), txt, color=col, fontsize=fs_name,
                  ha='left', va='top')
     dd = 0.012
     for ax, x0 in [(axL, 1), (axR, 0)]:
         dx = dd * (hi2 - lo2) / (hi1 - lo1) if ax is axL else dd
         for y0 in (0, 1):
             ax.plot((x0 - dx, x0 + dx), (y0 - 2 * dd, y0 + 2 * dd), transform=ax.transAxes,
-                    color='k', clip_on=False, lw=0.8)
-    axL.set_ylabel('Raman Intensity (a.u.)', fontsize=11)
-    fig.text(0.5, 0.02, 'Wavenumber (cm$^{-1}$)', ha='center', fontsize=11)
-    fig.subplots_adjust(left=0.06, right=0.97, bottom=0.10, top=0.97)
+                    color='k', clip_on=False, lw=1.0)
+    axL.set_ylabel('Raman Intensity (a.u.)', fontsize=fs_axis)
+    fig.text(0.53, 0.015, 'Wavenumber (cm$^{-1}$)', ha='center', fontsize=fs_axis)
+    fig.subplots_adjust(left=0.07, right=0.97, bottom=0.12, top=0.97)
     save_figure(fig, f'Fig1{"a" if tag == "EV" else "b"}_{tag}_CaF2_vs_AgSiNW')
 
 

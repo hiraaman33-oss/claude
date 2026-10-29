@@ -128,9 +128,12 @@ with open(f'{OUT}_peaks.csv', 'w', newline='') as fh:
 # ----------------------------------------------------------------------------
 # PLOT
 # ----------------------------------------------------------------------------
+# font sizes (pt) - large enough to stay readable when the figure is reduced to
+# one journal column
+FS_PEAK, FS_NAME, FS_AXIS, FS_TICK = 12, 15, 17, 15
 plt.rcParams.update({'font.family': 'sans-serif',
                      'font.sans-serif': ['Arial', 'Liberation Sans', 'DejaVu Sans'],
-                     'font.size': 10})
+                     'font.size': FS_TICK})
 fig, (axL, axR) = plt.subplots(
     1, 2, sharey=True, figsize=(9, 6.5),
     gridspec_kw={'width_ratios': [LOW_MAX - LOW_MIN, HIGH_MAX - HIGH_MIN],
@@ -144,30 +147,30 @@ def in_view(d):
 
 y_min = min(in_view(caf2).min(), in_view(ag).min())
 y_max = max(in_view(caf2).max(), in_view(ag).max())
-y_top = y_max + 0.45 * (y_max - y_min)       # head-room for the rotated labels
+y_top = y_max + 0.70 * (y_max - y_min)       # head-room for the rotated labels
 y_bot = y_min - 0.12 * (y_max - y_min)       # room for the CaF2 sample name
 axL.set_ylim(y_bot, y_top)
 
 for ax, lo, hi in [(axL, LOW_MIN, LOW_MAX), (axR, HIGH_MIN, HIGH_MAX)]:
     for d, col in [(caf2, C_CAF2), (ag, C_AG)]:
         m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
-        ax.plot(d[m, 0], d[m, 1], color=col, lw=0.6)
+        ax.plot(d[m, 0], d[m, 1], color=col, lw=0.8)
     ax.set_xlim(lo, hi)
     pos = [r[1] for r in rows]
     for k, (nominal, measured, cls, _, _, _) in enumerate(rows):
         if not lo <= measured <= hi:
             continue
         # close neighbour on the left -> put this label right of its line
-        near_left = k > 0 and measured - pos[k - 1] < 35
+        near_left = k > 0 and measured - pos[k - 1] < 45
         ha = 'left' if (near_left or measured - lo < 30) else 'right'
         t = ax.text(measured, y_top - 0.01 * (y_top - y_min), f'{measured}  {cls}',
-                    rotation=90, ha=ha, va='top', fontsize=7.5, color=CLASS_COL[cls])
+                    rotation=90, ha=ha, va='top', fontsize=FS_PEAK, color=CLASS_COL[cls])
         fig.canvas.draw()
         label_bottom = t.get_window_extent().transformed(ax.transData.inverted()).y0
         peak_top = ag[np.abs(ag[:, 0] - measured) <= 3, 1].max()
         ax.plot([measured, measured], [peak_top + 0.01 * (y_top - y_min), label_bottom],
-                color='k', ls=':', lw=0.8)
-    ax.tick_params(direction='in', top=True)
+                color='k', ls=':', lw=1.0)
+    ax.tick_params(direction='in', top=True, length=6, width=1.0, labelsize=FS_TICK)
 
 axL.spines['right'].set_visible(False)
 axR.spines['left'].set_visible(False)
@@ -181,22 +184,22 @@ axR.set_xticks([2800, 3000])
 x_lab = (420, 760)
 m = (ag[:, 0] >= x_lab[0]) & (ag[:, 0] <= x_lab[1])
 axL.text(x_lab[0], ag[m, 1].min() - 0.015 * (y_top - y_min), f'{SAMPLE_NAME} on Ag/SiNWs',
-         color=C_AG, fontsize=10, ha='left', va='top')
+         color=C_AG, fontsize=FS_NAME, ha='left', va='top')
 m = (caf2[:, 0] >= x_lab[0]) & (caf2[:, 0] <= x_lab[1])
 axL.text(x_lab[0], caf2[m, 1].min() - 0.015 * (y_top - y_min), f'{SAMPLE_NAME} on CaF$_2$',
-         color=C_CAF2, fontsize=10, ha='left', va='top')
+         color=C_CAF2, fontsize=FS_NAME, ha='left', va='top')
 
 # // break marks
 d = 0.012
-kw = dict(color='k', clip_on=False, lw=0.8)
+kw = dict(color='k', clip_on=False, lw=1.0)
 for ax, x0 in [(axL, 1), (axR, 0)]:
     dx = d * (HIGH_MAX - HIGH_MIN) / (LOW_MAX - LOW_MIN) if ax is axL else d
     for y0 in (0, 1):
         ax.plot((x0 - dx, x0 + dx), (y0 - 2 * d, y0 + 2 * d), transform=ax.transAxes, **kw)
 
-axL.set_ylabel('Raman Intensity (a.u.)', fontsize=11)
-fig.text(0.5, 0.02, 'Wavenumber (cm$^{-1}$)', ha='center', fontsize=11)
-fig.subplots_adjust(left=0.06, right=0.97, bottom=0.10, top=0.97)
+axL.set_ylabel('Raman Intensity (a.u.)', fontsize=FS_AXIS)
+fig.text(0.53, 0.015, 'Wavenumber (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
+fig.subplots_adjust(left=0.07, right=0.97, bottom=0.12, top=0.97)
 fig.savefig(f'{OUT}.png', dpi=600)
 fig.savefig(f'{OUT}.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
 for r in rows:
