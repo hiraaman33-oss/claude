@@ -45,6 +45,7 @@ COL = {'EV': '#0B5A7E', 'NV': '#B5541C', 'CaF2': '#555555'}
 NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
 LOW, HIGH = (400, 1800), (2700, 3100)
 FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 12, 14, 17, 15, 18
+SHOW_POSITION = False  # True: label '1002  Protein'; False: label 'Protein' only
 GAP = 25              # counts between the top of the CaF2 trace and the bottom of the Ag trace
 
 PEAKS = {
@@ -161,7 +162,7 @@ for row, s in enumerate(['EV', 'NV']):
         for (p, cls), xlab in zip(sel, xl):
             near = (ag[:, 0] >= min(p, xlab) - wl) & (ag[:, 0] <= max(p, xlab) + wl)
             base = ag[near, 1].max() + shift[(s, 'Ag')] + 0.03 * span
-            ax.text(xlab, base, f'{p}  {cls}', rotation=90, ha='center', va='bottom',
+            ax.text(xlab, base, (f'{p}  {cls}' if SHOW_POSITION else cls), rotation=90, ha='center', va='bottom',
                     fontsize=FS_LABEL, color=CLASS_COL[cls])
             y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + shift[(s, 'Ag')]
             ax.plot([p, xlab], [y_peak + 0.01 * span, base - 0.005 * span], ls=(0, (1, 2)), lw=0.9,
@@ -294,7 +295,7 @@ def draw_one(label_room):
             for (p, cls), xlab in zip(sel, xl):
                 near = (ag[:, 0] >= min(p, xlab) - wl) & (ag[:, 0] <= max(p, xlab) + wl)
                 base = ag[near, 1].max() + o + 0.015 * span
-                h = a.text(xlab, base, f'{p}  {cls}', rotation=90, ha='center', va='bottom',
+                h = a.text(xlab, base, (f'{p}  {cls}' if SHOW_POSITION else cls), rotation=90, ha='center', va='bottom',
                            fontsize=FS_LABEL, color=CLASS_COL[cls])
                 y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + o
                 a.plot([p, xlab], [y_peak + 0.005 * span, base - 0.003 * span], ls=(0, (1, 2)),
