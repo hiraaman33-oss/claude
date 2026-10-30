@@ -42,9 +42,11 @@ if len(sys.argv) > 1:
 FILES = {('EV', 'CaF2'): 's2-ev_acacia-dropcaf2', ('EV', 'Ag'): 's2-ev_acacia-agsinw',
          ('NV', 'CaF2'): 's1-ev_nano_acacia-dropcaf2', ('NV', 'Ag'): 's4a-ev_nano_acacia-20ng-agsinw'}
 COL = {'EV': '#0B5A7E', 'NV': '#B5541C', 'CaF2': '#555555'}
+CAF2_COL = {'EV': '#85ACBE', 'NV': '#DAA98D'}   # CaF2 traces: light shade of the sample colour (50 % white)
+#           (use {'EV': COL['CaF2'], 'NV': COL['CaF2']} for grey CaF2 traces)
 NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
 LOW, HIGH = (400, 1800), (2700, 3100)
-FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 10, 10, 13, 10, 13   # same as Fig 2b (6.5 in wide)
+FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 10, 10, 13, 10, 13   # same as Fig 2a/2b
 LABEL_TEXT = 'none'   # 'none': dotted line only; 'name': 'Protein'; 'position+name': '1002  Protein'
 MARK_LEN = 0.05      # length of the dotted peak marker when LABEL_TEXT = 'none' (fraction of plot height)
 PEAK_MARKERS = False  # True: dotted line above each peak (when LABEL_TEXT = 'none'); False: plain spectra
@@ -131,7 +133,7 @@ hi_all = max(spec[(s, 'Ag')][view(spec[(s, 'Ag')]), 1].max() + shift[(s, 'Ag')] 
 span = hi_all - lo_all
 ylim = (lo_all - 0.10 * span, hi_all + (0.40 if LABEL_TEXT != 'none' else 0.15) * span)  # room for labels
 
-fig = plt.figure(figsize=(6.5, 7.7))
+fig = plt.figure(figsize=(8.5, 8.0))
 gs = fig.add_gridspec(2, 2, width_ratios=[LOW[1] - LOW[0], HIGH[1] - HIGH[0]], wspace=0.03,
                       hspace=0.12)
 for row, s in enumerate(['EV', 'NV']):
@@ -139,10 +141,10 @@ for row, s in enumerate(['EV', 'NV']):
     axR = fig.add_subplot(gs[row, 1], sharey=axL)
     axL.set_ylim(*ylim)
     for ax, (lo, hi) in [(axL, LOW), (axR, HIGH)]:
-        for sub, col in [('CaF2', COL['CaF2']), ('Ag', COL[s])]:
+        for sub, col in [('CaF2', CAF2_COL[s]), ('Ag', COL[s])]:
             d = spec[(s, sub)]
             m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
-            ax.plot(d[m, 0], d[m, 1] + shift[(s, sub)], color=col, lw=0.5)
+            ax.plot(d[m, 0], d[m, 1] + shift[(s, sub)], color=col, lw=0.6)
         ax.set_xlim(lo, hi)
         ax.tick_params(direction='in', length=5, labelsize=FS_TICK)
     fig.canvas.draw()
@@ -184,7 +186,7 @@ for row, s in enumerate(['EV', 'NV']):
                     color='0.3')
     # sample names inside the panel, below each trace
     for sub, col, txt in [('Ag', COL[s], f'{NAME[s]} on Ag/SiNWs'),
-                          ('CaF2', COL['CaF2'], f'{NAME[s]} on CaF$_2$')]:
+                          ('CaF2', COL[s], f'{NAME[s]} on CaF$_2$')]:
         d = spec[(s, sub)]
         m = (d[:, 0] >= 410) & (d[:, 0] <= 900)
         axL.text(425, d[m, 1].min() + shift[(s, sub)] - 0.012 * span, txt, color=col,
@@ -210,11 +212,11 @@ for row, s in enumerate(['EV', 'NV']):
         for y0 in (0, 1):
             ax.plot((x0 - dx, x0 + dx), (y0 - 2 * dd * 0.5, y0 + 2 * dd * 0.5), transform=ax.transAxes,
                     color='k', clip_on=False, lw=1.0)
-    axL.set_ylabel('Raman Intensity (a.u.)', fontsize=FS_AXIS)
-    axL.text(-0.10, 1.0, f'({"ab"[row]})', transform=axL.transAxes, fontsize=FS_PANEL,
+    axL.set_ylabel('Intensity (a.u.)', fontsize=FS_AXIS)
+    axL.text(-0.075, 1.0, f'({"ab"[row]})', transform=axL.transAxes, fontsize=FS_PANEL,
              va='top', ha='right')
-fig.text(0.54, 0.012, 'Raman Shift (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
-fig.subplots_adjust(left=0.10, right=0.98, bottom=0.075, top=0.98)
+fig.text(0.53, 0.012, 'Raman Shift (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
+fig.subplots_adjust(left=0.08, right=0.98, bottom=0.075, top=0.98)
 fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_Enhancement.png', dpi=600)
 fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_Enhancement.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
 plt.close(fig)
@@ -269,7 +271,7 @@ def draw_one(label_room):
         top = yv.max() + off[key]
     y_lo = spec[ORDER[0]][view(spec[ORDER[0]]), 1].min()
     span = top - y_lo
-    fig, (axL, axR) = plt.subplots(1, 2, sharey=True, figsize=(6.5, 7.1),
+    fig, (axL, axR) = plt.subplots(1, 2, sharey=True, figsize=(8.5, 6.5),
                                    gridspec_kw={'width_ratios': [LOW[1] - LOW[0], HIGH[1] - HIGH[0]],
                                                 'wspace': 0.03})
     head = 0.28 if LABEL_TEXT != 'none' else 0.14          # room above the top trace
@@ -278,8 +280,8 @@ def draw_one(label_room):
         for s, sub in ORDER:
             d = spec[(s, sub)]
             m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
-            ax.plot(d[m, 0], d[m, 1] + off[(s, sub)], color=COL['CaF2'] if sub == 'CaF2' else COL[s],
-                    lw=0.5)
+            ax.plot(d[m, 0], d[m, 1] + off[(s, sub)], color=CAF2_COL[s] if sub == 'CaF2' else COL[s],
+                    lw=0.6)
         ax.set_xlim(lo, hi)
         ax.tick_params(direction='in', length=5, labelsize=FS_TICK)
     axL.spines['right'].set_visible(False)
@@ -288,9 +290,9 @@ def draw_one(label_room):
     axR.tick_params(left=False, right=True, labelleft=False)
     axL.set_xticks([400, 600, 800, 1000, 1200, 1400, 1600])
     axR.set_xticks([2800, 3000])
-    axL.set_ylabel('Raman Intensity (a.u.)', fontsize=FS_AXIS)
-    fig.text(0.53, 0.015, 'Raman Shift (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
-    fig.subplots_adjust(left=0.07, right=0.98, bottom=0.07, top=0.98)
+    axL.set_ylabel('Intensity (a.u.)', fontsize=FS_AXIS)
+    fig.text(0.53, 0.018, 'Raman Shift (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
+    fig.subplots_adjust(left=0.055, right=0.985, bottom=0.10, top=0.98)
     fig.canvas.draw()
     # names below each trace
     nv_caf_name = None
@@ -299,7 +301,7 @@ def draw_one(label_room):
         m = (d[:, 0] >= 410) & (d[:, 0] <= 900)
         txt = f'{NAME[s]} on ' + ('CaF$_2$' if sub == 'CaF2' else 'Ag/SiNWs')
         t = axL.text(425, d[m, 1].min() + off[(s, sub)] - 0.008 * span, txt,
-                     color=COL['CaF2'] if sub == 'CaF2' else COL[s], fontsize=FS_NAME, ha='left', va='top')
+                     color=COL[s], fontsize=FS_NAME, ha='left', va='top')
         if (s, sub) == ('NV', 'CaF2'):
             fig.canvas.draw()
             nv_caf_name = t.get_window_extent().transformed(axL.transData.inverted())
