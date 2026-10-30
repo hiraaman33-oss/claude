@@ -45,7 +45,8 @@ COL = {'EV': '#0B5A7E', 'NV': '#B5541C', 'CaF2': '#555555'}
 NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
 LOW, HIGH = (400, 1800), (2700, 3100)
 FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 12, 14, 17, 15, 18
-SHOW_POSITION = False  # True: label '1002  Protein'; False: label 'Protein' only
+LABEL_TEXT = 'none'   # 'none': dotted line only; 'name': 'Protein'; 'position+name': '1002  Protein'
+MARK_LEN = 0.05      # length of the dotted peak marker when LABEL_TEXT = 'none' (fraction of plot height)
 GAP = 25              # counts between the top of the CaF2 trace and the bottom of the Ag trace
 
 PEAKS = {
@@ -121,7 +122,7 @@ for s in ['EV', 'NV']:
 lo_all = min(spec[(s, 'CaF2')][view(spec[(s, 'CaF2')]), 1].min() for s in ['EV', 'NV'])
 hi_all = max(spec[(s, 'Ag')][view(spec[(s, 'Ag')]), 1].max() + shift[(s, 'Ag')] for s in ['EV', 'NV'])
 span = hi_all - lo_all
-ylim = (lo_all - 0.10 * span, hi_all + 0.40 * span)       # room for the vertical labels
+ylim = (lo_all - 0.10 * span, hi_all + (0.40 if LABEL_TEXT != 'none' else 0.15) * span)  # room for labels
 
 fig = plt.figure(figsize=(11, 13))
 gs = fig.add_gridspec(2, 2, width_ratios=[LOW[1] - LOW[0], HIGH[1] - HIGH[0]], wspace=0.03,
@@ -159,10 +160,16 @@ for row, s in enumerate(['EV', 'NV']):
                     moved = True
             if not moved:
                 break
+        if LABEL_TEXT == 'none':              # dotted marker above each peak, no text
+            for p, _ in sel:
+                y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + shift[(s, 'Ag')]
+                ax.plot([p, p], [y_peak + 0.01 * span, y_peak + (0.01 + 2 * MARK_LEN) * span],  # half-height panels
+                        ls=(0, (1, 2)), lw=1.2, color='0.3')
+            continue
         for (p, cls), xlab in zip(sel, xl):
             near = (ag[:, 0] >= min(p, xlab) - wl) & (ag[:, 0] <= max(p, xlab) + wl)
             base = ag[near, 1].max() + shift[(s, 'Ag')] + 0.03 * span
-            ax.text(xlab, base, (f'{p}  {cls}' if SHOW_POSITION else cls), rotation=90, ha='center', va='bottom',
+            ax.text(xlab, base, (f'{p}  {cls}' if LABEL_TEXT == 'position+name' else cls), rotation=90, ha='center', va='bottom',
                     fontsize=FS_LABEL, color=CLASS_COL[cls])
             y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + shift[(s, 'Ag')]
             ax.plot([p, xlab], [y_peak + 0.01 * span, base - 0.005 * span], ls=(0, (1, 2)), lw=0.9,
@@ -257,7 +264,8 @@ def draw_one(label_room):
     fig, (axL, axR) = plt.subplots(1, 2, sharey=True, figsize=(11, 12),
                                    gridspec_kw={'width_ratios': [LOW[1] - LOW[0], HIGH[1] - HIGH[0]],
                                                 'wspace': 0.03})
-    axL.set_ylim(y_lo - 0.06 * span, top + 0.28 * span)
+    head = 0.28 if LABEL_TEXT != 'none' else 0.14          # room above the top trace
+    axL.set_ylim(y_lo - 0.06 * span, top + head * span)
     for ax, (lo, hi) in [(axL, LOW), (axR, HIGH)]:
         for s, sub in ORDER:
             d = spec[(s, sub)]
@@ -293,9 +301,18 @@ def draw_one(label_room):
         o = off[(s, 'Ag')]
         for (lo, hi), (a, sel, xl, wl) in label_positions((axL, axR), s, fig).items():
             for (p, cls), xlab in zip(sel, xl):
+                if LABEL_TEXT == 'none':          # dotted marker above each peak, no text
+                    y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + o
+                    y_top = y_peak + (0.005 + MARK_LEN) * span
+                    a.plot([p, p], [y_peak + 0.005 * span, y_top], ls=(0, (1, 2)), lw=1.2, color='0.3')
+                    if s == 'EV':
+                        nc = spec[('NV', 'CaF2')]
+                        k = (nc[:, 0] >= p - wl) & (nc[:, 0] <= p + wl)
+                        need = max(need, y_top - (nc[k, 1].min() + off[('NV', 'CaF2')] - 0.01 * span))
+                    continue
                 near = (ag[:, 0] >= min(p, xlab) - wl) & (ag[:, 0] <= max(p, xlab) + wl)
                 base = ag[near, 1].max() + o + 0.015 * span
-                h = a.text(xlab, base, (f'{p}  {cls}' if SHOW_POSITION else cls), rotation=90, ha='center', va='bottom',
+                h = a.text(xlab, base, (f'{p}  {cls}' if LABEL_TEXT == 'position+name' else cls), rotation=90, ha='center', va='bottom',
                            fontsize=FS_LABEL, color=CLASS_COL[cls])
                 y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + o
                 a.plot([p, xlab], [y_peak + 0.005 * span, base - 0.003 * span], ls=(0, (1, 2)),
@@ -311,7 +328,7 @@ def draw_one(label_room):
                     need = max(need, y1 - ceiling)
     # 50-count scale bar, top right
     xb = 3075
-    yb = top + 0.20 * span - 50
+    yb = top + (head - 0.08) * span - 50
     axR.plot([xb, xb], [yb, yb + 50], color='k', lw=2.0)
     axR.text(xb - 10, yb + 25, '50\ncounts', ha='right', va='center', fontsize=FS_NAME - 2)
     dd = 0.012
@@ -323,7 +340,7 @@ def draw_one(label_room):
     return fig, need, off
 
 
-room = 80.0
+room = 80.0 if LABEL_TEXT != 'none' else float(GAP)
 for _ in range(10):                            # enlarge the space for the EV labels until they fit
     fig, need, off_one = draw_one(room)
     if need <= 0:
