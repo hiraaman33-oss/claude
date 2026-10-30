@@ -16,6 +16,7 @@
 # OUTPUT (CODE 005\PAPER, figures as PNG + TIFF, 600 dpi)
 #   Fig1a_EV_CaF2_vs_AgSiNW, Fig1b_NV_CaF2_vs_AgSiNW   raw single spectra
 #   Fig2a_MeanSD_Fingerprint, Fig2b_MeanSD_CH          mean +/- SD, band labels
+#   Fig2_label_positions.csv    every Fig 2 label position (from the data)
 #   Fig3_PCA_LDA                PCA scores + LDA canonical variable (a-d)
 #   Fig4_Loadings_Difference    PC1/PC2 loadings (a, b), NV - EV difference (c, d)
 #   Fig5_ConfusionMatrices      cross-validated, PCA-LDA and PLS-DA (a-d)
@@ -456,7 +457,7 @@ ax.set_ylabel('Intensity (a.u.)', fontsize=13)
 ax.legend(frameon=True, facecolor='white', edgecolor='none', framealpha=1, fontsize=10,
           loc='upper left', handlelength=1.5)
 fig.tight_layout()
-save_figure(fig, 'Fig2a_MeanSD_Fingerprint')
+plt.close(fig)     # positions above -> Tables S3/S4; the figure itself is drawn in section 3c
 
 # --- Fig 2b, CH-stretching 2760-3095 cm-1
 g, X = WINDOWS['ch']['g'], data['ch']
@@ -510,7 +511,7 @@ ax.set_ylabel('Intensity (a.u.)', fontsize=13)
 ax.legend(frameon=True, facecolor='white', edgecolor='none', framealpha=1, fontsize=9,
           loc='upper left', handlelength=1.5)
 fig.tight_layout()
-save_figure(fig, 'Fig2b_MeanSD_CH')
+plt.close(fig)     # drawn in section 3c
 for r in shift_table:
     if r['Consistent']:
         report(f"  consistent shift ({r['Region']}): {r['EV (cm-1)']} -> {r['NV (cm-1)']} cm-1 "
@@ -565,14 +566,326 @@ def fit_bands(x, yv, shape):
     return r.x, base, comps, eta
 
 
+# ============================================================================
+# 3c. FIGURE 2a / 2b - final figures: data-derived band labels, large fonts
+# ============================================================================
+# Label positions from the group mean spectra: peak = most prominent local
+# maximum in the window; shoulder = most prominent minimum of the 2nd
+# derivative (Savitzky-Golay 11, order 3); parabola-refined, rounded.
+# Labels are placed clear of the curves, the SD bands, the legend and the frame.
+report('\n3c. FIGURE 2a / 2b - band labels')
+F2_GRID = {w: WINDOWS[w]['grid_full'] for w in WINDOWS}
+OFFSET = {'fingerprint': 12.0, 'ch': 6.5}      # SNV units added to the NV spectrum
+TOP_ROOM = {'fingerprint': 7.0, 'ch': 6.0}     # space above the NV spectrum for labels
+# font sizes (pt), chosen to stay readable when the figure is reduced to one
+# journal column
+LABEL_FS, AXIS_FS, TICK_FS = 13, 17, 15
+
+# class colours of the label text
+PURPLE, BLUE, DARKBLUE = '#7030A0', '#2E75B6', '#1F3864'
+CLASS = {'Proteins': [('Proteins', PURPLE)],
+         'Proteins (COO$^{-}$)': [('Proteins (COO$^{-}$)', PURPLE)],
+         'Lipids': [('Lipids', BLUE)],
+         'Nucleic Acids': [('Nucleic Acids', DARKBLUE)],
+         'Lipids/NA': [('Lipids/', BLUE), ('NA', 'k')],
+         'Lipids/Proteins': [('Lipids/', BLUE), ('Proteins', PURPLE)],
+         'Proteins/Lipids': [('Proteins/', PURPLE), ('Lipids', BLUE)],
+         None: []}
+
+# ----------------------------------------------------------------------------
+# LABELS: (region, group 0=EV 1=NV, kind 'peak'/'shoulder', window lo, hi,
+#          text format, class, required)
+# text format: {p} = position; '~' and 'sh' are written as given
+# required=False: label only if a local extremum exists in the window
+# ----------------------------------------------------------------------------
+LABELS = [
+    # --- Fig 2a, fingerprint: labels of the current version
+    ('fingerprint', 0, 'peak', 507, 531, '{p:.1f}', None, True),          # Si 518.5 (one decimal, as before)
+    ('fingerprint', 0, 'peak', 797, 821, '{p}', 'Nucleic Acids', True),
+    ('fingerprint', 0, 'peak', 843, 867, '{p}', 'Proteins', True),
+    ('fingerprint', 0, 'peak', 919, 943, '{p}', 'Proteins', True),
+    ('fingerprint', 0, 'peak', 989, 1013, '{p}', 'Proteins', True),
+    ('fingerprint', 0, 'peak', 1149, 1173, '{p}', 'Proteins', True),
+    ('fingerprint', 0, 'peak', 1237, 1261, '{p}', 'Proteins', True),
+    ('fingerprint', 0, 'peak', 1361, 1385, '{p}', 'Lipids/NA', True),
+    ('fingerprint', 0, 'peak', 1591, 1615, '{p}', 'Proteins', True),
+    ('fingerprint', 1, 'peak', 507, 531, '{p:.1f}', None, True),
+    ('fingerprint', 1, 'peak', 787, 811, '{p}', 'Nucleic Acids', True),
+    ('fingerprint', 1, 'peak', 817, 841, '{p}', 'Proteins', True),
+    ('fingerprint', 1, 'peak', 915, 939, '{p}', 'Proteins', True),
+    ('fingerprint', 1, 'peak', 989, 1013, '{p}', 'Proteins', True),
+    ('fingerprint', 1, 'peak', 1021, 1045, '{p}', 'Proteins', True),
+    ('fingerprint', 1, 'peak', 1157, 1181, '{p}', 'Proteins', True),
+    ('fingerprint', 1, 'peak', 1233, 1257, '{p}', 'Proteins', True),
+    ('fingerprint', 1, 'peak', 1373, 1397, '{p}', 'Lipids/NA', True),
+    ('fingerprint', 1, 'peak', 1595, 1619, '{p}', 'Proteins', True),
+    # --- Fig 2a, new labels
+    ('fingerprint', 0, 'shoulder', 1560, 1585, '~{p} sh', 'Proteins (COO$^{-}$)', True),
+    ('fingerprint', 1, 'shoulder', 1620, 1640, '~{p} sh', None, True),
+    ('fingerprint', 0, 'shoulder', 1490, 1510, '~{p}', None, True),
+    ('fingerprint', 0, 'peak', 822, 835, '{p}', 'Proteins', True),       # weak Tyr band
+    ('fingerprint', 1, 'peak', 850, 860, '{p}', 'Proteins', False),      # weak Tyr band, if present
+    ('fingerprint', 0, 'peak', 1715, 1740, '{p}', 'Lipids', 'both1728'),  # only if present in EV AND NV
+    ('fingerprint', 1, 'peak', 1715, 1740, '{p}', 'Lipids', 'both1728'),
+    # --- Fig 2b, CH region
+    ('ch', 0, 'shoulder', 2868, 2892, '{p}', 'Lipids/Proteins', True),   # 2874 (current label, new class)
+    ('ch', 1, 'shoulder', 2868, 2892, '{p}', 'Lipids/Proteins', True),   # 2883
+    ('ch', 0, 'peak', 2923, 2947, '{p}', 'Proteins', True),              # 2933
+    ('ch', 1, 'peak', 2923, 2947, '{p}', 'Proteins', True),              # 2937
+    ('ch', 1, 'shoulder', 2950, 2975, '~{p} sh', 'Proteins/Lipids', True),
+    ('ch', 0, 'shoulder', 2845, 2860, '~{p}', 'Lipids', True),
+    # no labels above 3000 cm-1
+]
+# grey shadows: bands compared between EVs and NVs (EV window, NV window, kind);
+# drawn only if the shift is consistent at all sites (site ranges do not overlap)
+SHIFTS = {'fingerprint': [((507, 531), (507, 531), 'peak'), ((797, 821), (787, 811), 'peak'),
+                          ((919, 943), (915, 939), 'peak'), ((989, 1013), (989, 1013), 'peak'),
+                          ((1149, 1173), (1157, 1181), 'peak'), ((1237, 1261), (1233, 1257), 'peak'),
+                          ((1361, 1385), (1373, 1397), 'peak'), ((1591, 1615), (1595, 1619), 'peak')],
+          'ch': [((2868, 2892), (2868, 2892), 'shoulder'), ((2923, 2947), (2923, 2947), 'peak')]}
+
+
+def f2_band_position(g, s, lo, hi, kind):
+    """Most prominent local maximum ('peak') or 2nd-derivative minimum ('shoulder')
+    inside [lo, hi], refined by a parabola. None if there is none."""
+    if kind == 'shoulder':
+        s = -savgol_filter(s, 11, 3, deriv=2)
+    m = np.flatnonzero((g >= lo) & (g <= hi))
+    pk, pr = find_peaks(s[m], prominence=0)
+    if not len(pk):
+        return None
+    i = m[pk[np.argmax(pr['prominences'])]]
+    a, b, c = s[i - 1], s[i], s[i + 1]
+    return g[i] + 0.5 * (a - c) / (a - 2 * b + c) * (g[1] - g[0])
+
+
+f2_rows = []
+both1728 = all(f2_band_position(F2_GRID['fingerprint'], full['fingerprint'][y == c].mean(0), 1715, 1740,
+                             'peak') is not None for c in (0, 1))
+for region, c, kind, lo, hi, fmt, cls, required in LABELS:
+    pos = f2_band_position(F2_GRID[region], full[region][y == c].mean(0), lo, hi, kind)
+    if required == 'both1728':
+        draw = both1728
+        note = '' if both1728 else 'not drawn: no local maximum in both EV and NV'
+    elif pos is None:
+        draw, note = False, 'not drawn: no local extremum in window'
+    else:
+        draw, note = True, ''
+    text = None
+    if pos is not None:
+        text = fmt.format(p=pos) if '.1f' in fmt else fmt.format(p=int(round(pos)))
+    f2_rows.append({'Figure': '2a' if region == 'fingerprint' else '2b', 'Group': GROUPS[c],
+                 'Kind': kind, 'Window (cm-1)': f'{lo}-{hi}',
+                 'Position (cm-1)': '' if pos is None else round(pos, 1),
+                 'Label': '' if text is None else (text + ('- ' + cls.replace('$^{-}$', '-') if cls else '')),
+                 'Drawn': draw, 'Note': note, '_region': region, '_c': c, '_pos': pos, '_text': text,
+                 '_cls': cls})
+table = pd.DataFrame(f2_rows)
+f2_show = table.drop(columns=[k for k in table.columns if k.startswith('_')])
+pd.set_option('display.width', 200)
+pd.set_option('display.max_columns', 20)
+print('\nLABEL POSITIONS (from the mean spectra)')
+print(f2_show.to_string(index=False))
+f2_show.to_csv(OUTPUT_DIR / 'Fig2_label_positions.csv', index=False)
+
+
+def site_positions(region, c, lo, hi, kind):
+    return [f2_band_position(F2_GRID[region], full[region][sites == f'{GROUPS[c]}-{k}'].mean(0), lo, hi, kind)
+            for k in SITES]
+
+
+# ============================================================================
+# 3. FIGURES
+# ============================================================================
+def f2_spread(xs, widths, x_min, x_max):
+    """Move label centres apart until neighbouring labels do not overlap."""
+    xs = list(xs)
+    for _ in range(200):
+        moved = False
+        for i in range(1, len(xs)):
+            need = (widths[i - 1] + widths[i]) / 2 + 2
+            if xs[i] - xs[i - 1] < need:
+                mid = (xs[i] + xs[i - 1]) / 2
+                xs[i - 1], xs[i] = mid - need / 2, mid + need / 2
+                moved = True
+        xs = [min(max(v, x_min), x_max) for v in xs]
+        if not moved:
+            break
+    return xs
+
+
+def f2_draw_label(ax, x, ybase, segments, column_dx=0.0):
+    """Vertical label, coloured segments stacked upwards; returns (texts, top).
+    column_dx > 0: two-column label (number in the first column, class words in a
+    second column right of it), used only where a one-column label does not fit."""
+    yy = ybase
+    yr = ax.get_ylim()[1] - ax.get_ylim()[0]
+    texts, top = [], ybase
+    for k, (txt, col) in enumerate(segments):
+        if column_dx and k == 1:                       # start the second column
+            x, yy = x + column_dx, ybase
+        xx = x - column_dx / 2 if column_dx and k == 0 else x
+        t = ax.text(xx, yy, txt, rotation=90, va='bottom', ha='center', fontsize=LABEL_FS, color=col)
+        texts.append(t)
+        ax.figure.canvas.draw()
+        y1 = t.get_window_extent().transformed(ax.transData.inverted()).y1
+        top = max(top, y1)
+        # a space after the 'xxxx-' part, the coloured class words joined directly
+        yy = y1 + (0.008 * yr if txt.endswith('-') else -0.004 * yr)
+    return texts, top
+
+
+def f2_make_figure(region, xlim, figsize, legend_fs, name):
+    g = F2_GRID[region]
+    X = full[region]
+    off = OFFSET[region]
+    show_ = (g >= xlim[0]) & (g <= xlim[1])
+    gs = g[show_]
+    fig, ax = plt.subplots(figsize=figsize)
+    # grey shadows for consistent shifts
+    for (ev_w, nv_w, kind) in SHIFTS[region]:
+        pe = f2_band_position(g, X[y == 0].mean(0), *ev_w, kind)
+        pn = f2_band_position(g, X[y == 1].mean(0), *nv_w, kind)
+        se = site_positions(region, 0, *ev_w, kind)
+        sn = site_positions(region, 1, *nv_w, kind)
+        if None in [pe, pn] + se + sn:
+            continue
+        if max(se) < min(sn) or max(sn) < min(se):
+            ax.axvspan(min(pe, pn) - 4, max(pe, pn) + 4, color='0.92', lw=0, zorder=0)
+    stats = {}
+    for c in (0, 1):
+        mu, sd = X[y == c].mean(0)[show_], X[y == c].std(0, ddof=1)[show_]
+        o = off if c == 1 else 0.0
+        stats[c] = (mu, sd, o)
+        ax.fill_between(gs, mu - sd + o, mu + sd + o, color=COLS[c], alpha=0.22, lw=0)
+        ax.plot(gs, mu + o, color=COLS[c], lw=1.4,
+                label=f'{NAME_LONG[c]} (mean \u00b1 SD, n = {np.sum(y == c)})')
+    ax.set_xlim(*xlim)
+    ax.set_ylim((X[y == 0].mean(0) - X[y == 0].std(0, ddof=1))[show_].min() - 0.3,
+                (X[y == 1].mean(0) + X[y == 1].std(0, ddof=1))[show_].max() + off + TOP_ROOM[region])
+    ax.tick_params(axis='y', direction='in', length=6, width=1.0, labelleft=False)
+    ax.tick_params(axis='x', direction='in', length=6, width=1.0, labelsize=TICK_FS)
+    ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=AXIS_FS)
+    ax.set_ylabel('Intensity (a.u.)', fontsize=AXIS_FS)
+    ax.legend(frameon=True, facecolor='white', edgecolor='none', framealpha=1, fontsize=legend_fs,
+              loc='upper left', handlelength=1.5)
+    fig.tight_layout()
+    fig.canvas.draw()
+    # label width in data units (= height of one rotated text line)
+    probe = ax.text(0, 0, '0', rotation=90, fontsize=LABEL_FS)
+    fig.canvas.draw()
+    bb = probe.get_window_extent().transformed(ax.transData.inverted())
+    w_label = bb.x1 - bb.x0
+    probe.remove()
+    leg_box = ax.get_legend().get_window_extent().transformed(ax.transData.inverted())
+    tops = []
+    for c in (0, 1):
+        mu, sd, o = stats[c]
+        sel = table[(table._region == region) & (table._c == c) & table.Drawn].sort_values('_pos')
+        if sel.empty:
+            continue
+        xp = sel._pos.to_numpy(float)
+        xl = f2_spread(xp, [w_label] * len(xp), xlim[0] + w_label, xlim[1] - w_label)
+        mu1, sd1, o1 = stats[1]
+        y_top_axis = ax.get_ylim()[1]
+
+        def base_at(x_peak, x_lab):
+            """Label base: just above the SD band under the label (and above the peak
+            if the label sits at the peak)."""
+            span = np.abs(gs - x_lab) <= w_label
+            if abs(x_lab - x_peak) <= w_label:
+                span |= np.abs(gs - x_peak) <= 4
+            return (mu + sd)[span].max() + o + 0.15
+
+        def leader(x_peak, y_peak, x_end, base):
+            """Dotted line from the band on the mean spectrum to the label."""
+            if abs(x_end - x_peak) < 1:
+                ax.plot([x_peak, x_peak], [y_peak, base], ls=(0, (1, 2)), lw=0.7, color='0.35')
+            else:
+                ax.plot([x_peak, x_end], [y_peak, base], ls=(0, (1, 2)), lw=0.7, color='0.35')
+
+        def ceiling(x_lab):
+            """Highest y a label may reach: below the NV band (for EV labels), the
+            legend and the frame."""
+            k = np.abs(gs - x_lab) <= w_label
+            lim = y_top_axis - 0.1
+            if leg_box.x0 - w_label <= x_lab <= leg_box.x1 + w_label:
+                lim = min(lim, leg_box.y0 - 0.1)
+            if c == 0:
+                lim = min(lim, (mu1 - sd1)[k].min() + o1 - 0.1)
+            return lim
+
+        for j, ((_, r), x_peak) in enumerate(zip(sel.iterrows(), xp)):
+            cls = r._cls if isinstance(r._cls, str) else None     # pandas stores None as NaN
+            segs = [(r._text + '-' if cls else r._text, 'k')] + CLASS[cls]
+            texts, top = f2_draw_label(ax, xl[j], base_at(x_peak, xl[j]) + 0.05, segs)
+            length = top - base_at(x_peak, xl[j])
+            if top > ceiling(xl[j]):
+                # label would touch the other spectrum: move it sideways (smallest move
+                # that fits, without coming closer than one label width to a neighbour)
+                for t in texts:
+                    t.remove()
+                others = [v for i, v in enumerate(xl) if i != j]
+                for dx in sorted(np.arange(-120, 121, 2), key=abs):
+                    xc = xl[j] + dx
+                    if any(abs(xc - v) < w_label + 2 for v in others):
+                        continue
+                    if base_at(x_peak, xc) + length < ceiling(xc):
+                        xl[j] = xc
+                        break
+                else:
+                    # still too tall: write the label in two columns (same font)
+                    two_col = w_label * 0.5
+                    texts, top = f2_draw_label(ax, xl[j], base_at(x_peak, xl[j]) + 0.05, segs, two_col)
+                    length2 = top - base_at(x_peak, xl[j])
+                    for t in texts:
+                        t.remove()
+                    for dx in sorted(np.arange(-120, 121, 2), key=abs):
+                        xc = xl[j] + dx
+                        if any(abs(xc - v) < 1.5 * w_label + 2 for v in others):
+                            continue
+                        if base_at(x_peak, xc) + length2 < ceiling(xc):
+                            xl[j] = xc
+                            break
+                    else:
+                        print(f'  WARNING {name}: no free place for the label at {x_peak:.0f} cm-1')
+                    texts, top = f2_draw_label(ax, xl[j], base_at(x_peak, xl[j]) + 0.05, segs, two_col)
+                    x_lab, base = xl[j], base_at(x_peak, xl[j])
+                    y_peak = np.interp(x_peak, gs, mu) + o
+                    tops.append((c, x_lab, base, top))
+                    leader(x_peak, y_peak, x_lab - two_col / 2, base)
+                    continue
+                texts, top = f2_draw_label(ax, xl[j], base_at(x_peak, xl[j]) + 0.05, segs)
+            x_lab, base = xl[j], base_at(x_peak, xl[j])
+            y_peak = np.interp(x_peak, gs, mu) + o
+            tops.append((c, x_lab, base, top))
+            # dotted leader: up from the mean spectrum, then to the label
+            leader(x_peak, y_peak, x_lab, base)
+    # check: EV labels must stay below the NV spectrum (mean - SD)
+    mu1, sd1, o1 = stats[1]
+    for c, x_lab, base, top in tops:
+        if c == 0:
+            k = np.abs(gs - x_lab) <= w_label
+            if top > (mu1 - sd1)[k].min() + o1:
+                print(f'  WARNING {name}: EV label at {x_lab:.0f} cm-1 reaches the NV spectrum')
+    save_figure(fig, name)
+
+
+print()
+plt.rcParams.update({'font.size': TICK_FS})
+f2_make_figure('fingerprint', (400, 1790), (8.5, 7.8), 13, 'Fig2a_MeanSD_Fingerprint')
+f2_make_figure('ch', (2760, 3095), (7.0, 6.5), 12, 'Fig2b_MeanSD_CH')
+plt.rcParams.update({'font.size': 10})
+
+
 report('\n3b. FIGURE S2 - CH band fitting')
 g = WINDOWS['ch']['g']
 fr = (g >= FIT_RANGE[0]) & (g <= FIT_RANGE[1])
 gx = g[fr]
 fit_rows = []
 FITS = {}                                   # (group, line shape) -> fitted curves
-plt.rcParams.update({'font.size': 10})
-fig = plt.figure(figsize=(13, 7.6))
+plt.rcParams.update({'font.size': 13})
+fig = plt.figure(figsize=(15, 9.4))
 outer = fig.add_gridspec(2, 3, hspace=0.38, wspace=0.28)
 letters = iter('abcdef')
 for row, c in enumerate((0, 1)):
@@ -603,32 +916,32 @@ for row, c in enumerate((0, 1)):
         inner = outer[row, col].subgridspec(2, 1, height_ratios=[1, 3.2], hspace=0.05)
         ax_r = fig.add_subplot(inner[0])
         ax = fig.add_subplot(inner[1], sharex=ax_r)
-        ax_r.plot(gx, res, color='k', lw=0.8)
+        ax_r.plot(gx, res, color='k', lw=1.0)
         ax_r.axhline(0, color='k', ls='--', lw=0.6)
         ax_r.set_ylim(-8, 8)
         ax_r.set_yticks([-8, 0, 8])
-        ax_r.set_yticklabels(['-8%', '0', '8%'], fontsize=8)
-        ax_r.set_ylabel('Residuals', fontsize=9)
+        ax_r.set_yticklabels(['-8%', '0', '8%'], fontsize=11)
+        ax_r.set_ylabel('Residuals', fontsize=12)
         ax_r.tick_params(labelbottom=False)
-        ax_r.set_title(f'{NAME_LONG[c].split(" on")[0]}: {FIT_SHAPES[shape]} ({shape})', fontsize=10)
+        ax_r.set_title(f'{NAME_LONG[c].split(" on")[0]}: {FIT_SHAPES[shape]} ({shape})', fontsize=13)
         ax.plot(gx, yv - base, color='k', lw=2.2, label='data')
         ax.plot(gx, total - base, color='0.6', lw=1.4, label='fit')
         for k, comp in enumerate(comps):
-            ax.plot(gx, comp, color='k', lw=0.6)
+            ax.plot(gx, comp, color='k', lw=0.9)
             ax.text(p[3 + 3 * k], comp.max() + 0.04 * height, FIT_BANDS[k][1], ha='center',
-                    va='bottom', fontsize=10, family='serif')
+                    va='bottom', fontsize=14, family='serif')
         ax.set_xlim(*FIT_RANGE)
         ax.set_ylim(0, height * 1.12)
         ax.set_xlabel('Raman shift (cm$^{-1}$)')
         ax.set_ylabel('Intensity (a.u.)')
         ax.tick_params(axis='y', labelleft=False)
-        ax_r.text(-0.14, 1.25, f'({next(letters)})', transform=ax_r.transAxes, fontsize=13, va='bottom')
+        ax_r.text(-0.16, 1.25, f'({next(letters)})', transform=ax_r.transAxes, fontsize=17, va='bottom')
 fig.subplots_adjust(left=0.05, right=0.99, bottom=0.07, top=0.93)
 save_figure(fig, 'FigS2_PeakFit_CH')
 
 # main figure: Gaussian-Lorentzian sum only (best or equal-best fit for both groups
 # by AIC/BIC; for NVs the fitted Lorentzian fraction is 0, i.e. Gaussian)
-fig = plt.figure(figsize=(11, 5.6))
+fig = plt.figure(figsize=(12.5, 7.0))
 outer = fig.add_gridspec(1, 2, wspace=0.18)
 for col, c in enumerate((0, 1)):
     yv = data['ch'][y == c].mean(0)[fr]
@@ -637,27 +950,27 @@ for col, c in enumerate((0, 1)):
     inner = outer[col].subgridspec(2, 1, height_ratios=[1, 3.4], hspace=0.05)
     ax_r = fig.add_subplot(inner[0])
     ax = fig.add_subplot(inner[1], sharex=ax_r)
-    ax_r.plot(gx, res, color='k', lw=0.8)
+    ax_r.plot(gx, res, color='k', lw=1.0)
     ax_r.axhline(0, color='k', ls='--', lw=0.6)
     ax_r.set_ylim(-8, 8)
     ax_r.set_yticks([-8, 0, 8])
-    ax_r.set_yticklabels(['-8%', '0', '8%'], fontsize=9)
-    ax_r.set_ylabel('Residuals', fontsize=10)
+    ax_r.set_yticklabels(['-8%', '0', '8%'], fontsize=12)
+    ax_r.set_ylabel('Residuals', fontsize=14)
     ax_r.tick_params(labelbottom=False)
-    ax_r.set_title(f'{NAME_LONG[c]}', fontsize=11)
+    ax_r.set_title(f'{NAME_LONG[c]}', fontsize=15)
     ax.plot(gx, yv - base, color='k', lw=2.2, label='Mean spectrum')
     ax.plot(gx, total - base, color='0.6', lw=1.4, label=f'GL fit (Lorentzian fraction {eta:.2f})')
     for k, comp in enumerate(comps):
-        ax.plot(gx, comp, color='k', lw=0.6)
+        ax.plot(gx, comp, color='k', lw=0.9)
         ax.text(p[3 + 3 * k], comp.max() + 0.04 * height, f'{FIT_BANDS[k][1]}\n{p[3 + 3 * k]:.0f}',
-                ha='center', va='bottom', fontsize=9, family='serif', linespacing=0.95)
+                ha='center', va='bottom', fontsize=13, family='serif', linespacing=0.95)
     ax.set_xlim(*FIT_RANGE)
     ax.set_ylim(0, height * 1.22)
     ax.set_xlabel('Raman shift (cm$^{-1}$)')
     ax.set_ylabel('Intensity (a.u.)')
     ax.tick_params(axis='y', labelleft=False)
-    ax.legend(frameon=False, fontsize=9, loc='upper right')
-    ax_r.text(-0.10, 1.25, f'({"ab"[col]})', transform=ax_r.transAxes, fontsize=13, va='bottom')
+    ax.legend(frameon=False, fontsize=12, loc='upper right')
+    ax_r.text(-0.10, 1.25, f'({"ab"[col]})', transform=ax_r.transAxes, fontsize=17, va='bottom')
 fig.subplots_adjust(left=0.05, right=0.99, bottom=0.10, top=0.90)
 save_figure(fig, 'Fig2c_PeakFit_CH_GL')
 plt.rcParams.update({'font.size': 10})
@@ -670,8 +983,9 @@ plt.rcParams.update({'font.size': 10})
 # fitted on all spectra (display of the separation; the classification result is
 # the cross-validation of section 6). p: Welch's t-test on the 6 + 6 site means.
 report('\n4. FIGURE 3 - PCA and LDA')
-plt.rcParams.update({'font.size': 12, 'axes.spines.top': False, 'axes.spines.right': False})
-fig, axs = plt.subplots(2, 2, figsize=(10, 9),
+plt.rcParams.update({'font.size': 16, 'axes.spines.top': False, 'axes.spines.right': False,
+                     'axes.linewidth': 1.2})
+fig, axs = plt.subplots(2, 2, figsize=(11, 10),
                         gridspec_kw={'width_ratios': [1.35, 1], 'wspace': 0.32, 'hspace': 0.42})
 letters = iter('abcd')
 for row, w in enumerate(['fingerprint', 'ch']):
@@ -702,20 +1016,20 @@ for row, w in enumerate(['fingerprint', 'ch']):
     ax = axs[row, 0]                        # PCA scores, 2-SD ellipses
     for c in (0, 1):
         P = T[y == c, :2]
-        ax.scatter(P[:, 0], P[:, 1], s=14, color=COLS[c], lw=0, alpha=0.85, label=GROUPS[c])
+        ax.scatter(P[:, 0], P[:, 1], s=22, color=COLS[c], lw=0, alpha=0.85, label=GROUPS[c])
         vals, vecs = np.linalg.eigh(np.cov(P.T))
         ang = np.degrees(np.arctan2(vecs[1, 1], vecs[0, 1]))
         ax.add_patch(Ellipse(P.mean(0), 4 * np.sqrt(vals[1]), 4 * np.sqrt(vals[0]), angle=ang,
-                             fc='none', ec=COLS[c], lw=1.4))
+                             fc='none', ec=COLS[c], lw=1.8))
     ax.axhline(0, color='k', lw=0.6)
     ax.axvline(0, color='k', lw=0.6)
     ax.set_xlabel(f'PC1 ({var[0]:.1f}%)')
     ax.set_ylabel(f'PC2 ({var[1]:.1f}%)')
     ylo, yhi = ax.get_ylim()
     ax.set_ylim(ylo, yhi + 0.28 * (yhi - ylo))
-    ax.legend(frameon=False, fontsize=11, loc='upper left', ncol=2, handletextpad=0.1,
+    ax.legend(frameon=False, fontsize=15, loc='upper left', ncol=2, handletextpad=0.1,
               columnspacing=1.0, markerscale=1.6)
-    ax.set_title(TITLES[w], fontsize=12, loc='left')
+    ax.set_title(TITLES[w], fontsize=16, loc='left')
 
     ax = axs[row, 1]                        # LD1 box plot
     rng = np.random.default_rng(0)
@@ -725,19 +1039,19 @@ for row, w in enumerate(['fingerprint', 'ch']):
                    boxprops=dict(fc=COLS[c], alpha=0.30, ec=COLS[c]),
                    medianprops=dict(color=COLS[c], lw=1.6),
                    whiskerprops=dict(color=COLS[c]), capprops=dict(color=COLS[c]))
-        ax.scatter(c + rng.uniform(-0.15, 0.15, len(v)), v, s=8, color=COLS[c], lw=0, alpha=0.8)
+        ax.scatter(c + rng.uniform(-0.15, 0.15, len(v)), v, s=12, color=COLS[c], lw=0, alpha=0.8)
     top = ld.max() + 0.08 * np.ptp(ld)
     ax.plot([0, 1], [top, top], color='k', lw=0.8)
-    ax.text(0.5, top, stars(p), ha='center', va='bottom', fontsize=12)
+    ax.text(0.5, top, stars(p), ha='center', va='bottom', fontsize=16)
     ax.set_xticks([0, 1])
     ax.set_xticklabels(['EVs', 'NVs'])
     ax.set_ylabel('Canonical variable 1')
     ax.set_ylim(ld.min() - 0.20 * np.ptp(ld), top + 0.15 * np.ptp(ld))
     ax.text(0.5, 0.02, "Welch's t-test on site means\n(n = 6), " + stars(p) + f' p = {p:.1e}',
-            transform=ax.transAxes, ha='center', va='bottom', fontsize=9)
+            transform=ax.transAxes, ha='center', va='bottom', fontsize=12)
     for a in axs[row]:
         a.text(-0.27 if a is axs[row, 1] else -0.18, 1.08, f'({next(letters)})',
-               transform=a.transAxes, fontsize=14, va='bottom')
+               transform=a.transAxes, fontsize=18, va='bottom')
 fig.subplots_adjust(left=0.09, right=0.98, bottom=0.07, top=0.94)
 save_figure(fig, 'Fig3_PCA_LDA')
 
@@ -764,29 +1078,30 @@ def main_bands(g, curve, n, min_gap=20):
 N_BANDS = {'fingerprint': 8, 'ch': 4}
 report('\n5. FIGURE 4 - loadings and difference spectrum')
 band_rows = []
-fig, axs = plt.subplots(2, 2, figsize=(12, 9), gridspec_kw={'width_ratios': [3, 1.3]})
+fig, axs = plt.subplots(2, 2, figsize=(14, 10.5), gridspec_kw={'width_ratios': [3, 1.3]})
 for col, w in enumerate(['fingerprint', 'ch']):
     g, L, var = WINDOWS[w]['g'], RES[w]['loadings'], RES[w]['var']
     hi_g = GROUPS[0] if RES[w]['pc1_mean'][0] > 0 else GROUPS[1]
     lo_g = GROUPS[1] if hi_g == GROUPS[0] else GROUPS[0]
     ax = axs[0, col]
     ax.axhline(0, color='k', lw=0.6)
-    ax.plot(g, L[0], color='#0B5A7E', lw=1.2, label=f'PC1 ({var[0]:.1f}%)')
-    ax.plot(g, L[1], color='#B5541C', lw=1.0, alpha=0.8, label=f'PC2 ({var[1]:.1f}%)')
+    ax.plot(g, L[0], color='#0B5A7E', lw=1.6, label=f'PC1 ({var[0]:.1f}%)')
+    ax.plot(g, L[1], color='#B5541C', lw=1.4, alpha=0.8, label=f'PC2 ({var[1]:.1f}%)')
     bands = main_bands(g, L[0], N_BANDS[w])
     RES[w]['load_bands'] = [(wn, v, hi_g if v > 0 else lo_g) for wn, v in bands]
     span = np.ptp(L[:2])
     for wn, v in bands:
         ax.text(wn, v + (0.03 if v > 0 else -0.03) * span, f'{wn:.0f}', ha='center',
-                va='bottom' if v > 0 else 'top', fontsize=9, rotation=90)
+                va='bottom' if v > 0 else 'top', fontsize=13, rotation=90)
         band_rows.append({'Source': 'PC1 loading', 'Region': w, 'Band (cm-1)': round(wn),
                           'Value': round(v, 4), 'Relatively stronger in': hi_g if v > 0 else lo_g})
     ax.set_xlim(g[0], g[-1])
-    ax.set_ylim(L[:2].min() - 0.18 * span, L[:2].max() + 0.22 * span)
+    ax.set_ylim(L[:2].min() - 0.18 * span, L[:2].max() + (0.22 if w == 'fingerprint' else 0.55) * span)
     ax.set_xlabel('Raman shift (cm$^{-1}$)')
     ax.set_ylabel('Loading (a.u.)')
-    ax.set_title(f'{TITLES[w]}\nPC1 > 0: {hi_g} side', fontsize=11, loc='left')
-    ax.legend(frameon=False, fontsize=10, loc='lower left')
+    ax.set_title(f'{TITLES[w]}\nPC1 > 0: {hi_g} side', fontsize=15, loc='left')
+    ax.legend(frameon=False, fontsize=14 if w == 'fingerprint' else 12,
+              loc='lower left' if w == 'fingerprint' else 'upper right')
 
     X = data[w]
     S = {c: np.array([X[sites == s].mean(0) for s in sorted(set(sites[y == c]))]) for c in (0, 1)}
@@ -796,27 +1111,28 @@ for col, w in enumerate(['fingerprint', 'ch']):
     ax = axs[1, col]
     ax.axhline(0, color='k', lw=0.6)
     ax.fill_between(g, d - 2 * se, d + 2 * se, color='0.75', lw=0, label='$\\pm$2 SE (6 + 6 sites)')
-    ax.plot(g, d, color='k', lw=1.0, label='NV $-$ EV')
+    ax.plot(g, d, color='k', lw=1.4, label='NV $-$ EV')
     bands = [b for b in main_bands(g, np.where(sig, d, 0), N_BANDS[w]) if b[1] != 0]
     RES[w]['diff_bands'] = bands
     RES[w]['diff_sig_frac'] = sig.mean() * 100
     span = np.ptp(np.r_[d - 2 * se, d + 2 * se])
     for wn, v in bands:
         ax.text(wn, v + (0.04 if v > 0 else -0.04) * span, f'{wn:.0f}', ha='center',
-                va='bottom' if v > 0 else 'top', fontsize=9, rotation=90)
+                va='bottom' if v > 0 else 'top', fontsize=13, rotation=90)
         band_rows.append({'Source': 'NV - EV difference', 'Region': w, 'Band (cm-1)': round(wn),
                           'Value': round(v, 3), 'Relatively stronger in': GROUPS[1] if v > 0 else GROUPS[0]})
     ax.set_xlim(g[0], g[-1])
-    ax.set_ylim((d - 2 * se).min() - 0.15 * span, (d + 2 * se).max() + 0.2 * span)
+    ax.set_ylim((d - 2 * se).min() - 0.15 * span, (d + 2 * se).max() + (0.2 if w == 'fingerprint' else 0.5) * span)
     ax.set_xlabel('Raman shift (cm$^{-1}$)')
     ax.set_ylabel('$\\Delta$ SNV intensity, NV $-$ EV')
-    ax.set_title(TITLES[w], fontsize=11, loc='left')
-    ax.legend(frameon=False, fontsize=10, loc='lower left' if w == 'fingerprint' else 'upper left')
+    ax.set_title(TITLES[w], fontsize=15, loc='left')
+    ax.legend(frameon=False, fontsize=14 if w == 'fingerprint' else 12,
+              loc='lower left' if w == 'fingerprint' else 'upper right')
     report(f'  {PLAIN[w]}: PC1 > 0 = {hi_g}; difference > 2 SE at {sig.mean() * 100:.0f} % '
            f'of wavenumbers')
 for a, letter in zip([axs[0, 0], axs[0, 1], axs[1, 0], axs[1, 1]], 'abcd'):
     a.text(-0.10 if a in (axs[0, 0], axs[1, 0]) else -0.25, 1.06, f'({letter})',
-           transform=a.transAxes, fontsize=14, va='bottom')
+           transform=a.transAxes, fontsize=18, va='bottom')
 fig.tight_layout()
 save_figure(fig, 'Fig4_Loadings_Difference')
 
@@ -863,7 +1179,7 @@ folds = make_folds(y)
 for k, (tr, te) in enumerate(folds, 1):
     report(f'  fold {k}: test sites ' + ', '.join(sorted(set(sites[te]))))
 fold_rows = []
-fig, axs = plt.subplots(2, 2, figsize=(8, 7.6))
+fig, axs = plt.subplots(2, 2, figsize=(9.5, 9))
 letters = iter('abcd')
 for row, w in enumerate(['fingerprint', 'ch']):
     X = data[w]
@@ -886,15 +1202,15 @@ for row, w in enumerate(['fingerprint', 'ch']):
         for i in range(2):
             for j in range(2):
                 ax.text(j, i, f'{cm[i, j]}\n({cm[i, j] / cm[i].sum() * 100:.1f}%)', ha='center',
-                        va='center', fontsize=13, color='white' if cm[i, j] > 60 else 'black')
+                        va='center', fontsize=18, color='white' if cm[i, j] > 60 else 'black')
         ax.set_xticks([0, 1])
         ax.set_xticklabels(['EVs', 'NVs'])
         ax.set_yticks([0, 1])
         ax.set_yticklabels(['EVs', 'NVs'])
         ax.set_xlabel('Predicted')
         ax.set_ylabel('True')
-        ax.set_title(f'{model} - {SHORT[w]}\naccuracy {acc:.1f}%', fontsize=12)
-        ax.text(-0.32, 1.12, f'({next(letters)})', transform=ax.transAxes, fontsize=14, va='bottom')
+        ax.set_title(f'{model} - {SHORT[w]}\naccuracy {acc:.1f}%', fontsize=16)
+        ax.text(-0.36, 1.12, f'({next(letters)})', transform=ax.transAxes, fontsize=18, va='bottom')
     report(f'  {PLAIN[w]} PCA-LDA, PCA re-fitted in each fold: {RES[w]["strict"]:.1f} %')
 fig.tight_layout()
 save_figure(fig, 'Fig5_ConfusionMatrices')
@@ -911,7 +1227,7 @@ pd.DataFrame(fold_rows).to_csv(OUTPUT_DIR / 'TableS2_Fold_results.csv', index=Fa
 if N_PERM_MODE == 'exact':
     report('\n7. FIGURE S1 - permutation test (924 site labelings)')
     labelings = list(combinations(range(len(SITE_IDS)), 6))
-    fig, axs = plt.subplots(2, 2, figsize=(9, 7))
+    fig, axs = plt.subplots(2, 2, figsize=(11, 9))
     letters = iter('abcd')
     for row, w in enumerate(['fingerprint', 'ch']):
         X = data[w]
@@ -938,13 +1254,13 @@ if N_PERM_MODE == 'exact':
             ax.hist(a, bins=np.arange(0, 102.5, 2.5), color='0.6', edgecolor='white')
             ax.axvline(obs, color='#B5541C', lw=2)
             ax.text(obs - 1, ax.get_ylim()[1] * 0.92, f'real\n{obs:.1f}%', ha='right', va='top',
-                    color='#B5541C', fontsize=10)
+                    color='#B5541C', fontsize=14)
             ax.set_xlim(0, 100)
             ax.set_xlabel('Cross-validated accuracy (%)')
             ax.set_ylabel('Number of site labelings')
             ax.set_title(f'{model} - {SHORT[w]}\np = {n_ge / len(a):.4f} ({len(a)} labelings)',
-                         fontsize=11)
-            ax.text(-0.18, 1.08, f'({next(letters)})', transform=ax.transAxes, fontsize=14,
+                         fontsize=15)
+            ax.text(-0.18, 1.08, f'({next(letters)})', transform=ax.transAxes, fontsize=18,
                     va='bottom')
     fig.tight_layout()
     save_figure(fig, 'FigS1_Permutation')
