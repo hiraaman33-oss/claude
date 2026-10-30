@@ -599,42 +599,32 @@ CLASS = {'Proteins': [('Proteins', PURPLE)],
 # required=False: label only if a local extremum exists in the window
 # ----------------------------------------------------------------------------
 LABELS = [
-    # --- Fig 2a, fingerprint: labels of the current version
-    ('fingerprint', 0, 'peak', 507, 531, '{p:.1f}', None, True),          # Si 518.5 (one decimal, as before)
-    ('fingerprint', 0, 'peak', 797, 821, '{p}', 'Nucleic Acids', True),
-    ('fingerprint', 0, 'peak', 843, 867, '{p}', 'Proteins', True),
-    ('fingerprint', 0, 'peak', 919, 943, '{p}', 'Proteins', True),
-    ('fingerprint', 0, 'peak', 989, 1013, '{p}', 'Proteins', True),
-    ('fingerprint', 0, 'peak', 1149, 1173, '{p}', 'Proteins', True),
-    ('fingerprint', 0, 'peak', 1237, 1261, '{p}', 'Proteins', True),
-    ('fingerprint', 0, 'peak', 1361, 1385, '{p}', 'Lipids/NA', True),
-    ('fingerprint', 0, 'peak', 1591, 1615, '{p}', 'Proteins', True),
-    ('fingerprint', 1, 'peak', 507, 531, '{p:.1f}', None, True),
-    ('fingerprint', 1, 'peak', 787, 811, '{p}', 'Nucleic Acids', True),
-    ('fingerprint', 1, 'peak', 817, 841, '{p}', 'Proteins', True),
-    ('fingerprint', 1, 'peak', 915, 939, '{p}', 'Proteins', True),
-    ('fingerprint', 1, 'peak', 989, 1013, '{p}', 'Proteins', True),
-    ('fingerprint', 1, 'peak', 1021, 1045, '{p}', 'Proteins', True),
-    ('fingerprint', 1, 'peak', 1157, 1181, '{p}', 'Proteins', True),
-    ('fingerprint', 1, 'peak', 1233, 1257, '{p}', 'Proteins', True),
-    ('fingerprint', 1, 'peak', 1373, 1397, '{p}', 'Lipids/NA', True),
-    ('fingerprint', 1, 'peak', 1595, 1619, '{p}', 'Proteins', True),
-    # --- Fig 2a, new labels
-    ('fingerprint', 0, 'shoulder', 1560, 1585, '~{p} sh', 'Proteins (COO$^{-}$)', True),
-    ('fingerprint', 1, 'shoulder', 1620, 1640, '~{p} sh', None, True),
-    ('fingerprint', 0, 'shoulder', 1490, 1510, '~{p}', None, True),
-    ('fingerprint', 0, 'peak', 822, 835, '{p}', 'Proteins', True),       # weak Tyr band
-    ('fingerprint', 1, 'peak', 850, 860, '{p}', 'Proteins', False),      # weak Tyr band, if present
-    ('fingerprint', 0, 'peak', 1715, 1740, '{p}', 'Lipids', 'both1728'),  # only if present in EV AND NV
-    ('fingerprint', 1, 'peak', 1715, 1740, '{p}', 'Lipids', 'both1728'),
-    # --- Fig 2b, CH region
-    ('ch', 0, 'shoulder', 2868, 2892, '{p}', 'Lipids/Proteins', True),   # 2874 (current label, new class)
-    ('ch', 1, 'shoulder', 2868, 2892, '{p}', 'Lipids/Proteins', True),   # 2883
-    ('ch', 0, 'peak', 2923, 2947, '{p}', 'Proteins', True),              # 2933
-    ('ch', 1, 'peak', 2923, 2947, '{p}', 'Proteins', True),              # 2937
-    ('ch', 1, 'shoulder', 2950, 2975, '~{p} sh', 'Proteins/Lipids', True),
-    ('ch', 0, 'shoulder', 2845, 2860, '~{p}', 'Lipids', True),
-    # no labels above 3000 cm-1
+    # --- Fig 2a, fingerprint (exactly the labels of the approved figure)
+    ('fingerprint', 0, 'peak', 507, 531, '{p:.1f}', None, True),          # Si 518.5
+    ('fingerprint', 0, 'peak', 797, 821, '{p}', 'Nucleic Acids', True),   # 809
+    ('fingerprint', 0, 'peak', 843, 867, '{p}', 'Proteins', True),        # 855
+    ('fingerprint', 0, 'peak', 919, 943, '{p}', 'Proteins', True),        # 932
+    ('fingerprint', 0, 'peak', 989, 1013, '{p}', 'Proteins', True),       # 1002
+    ('fingerprint', 0, 'peak', 1149, 1173, '{p}', 'Proteins', True),      # 1162
+    ('fingerprint', 0, 'peak', 1237, 1261, '{p}', 'Proteins', True),      # 1249
+    ('fingerprint', 0, 'peak', 1361, 1385, '{p}', 'Lipids/NA', True),     # 1373
+    ('fingerprint', 0, 'peak', 1591, 1615, '{p}', 'Proteins', True),      # 1603
+    ('fingerprint', 1, 'peak', 507, 531, '{p:.1f}', None, True),          # Si 518.1
+    ('fingerprint', 1, 'peak', 787, 811, '{p}', 'Nucleic Acids', True),   # 799
+    ('fingerprint', 1, 'peak', 817, 841, '{p}', 'Proteins', True),        # 829
+    ('fingerprint', 1, 'peak', 915, 939, '{p}', 'Proteins', True),        # 927
+    ('fingerprint', 1, 'peak', 989, 1013, '{p}', 'Proteins', True),       # 1001
+    ('fingerprint', 1, 'peak', 1021, 1045, '{p}', 'Proteins', True),      # 1033
+    ('fingerprint', 1, 'peak', 1157, 1181, '{p}', 'Proteins', True),      # 1169
+    ('fingerprint', 1, 'peak', 1233, 1257, '{p}', 'Proteins', True),      # 1244
+    ('fingerprint', 1, 'peak', 1373, 1397, '{p}', 'Lipids/NA', True),     # 1385
+    ('fingerprint', 1, 'peak', 1595, 1619, '{p}', 'Proteins', True),      # 1607
+    ('fingerprint', 1, 'peak', 1717, 1741, '{p}', 'Lipids', True),        # 1728
+    # --- Fig 2b, CH region (exactly the labels of the approved figure)
+    ('ch', 0, 'shoulder', 2868, 2892, '{p}', 'Lipids', True),             # 2874
+    ('ch', 1, 'shoulder', 2868, 2892, '{p}', 'Lipids', True),             # 2883
+    ('ch', 0, 'peak', 2923, 2947, '{p}', 'Proteins', True),               # 2933
+    ('ch', 1, 'peak', 2923, 2947, '{p}', 'Proteins', True),               # 2937
 ]
 # grey shadows: bands compared between EVs and NVs (EV window, NV window, kind);
 # drawn only if the shift is consistent at all sites (site ranges do not overlap)
@@ -689,8 +679,20 @@ print(f2_show.to_string(index=False))
 f2_show.to_csv(OUTPUT_DIR / 'Fig2_label_positions.csv', index=False)
 
 
+def shift_position(g, s, lo, hi, kind):
+    """Band position used for the grey shift shadows (same method as Table S4):
+    peak = maximum in the window, refined by a parabola (also valid at the window
+    edge); shoulder = 2nd-derivative minimum."""
+    if kind == 'shoulder':
+        return f2_band_position(g, s, lo, hi, kind)
+    m = np.flatnonzero((g >= lo) & (g <= hi))
+    i = m[int(np.argmax(s[m]))]
+    a, b, c = s[i - 1], s[i], s[i + 1]
+    return g[i] + 0.5 * (a - c) / (a - 2 * b + c) * (g[1] - g[0])
+
+
 def site_positions(region, c, lo, hi, kind):
-    return [f2_band_position(F2_GRID[region], full[region][sites == f'{GROUPS[c]}-{k}'].mean(0), lo, hi, kind)
+    return [shift_position(F2_GRID[region], full[region][sites == f'{GROUPS[c]}-{k}'].mean(0), lo, hi, kind)
             for k in SITES]
 
 
@@ -744,8 +746,8 @@ def f2_make_figure(region, xlim, figsize, legend_fs, name):
     fig, ax = plt.subplots(figsize=figsize)
     # grey shadows for consistent shifts
     for (ev_w, nv_w, kind) in SHIFTS[region]:
-        pe = f2_band_position(g, X[y == 0].mean(0), *ev_w, kind)
-        pn = f2_band_position(g, X[y == 1].mean(0), *nv_w, kind)
+        pe = shift_position(g, X[y == 0].mean(0), *ev_w, kind)
+        pn = shift_position(g, X[y == 1].mean(0), *nv_w, kind)
         se = site_positions(region, 0, *ev_w, kind)
         sn = site_positions(region, 1, *nv_w, kind)
         if None in [pe, pn] + se + sn:
