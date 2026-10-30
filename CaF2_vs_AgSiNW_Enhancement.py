@@ -22,7 +22,9 @@
 #   S2-EV_Acacia-dropCaF2 ...      S2-EV_ACACIA-AgSiNW ...
 #   s1-EV_nano_Acacia-dropCaF2 ... s4a-EV_nano_ACACIA-20ng-AgSiNW ...
 # HOW TO RUN (PyCharm): pip install numpy scipy matplotlib, check DATA_DIR, Run.
-# OUTPUT (in DATA_DIR): CaF2_vs_AgSiNW_Enhancement.png / .tiff (600 dpi) + CSV
+# OUTPUT (in DATA_DIR): CaF2_vs_AgSiNW_Enhancement.png / .tiff  (two panels, 600 dpi)
+#                       CaF2_vs_AgSiNW_OneGraph.png / .tiff     (all four in one graph)
+#                       CaF2_vs_AgSiNW_bands.csv
 # =============================================================================
 
 import sys
@@ -199,6 +201,140 @@ fig.text(0.53, 0.02, 'Raman Shift (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
 fig.subplots_adjust(left=0.08, right=0.98, bottom=0.06, top=0.99)
 fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_Enhancement.png', dpi=600)
 fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_Enhancement.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
+plt.close(fig)
+
+
+# ============================================================================
+# 4. ONE-GRAPH VERSION: all four spectra in one plot, same count scale
+#    bottom -> top: EV on CaF2, EV on Ag/SiNWs, NV on CaF2, NV on Ag/SiNWs
+# ============================================================================
+ORDER = [('EV', 'CaF2'), ('EV', 'Ag'), ('NV', 'CaF2'), ('NV', 'Ag')]
+
+
+def label_positions(ax, s, fig):
+    """x positions of the labels of sample s, spread so they do not overlap."""
+    out = {}
+    for lo, hi in [LOW, HIGH]:
+        sel = sorted((p, c) for p, c in labels[s] if lo <= p <= hi)
+        if not sel:
+            continue
+        a = ax[0] if (lo, hi) == LOW else ax[1]
+        probe = a.text(0, 0, '0', rotation=90, fontsize=FS_LABEL)
+        fig.canvas.draw()
+        bb = probe.get_window_extent().transformed(a.transData.inverted())
+        wl = bb.x1 - bb.x0
+        probe.remove()
+        xl = [p for p, _ in sel]
+        for _ in range(200):
+            moved = False
+            for i in range(1, len(xl)):
+                if xl[i] - xl[i - 1] < wl * 1.1:
+                    mid = (xl[i] + xl[i - 1]) / 2
+                    xl[i - 1], xl[i] = mid - wl * 0.55, mid + wl * 0.55
+                    moved = True
+            if not moved:
+                break
+        out[(lo, hi)] = (a, sel, xl, wl)
+    return out
+
+
+def draw_one(label_room):
+    """Draw the single graph; return the figure and how much more space the EV
+    labels need so that they stay below the NV-on-CaF2 trace and its name."""
+    off, top = {}, None
+    for key in ORDER:                          # stack the traces with fixed gaps
+        d = spec[key]
+        yv = d[view(d), 1]
+        if top is None:
+            off[key] = 0.0
+        else:
+            gap = label_room if key == ('NV', 'CaF2') else GAP
+            off[key] = top + gap - yv.min()
+        top = yv.max() + off[key]
+    y_lo = spec[ORDER[0]][view(spec[ORDER[0]]), 1].min()
+    span = top - y_lo
+    fig, (axL, axR) = plt.subplots(1, 2, sharey=True, figsize=(11, 12),
+                                   gridspec_kw={'width_ratios': [LOW[1] - LOW[0], HIGH[1] - HIGH[0]],
+                                                'wspace': 0.03})
+    axL.set_ylim(y_lo - 0.06 * span, top + 0.28 * span)
+    for ax, (lo, hi) in [(axL, LOW), (axR, HIGH)]:
+        for s, sub in ORDER:
+            d = spec[(s, sub)]
+            m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
+            ax.plot(d[m, 0], d[m, 1] + off[(s, sub)], color=COL['CaF2'] if sub == 'CaF2' else COL[s],
+                    lw=0.8)
+        ax.set_xlim(lo, hi)
+        ax.tick_params(direction='in', length=6, width=1.0, labelsize=FS_TICK)
+    axL.spines['right'].set_visible(False)
+    axR.spines['left'].set_visible(False)
+    axL.tick_params(labelleft=False)
+    axR.tick_params(left=False, right=True, labelleft=False)
+    axL.set_xticks([400, 600, 800, 1000, 1200, 1400, 1600])
+    axR.set_xticks([2800, 3000])
+    axL.set_ylabel('Raman Intensity (a.u.)', fontsize=FS_AXIS)
+    fig.text(0.53, 0.015, 'Raman Shift (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
+    fig.subplots_adjust(left=0.07, right=0.98, bottom=0.07, top=0.98)
+    fig.canvas.draw()
+    # names below each trace
+    nv_caf_name = None
+    for s, sub in ORDER:
+        d = spec[(s, sub)]
+        m = (d[:, 0] >= 410) & (d[:, 0] <= 900)
+        txt = f'{NAME[s]} on ' + ('CaF$_2$' if sub == 'CaF2' else 'Ag/SiNWs')
+        t = axL.text(415, d[m, 1].min() + off[(s, sub)] - 0.008 * span, txt,
+                     color=COL['CaF2'] if sub == 'CaF2' else COL[s], fontsize=FS_NAME, ha='left', va='top')
+        if (s, sub) == ('NV', 'CaF2'):
+            fig.canvas.draw()
+            nv_caf_name = t.get_window_extent().transformed(axL.transData.inverted())
+    need = 0.0
+    for s in ['EV', 'NV']:
+        ag = spec[(s, 'Ag')]
+        o = off[(s, 'Ag')]
+        for (lo, hi), (a, sel, xl, wl) in label_positions((axL, axR), s, fig).items():
+            for (p, cls), xlab in zip(sel, xl):
+                near = (ag[:, 0] >= min(p, xlab) - wl) & (ag[:, 0] <= max(p, xlab) + wl)
+                base = ag[near, 1].max() + o + 0.015 * span
+                h = a.text(xlab, base, f'{p}  {cls}', rotation=90, ha='center', va='bottom',
+                           fontsize=FS_LABEL, color=CLASS_COL[cls])
+                y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + o
+                a.plot([p, xlab], [y_peak + 0.005 * span, base - 0.003 * span], ls=(0, (1, 2)),
+                       lw=0.9, color='0.3')
+                if s == 'EV':                 # EV labels must stay below NV on CaF2
+                    fig.canvas.draw()
+                    y1 = h.get_window_extent().transformed(a.transData.inverted()).y1
+                    nc = spec[('NV', 'CaF2')]
+                    k = (nc[:, 0] >= xlab - wl) & (nc[:, 0] <= xlab + wl)
+                    ceiling = nc[k, 1].min() + off[('NV', 'CaF2')] - 0.01 * span
+                    if a is axL and nv_caf_name.x0 - wl <= xlab <= nv_caf_name.x1 + wl:
+                        ceiling = min(ceiling, nv_caf_name.y0 - 0.005 * span)
+                    need = max(need, y1 - ceiling)
+    # 50-count scale bar, top right
+    xb = 3075
+    yb = top + 0.20 * span - 50
+    axR.plot([xb, xb], [yb, yb + 50], color='k', lw=2.0)
+    axR.text(xb - 10, yb + 25, '50\ncounts', ha='right', va='center', fontsize=FS_NAME - 2)
+    dd = 0.012
+    for ax, x0 in [(axL, 1), (axR, 0)]:
+        dx = dd * (HIGH[1] - HIGH[0]) / (LOW[1] - LOW[0]) if ax is axL else dd
+        for y0 in (0, 1):
+            ax.plot((x0 - dx, x0 + dx), (y0 - dd, y0 + dd), transform=ax.transAxes, color='k',
+                    clip_on=False, lw=1.0)
+    return fig, need, off
+
+
+room = 80.0
+for _ in range(10):                            # enlarge the space for the EV labels until they fit
+    fig, need, off_one = draw_one(room)
+    if need <= 0:
+        break
+    plt.close(fig)
+    room += need * 1.1 + 5
+fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_OneGraph.png', dpi=600)
+fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_OneGraph.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
+print('One-graph version: vertical shifts (display only): ' +
+      ', '.join(f'{s} on {"CaF2" if sub == "CaF2" else "Ag/SiNWs"} +{off_one[(s, sub)]:.0f}'
+                for s, sub in ORDER))
+
 for s in ['EV', 'NV']:
     print(f'{NAME[s]} on Ag/SiNWs shifted up by {shift[(s, "Ag")]:.0f} counts (display only)')
 print(f'Saved in: {DATA_DIR}')
