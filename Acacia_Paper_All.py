@@ -620,19 +620,32 @@ LABELS = [
     ('fingerprint', 1, 'peak', 1373, 1397, '{p}', 'Lipids/NA', True),     # 1385
     ('fingerprint', 1, 'peak', 1595, 1619, '{p}', 'Proteins', True),      # 1607
     ('fingerprint', 1, 'peak', 1717, 1741, '{p}', 'Lipids', True),        # 1728
-    # --- Fig 2b, CH region (exactly the labels of the approved figure)
-    ('ch', 0, 'shoulder', 2868, 2892, '{p}', 'Lipids', True),             # 2874
-    ('ch', 1, 'shoulder', 2868, 2892, '{p}', 'Lipids', True),             # 2883
+    # --- Fig 2b, CH region: main CH3 band
     ('ch', 0, 'peak', 2923, 2947, '{p}', 'Proteins', True),               # 2933
     ('ch', 1, 'peak', 2923, 2947, '{p}', 'Proteins', True),               # 2937
 ]
+# ON/OFF SWITCHES for optional labels (True = label shown, False = not shown)
+SHOW_CH_SHOULDERS = True     # Fig 2b: CH2 lipid shoulder, EV 2874 / NV 2883 (+ grey shadow)
+SHOW_EXTRA_PEAKS = False     # Fig 2a: further peaks present in the mean spectra at all sites
+if SHOW_CH_SHOULDERS:
+    LABELS += [('ch', 0, 'shoulder', 2868, 2892, '{p}', 'Lipids', True),    # 2874
+               ('ch', 1, 'shoulder', 2868, 2892, '{p}', 'Lipids', True)]    # 2883
+if SHOW_EXTRA_PEAKS:
+    LABELS += [('fingerprint', 0, 'peak', 627, 651, '{p}', 'Proteins', True),        # 639 Tyr
+               ('fingerprint', 0, 'peak', 757, 781, '{p}', 'Nucleic Acids', True),   # 769
+               ('fingerprint', 0, 'peak', 1061, 1085, '{p}', 'Lipids', True),        # 1073 C-C / C-O
+               ('fingerprint', 1, 'peak', 655, 679, '{p}', 'Nucleic Acids', True),   # 667 G/T ring
+               ('fingerprint', 1, 'peak', 1063, 1087, '{p}', 'Lipids', True),        # 1075 C-C / C-O
+               ('fingerprint', 1, 'peak', 1275, 1299, '{p}', 'Proteins', True)]      # 1287 amide III
 # grey shadows: bands compared between EVs and NVs (EV window, NV window, kind);
 # drawn only if the shift is consistent at all sites (site ranges do not overlap)
 SHIFTS = {'fingerprint': [((507, 531), (507, 531), 'peak'), ((797, 821), (787, 811), 'peak'),
                           ((919, 943), (915, 939), 'peak'), ((989, 1013), (989, 1013), 'peak'),
                           ((1149, 1173), (1157, 1181), 'peak'), ((1237, 1261), (1233, 1257), 'peak'),
                           ((1361, 1385), (1373, 1397), 'peak'), ((1591, 1615), (1595, 1619), 'peak')],
-          'ch': [((2868, 2892), (2868, 2892), 'shoulder'), ((2923, 2947), (2923, 2947), 'peak')]}
+          'ch': [((2923, 2947), (2923, 2947), 'peak')]}
+if SHOW_CH_SHOULDERS:
+    SHIFTS['ch'].insert(0, ((2868, 2892), (2868, 2892), 'shoulder'))
 
 
 def f2_band_position(g, s, lo, hi, kind):
