@@ -1,0 +1,23 @@
+Sample,Nominal (cm-1),Class,Position on Ag/SiNWs (cm-1),Prominence/noise on Ag/SiNWs,Prominence/noise on CaF2 (same window)
+EV Acacia,519,Si substrate,520,13.8,2.1
+EV Acacia,831,Protein/NA,831,3.8,2.2
+EV Acacia,1001,Protein,1002,8.4,2.3
+EV Acacia,1031,Protein,1031,1.9,1.5
+EV Acacia,1166,Protein,1166,6.6,2.2
+EV Acacia,1355,Protein,1355,3.7,1.6
+EV Acacia,1582,Protein,1583,6.4,1.2
+EV Acacia,1604,Protein,1606,7.3,1.6
+EV Acacia,1724,Lipid,1724,6.2,2.0
+EV Acacia,2929,Protein/Lipid,2927,2.2,1.6
+Nanovesicles Acacia,519,Si substrate,518,9.5,1.8
+Nanovesicles Acacia,612,Protein,612,3.9,1.7
+Nanovesicles Acacia,797,Nucleic acid,803,2.4,2.0
+Nanovesicles Acacia,826,Protein/NA,825,2.6,2.1
+Nanovesicles Acacia,921,Protein/Carb.,920,6.2,1.1
+Nanovesicles Acacia,1001,Protein,1002,4.3,1.5
+Nanovesicles Acacia,1031,Protein,1030,3.8,1.4
+Nanovesicles Acacia,1240,Protein,1241,4.0,2.5
+Nanovesicles Acacia,1386,Lipid/Protein,1385,4.5,1.3
+Nanovesicles Acacia,1607,Protein,1608,3.5,2.4
+Nanovesicles Acacia,1624,Protein,1624,4.3,2.7
+Nanovesicles Acacia,2936,Protein/Lipid,2934,2.4,2.6
