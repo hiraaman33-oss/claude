@@ -29,7 +29,5 @@ Figure,Group,Kind,Window (cm-1),Position (cm-1),Label,Drawn,Note
 2b,NVs,shoulder,2868-2892,2883.0,2883- Lipids/Proteins,True,
 2b,EVs,peak,2923-2947,2932.6,2933- Proteins,True,
 2b,NVs,peak,2923-2947,2936.7,2937- Proteins,True,
-2b,EVs,peak,3050-3080,3067.6,3068- Proteins,True,
-2b,NVs,peak,3050-3085,3073.1,3073- Proteins,True,
 2b,NVs,shoulder,2950-2975,2962.5,~2962 sh- Proteins/Lipids,True,
 2b,EVs,shoulder,2845-2860,2852.0,~2852- Lipids,True,

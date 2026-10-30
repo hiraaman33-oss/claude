@@ -110,10 +110,9 @@ LABELS = [
     ('ch', 1, 'shoulder', 2868, 2892, '{p}', 'Lipids/Proteins', True),   # 2883
     ('ch', 0, 'peak', 2923, 2947, '{p}', 'Proteins', True),              # 2933
     ('ch', 1, 'peak', 2923, 2947, '{p}', 'Proteins', True),              # 2937
-    ('ch', 0, 'peak', 3050, 3080, '{p}', 'Proteins', True),              # aromatic =C-H
-    ('ch', 1, 'peak', 3050, 3085, '{p}', 'Proteins', False),
     ('ch', 1, 'shoulder', 2950, 2975, '~{p} sh', 'Proteins/Lipids', True),
     ('ch', 0, 'shoulder', 2845, 2860, '~{p}', 'Lipids', True),
+    # no labels above 3000 cm-1
 ]
 # grey shadows: bands compared between EVs and NVs (EV window, NV window, kind);
 # drawn only if the shift is consistent at all sites (site ranges do not overlap)
