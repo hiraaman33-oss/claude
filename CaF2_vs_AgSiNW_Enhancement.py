@@ -44,7 +44,7 @@ FILES = {('EV', 'CaF2'): 's2-ev_acacia-dropcaf2', ('EV', 'Ag'): 's2-ev_acacia-ag
 COL = {'EV': '#0B5A7E', 'NV': '#B5541C', 'CaF2': '#555555'}
 NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
 LOW, HIGH = (400, 1800), (2700, 3100)
-FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 12, 14, 17, 15, 18
+FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 10, 10, 13, 10, 13   # same as Fig 2b (6.5 in wide)
 LABEL_TEXT = 'none'   # 'none': dotted line only; 'name': 'Protein'; 'position+name': '1002  Protein'
 MARK_LEN = 0.05      # length of the dotted peak marker when LABEL_TEXT = 'none' (fraction of plot height)
 PEAK_MARKERS = False  # True: dotted line above each peak (when LABEL_TEXT = 'none'); False: plain spectra
@@ -131,7 +131,7 @@ hi_all = max(spec[(s, 'Ag')][view(spec[(s, 'Ag')]), 1].max() + shift[(s, 'Ag')] 
 span = hi_all - lo_all
 ylim = (lo_all - 0.10 * span, hi_all + (0.40 if LABEL_TEXT != 'none' else 0.15) * span)  # room for labels
 
-fig = plt.figure(figsize=(11, 13))
+fig = plt.figure(figsize=(6.5, 7.7))
 gs = fig.add_gridspec(2, 2, width_ratios=[LOW[1] - LOW[0], HIGH[1] - HIGH[0]], wspace=0.03,
                       hspace=0.12)
 for row, s in enumerate(['EV', 'NV']):
@@ -142,9 +142,9 @@ for row, s in enumerate(['EV', 'NV']):
         for sub, col in [('CaF2', COL['CaF2']), ('Ag', COL[s])]:
             d = spec[(s, sub)]
             m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
-            ax.plot(d[m, 0], d[m, 1] + shift[(s, sub)], color=col, lw=0.8)
+            ax.plot(d[m, 0], d[m, 1] + shift[(s, sub)], color=col, lw=0.5)
         ax.set_xlim(lo, hi)
-        ax.tick_params(direction='in', length=6, width=1.0, labelsize=FS_TICK)
+        ax.tick_params(direction='in', length=5, labelsize=FS_TICK)
     fig.canvas.draw()
     # band labels on the Ag/SiNW spectrum
     ag = spec[(s, 'Ag')]
@@ -187,13 +187,13 @@ for row, s in enumerate(['EV', 'NV']):
                           ('CaF2', COL['CaF2'], f'{NAME[s]} on CaF$_2$')]:
         d = spec[(s, sub)]
         m = (d[:, 0] >= 410) & (d[:, 0] <= 900)
-        axL.text(415, d[m, 1].min() + shift[(s, sub)] - 0.012 * span, txt, color=col,
+        axL.text(425, d[m, 1].min() + shift[(s, sub)] - 0.012 * span, txt, color=col,
                  fontsize=FS_NAME, ha='left', va='top')
     # 50-count scale bar (right panel), so band size and noise can be judged
-    xb = 3075
+    xb = 3065
     yb = ylim[1] - 0.12 * (ylim[1] - ylim[0]) - 50     # top-right corner, clear of the traces
-    axR.plot([xb, xb], [yb, yb + 50], color='k', lw=2.0)
-    axR.text(xb - 10, yb + 25, '50\ncounts', ha='right', va='center', fontsize=FS_NAME - 2)
+    axR.plot([xb, xb], [yb, yb + 50], color='k', lw=1.5)
+    axR.text(xb - 10, yb + 25, '50\ncounts', ha='right', va='center', fontsize=FS_NAME - 1)
     # axes cosmetics, break marks
     axL.spines['right'].set_visible(False)
     axR.spines['left'].set_visible(False)
@@ -211,10 +211,10 @@ for row, s in enumerate(['EV', 'NV']):
             ax.plot((x0 - dx, x0 + dx), (y0 - 2 * dd * 0.5, y0 + 2 * dd * 0.5), transform=ax.transAxes,
                     color='k', clip_on=False, lw=1.0)
     axL.set_ylabel('Raman Intensity (a.u.)', fontsize=FS_AXIS)
-    axL.text(-0.07, 1.0, f'({"ab"[row]})', transform=axL.transAxes, fontsize=FS_PANEL,
+    axL.text(-0.10, 1.0, f'({"ab"[row]})', transform=axL.transAxes, fontsize=FS_PANEL,
              va='top', ha='right')
-fig.text(0.53, 0.02, 'Raman Shift (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
-fig.subplots_adjust(left=0.08, right=0.98, bottom=0.06, top=0.99)
+fig.text(0.54, 0.012, 'Raman Shift (cm$^{-1}$)', ha='center', fontsize=FS_AXIS)
+fig.subplots_adjust(left=0.10, right=0.98, bottom=0.075, top=0.98)
 fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_Enhancement.png', dpi=600)
 fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_Enhancement.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
 plt.close(fig)
@@ -269,7 +269,7 @@ def draw_one(label_room):
         top = yv.max() + off[key]
     y_lo = spec[ORDER[0]][view(spec[ORDER[0]]), 1].min()
     span = top - y_lo
-    fig, (axL, axR) = plt.subplots(1, 2, sharey=True, figsize=(11, 12),
+    fig, (axL, axR) = plt.subplots(1, 2, sharey=True, figsize=(6.5, 7.1),
                                    gridspec_kw={'width_ratios': [LOW[1] - LOW[0], HIGH[1] - HIGH[0]],
                                                 'wspace': 0.03})
     head = 0.28 if LABEL_TEXT != 'none' else 0.14          # room above the top trace
@@ -279,9 +279,9 @@ def draw_one(label_room):
             d = spec[(s, sub)]
             m = (d[:, 0] >= lo) & (d[:, 0] <= hi)
             ax.plot(d[m, 0], d[m, 1] + off[(s, sub)], color=COL['CaF2'] if sub == 'CaF2' else COL[s],
-                    lw=0.8)
+                    lw=0.5)
         ax.set_xlim(lo, hi)
-        ax.tick_params(direction='in', length=6, width=1.0, labelsize=FS_TICK)
+        ax.tick_params(direction='in', length=5, labelsize=FS_TICK)
     axL.spines['right'].set_visible(False)
     axR.spines['left'].set_visible(False)
     axL.tick_params(labelleft=False)
@@ -298,7 +298,7 @@ def draw_one(label_room):
         d = spec[(s, sub)]
         m = (d[:, 0] >= 410) & (d[:, 0] <= 900)
         txt = f'{NAME[s]} on ' + ('CaF$_2$' if sub == 'CaF2' else 'Ag/SiNWs')
-        t = axL.text(415, d[m, 1].min() + off[(s, sub)] - 0.008 * span, txt,
+        t = axL.text(425, d[m, 1].min() + off[(s, sub)] - 0.008 * span, txt,
                      color=COL['CaF2'] if sub == 'CaF2' else COL[s], fontsize=FS_NAME, ha='left', va='top')
         if (s, sub) == ('NV', 'CaF2'):
             fig.canvas.draw()
@@ -336,10 +336,10 @@ def draw_one(label_room):
                         ceiling = min(ceiling, nv_caf_name.y0 - 0.005 * span)
                     need = max(need, y1 - ceiling)
     # 50-count scale bar, top right
-    xb = 3075
+    xb = 3065
     yb = top + (head - 0.08) * span - 50
-    axR.plot([xb, xb], [yb, yb + 50], color='k', lw=2.0)
-    axR.text(xb - 10, yb + 25, '50\ncounts', ha='right', va='center', fontsize=FS_NAME - 2)
+    axR.plot([xb, xb], [yb, yb + 50], color='k', lw=1.5)
+    axR.text(xb - 10, yb + 25, '50\ncounts', ha='right', va='center', fontsize=FS_NAME - 1)
     dd = 0.012
     for ax, x0 in [(axL, 1), (axR, 0)]:
         dx = dd * (HIGH[1] - HIGH[0]) / (LOW[1] - LOW[0]) if ax is axL else dd
