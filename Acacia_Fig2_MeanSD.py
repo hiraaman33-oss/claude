@@ -5,8 +5,9 @@
 #   Fig2a_MeanSD_Fingerprint   400-1790 cm-1
 #   Fig2b_MeanSD_CH            2760-3095 cm-1
 #
-# Same data, pre-processing and colours as Acacia_Paper_All.py; larger fonts, lines
-# and offsets for print, and the band labels listed in LABELS below.
+# Same data, pre-processing and colours as Acacia_Paper_All.py; figure sizes
+# (2a 8.5 x 6.5 in, 2b 6.5 x 6.0 in) and fonts (labels 10, axes 13, ticks 10 pt)
+# as in the CaF2 vs Ag/SiNW figure, and the band labels listed in LABELS below.
 #
 # DATA: CODE 005\EV Acacia\EV_Acacia_Raman_Data.xlsx and
 #       CODE 005\Nano vesicles Acacia\NV_Acacia_Raman_Data.xlsx
@@ -55,11 +56,10 @@ COLS = {0: '#0B5A7E', 1: '#B5541C'}
 NAME_LONG = {0: 'EV Acacia on Ag/SiNWs', 1: 'Nanovesicles Acacia on Ag/SiNWs'}
 WINDOWS = {'fingerprint': {'raw': (200, 1800), 'grid': (205, 1795)},
            'ch': {'raw': (2700, 3100), 'grid': (2705, 3095)}}
-OFFSET = {'fingerprint': 12.0, 'ch': 6.5}      # SNV units added to the NV spectrum
-TOP_ROOM = {'fingerprint': 7.0, 'ch': 6.0}     # space above the NV spectrum for labels
-# font sizes (pt), chosen to stay readable when the figure is reduced to one
-# journal column
-LABEL_FS, AXIS_FS, TICK_FS = 13, 17, 15
+OFFSET = {'fingerprint': 8.5, 'ch': 5.5}       # SNV units added to the NV spectrum
+TOP_ROOM = {'fingerprint': 4.3, 'ch': 4.4}     # space above the NV spectrum for labels
+# font sizes (pt): band labels, axis titles, tick numbers
+LABEL_FS, AXIS_FS, TICK_FS = 10, 13, 10
 
 # class colours of the label text
 PURPLE, BLUE, DARKBLUE = '#7030A0', '#2E75B6', '#1F3864'
@@ -318,13 +318,13 @@ def make_figure(region, xlim, figsize, legend_fs, name):
         o = off if c == 1 else 0.0
         stats[c] = (mu, sd, o)
         ax.fill_between(gs, mu - sd + o, mu + sd + o, color=COLS[c], alpha=0.22, lw=0)
-        ax.plot(gs, mu + o, color=COLS[c], lw=1.4,
+        ax.plot(gs, mu + o, color=COLS[c], lw=1.0,
                 label=f'{NAME_LONG[c]} (mean \u00b1 SD, n = {np.sum(y == c)})')
     ax.set_xlim(*xlim)
     ax.set_ylim((X[y == 0].mean(0) - X[y == 0].std(0, ddof=1))[show_].min() - 0.3,
                 (X[y == 1].mean(0) + X[y == 1].std(0, ddof=1))[show_].max() + off + TOP_ROOM[region])
-    ax.tick_params(axis='y', direction='in', length=6, width=1.0, labelleft=False)
-    ax.tick_params(axis='x', direction='in', length=6, width=1.0, labelsize=TICK_FS)
+    ax.tick_params(axis='y', direction='in', length=5, labelleft=False)
+    ax.tick_params(axis='x', direction='in', length=5, labelsize=TICK_FS)
     ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=AXIS_FS)
     ax.set_ylabel('Intensity (a.u.)', fontsize=AXIS_FS)
     ax.legend(frameon=True, facecolor='white', edgecolor='none', framealpha=1, fontsize=legend_fs,
@@ -434,8 +434,8 @@ def make_figure(region, xlim, figsize, legend_fs, name):
 
 
 print()
-make_figure('fingerprint', (400, 1790), (8.5, 7.8), 13, 'Fig2a_MeanSD_Fingerprint')
-make_figure('ch', (2760, 3095), (7.0, 6.5), 12, 'Fig2b_MeanSD_CH')
+make_figure('fingerprint', (400, 1790), (8.5, 6.5), 10, 'Fig2a_MeanSD_Fingerprint')
+make_figure('ch', (2760, 3095), (6.5, 6.0), 9, 'Fig2b_MeanSD_CH')
 print(f'\nAll outputs saved in: {OUTPUT_DIR}')
 if len(sys.argv) <= 1:
     plt.show()

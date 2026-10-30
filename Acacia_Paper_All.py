@@ -577,11 +577,10 @@ def fit_bands(x, yv, shape):
 # Labels are placed clear of the curves, the SD bands, the legend and the frame.
 report('\n3c. FIGURE 2a / 2b - band labels')
 F2_GRID = {w: WINDOWS[w]['grid_full'] for w in WINDOWS}
-OFFSET = {'fingerprint': 12.0, 'ch': 6.5}      # SNV units added to the NV spectrum
-TOP_ROOM = {'fingerprint': 7.0, 'ch': 6.0}     # space above the NV spectrum for labels
-# font sizes (pt), chosen to stay readable when the figure is reduced to one
-# journal column
-LABEL_FS, AXIS_FS, TICK_FS = 13, 17, 15
+OFFSET = {'fingerprint': 8.5, 'ch': 5.5}       # SNV units added to the NV spectrum
+TOP_ROOM = {'fingerprint': 4.3, 'ch': 4.4}     # space above the NV spectrum for labels
+# font sizes (pt): band labels, axis titles, tick numbers
+LABEL_FS, AXIS_FS, TICK_FS = 10, 13, 10
 
 # class colours of the label text
 PURPLE, BLUE, DARKBLUE = '#7030A0', '#2E75B6', '#1F3864'
@@ -775,13 +774,13 @@ def f2_make_figure(region, xlim, figsize, legend_fs, name):
         o = off if c == 1 else 0.0
         stats[c] = (mu, sd, o)
         ax.fill_between(gs, mu - sd + o, mu + sd + o, color=COLS[c], alpha=0.22, lw=0)
-        ax.plot(gs, mu + o, color=COLS[c], lw=1.4,
+        ax.plot(gs, mu + o, color=COLS[c], lw=1.0,
                 label=f'{NAME_LONG[c]} (mean \u00b1 SD, n = {np.sum(y == c)})')
     ax.set_xlim(*xlim)
     ax.set_ylim((X[y == 0].mean(0) - X[y == 0].std(0, ddof=1))[show_].min() - 0.3,
                 (X[y == 1].mean(0) + X[y == 1].std(0, ddof=1))[show_].max() + off + TOP_ROOM[region])
-    ax.tick_params(axis='y', direction='in', length=6, width=1.0, labelleft=False)
-    ax.tick_params(axis='x', direction='in', length=6, width=1.0, labelsize=TICK_FS)
+    ax.tick_params(axis='y', direction='in', length=5, labelleft=False)
+    ax.tick_params(axis='x', direction='in', length=5, labelsize=TICK_FS)
     ax.set_xlabel('Raman Shift (cm$^{-1}$)', fontsize=AXIS_FS)
     ax.set_ylabel('Intensity (a.u.)', fontsize=AXIS_FS)
     ax.legend(frameon=True, facecolor='white', edgecolor='none', framealpha=1, fontsize=legend_fs,
@@ -890,8 +889,8 @@ def f2_make_figure(region, xlim, figsize, legend_fs, name):
 
 print()
 plt.rcParams.update({'font.size': TICK_FS})
-f2_make_figure('fingerprint', (400, 1790), (8.5, 7.8), 13, 'Fig2a_MeanSD_Fingerprint')
-f2_make_figure('ch', (2760, 3095), (7.0, 6.5), 12, 'Fig2b_MeanSD_CH')
+f2_make_figure('fingerprint', (400, 1790), (8.5, 6.5), 10, 'Fig2a_MeanSD_Fingerprint')
+f2_make_figure('ch', (2760, 3095), (6.5, 6.0), 9, 'Fig2b_MeanSD_CH')
 plt.rcParams.update({'font.size': 10})
 
 
