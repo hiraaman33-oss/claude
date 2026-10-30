@@ -16,11 +16,12 @@
 #   is used (default: S2 for EV, s4a for NV, the best-matching BC200 pair);
 #   all files found are listed in the Run window.
 #
-# BAND LABELS COME FROM THE DATA: for each band window below, the most prominent
-#   local maximum of the spectrum (located on a lightly smoothed copy,
-#   Savitzky-Golay 11 pts / order 3; the plotted line is raw) is labelled only if
-#   its prominence is at least MIN_SNR x the noise SD of that spectrum.
-#   The table of all positions is printed and saved as EV_NV_RawComparison_peaks.csv.
+# BAND LABELS: the same bands, classes, label style and peak-finding as Figure 1
+#   (CaF2 vs Ag/SiNWs): most prominent local maximum within +/-12 cm-1 of each
+#   nominal band, located on a lightly smoothed copy (Savitzky-Golay 11 pts /
+#   order 3; the plotted line is raw), so the numbers are identical to Figure 1.
+#   The table (with prominence / noise) is printed and saved as
+#   EV_NV_RawComparison_peaks.csv.
 #
 # HOW TO RUN (PyCharm): pip install numpy scipy matplotlib, check DATA_DIR, Run.
 # OUTPUT (in DATA_DIR): EV_NV_RawComparison.png / .tiff (600 dpi) + peaks CSV
@@ -44,31 +45,26 @@ NV_PICK = 's4a'       # start of the NV file name to use if there are several NV
 C_EV, C_NV = '#0B5A7E', '#B5541C'
 NAME = {'EV': 'EV Acacia on Ag/SiNWs', 'NV': 'Nanovesicles Acacia on Ag/SiNWs'}
 LOW, HIGH = (400, 1800), (2700, 3100)
-MIN_SNR = 3.0         # label a band only if prominence >= 3 x noise SD
 FS_LABEL, FS_NAME, FS_AXIS, FS_TICK = 13, 15, 17, 15
 
-PURPLE, BLUE, DARKBLUE = '#7030A0', '#2E75B6', '#1F3864'
-CLASS = {'Proteins': [('Proteins', PURPLE)], 'Lipids': [('Lipids', BLUE)],
-         'Nucleic Acids': [('Nucleic Acids', DARKBLUE)],
-         'Lipids/NA': [('Lipids/', BLUE), ('NA', 'k')],
-         'Proteins/Lipids': [('Proteins/', PURPLE), ('Lipids', BLUE)], None: []}
-# band windows (lo, hi), class, assignment
-BANDS = [((507, 531), None, 'Si substrate (optical phonon)'),
-         ((790, 812), 'Nucleic Acids', 'O-P-O backbone stretching'),
-         ((818, 842), 'Proteins', 'Tyr Fermi doublet'),
-         ((848, 862), 'Proteins', 'Tyr Fermi doublet'),
-         ((912, 930), 'Proteins', 'C-C stretching (Pro) / glucose'),
-         ((993, 1010), 'Proteins', 'Phe ring breathing'),
-         ((1024, 1042), 'Proteins', 'Phe C-H in-plane bending'),
-         ((1155, 1178), 'Proteins', 'Tyr C-H bending'),
-         ((1230, 1255), 'Proteins', 'Amide III'),
-         ((1340, 1365), 'Proteins', 'Trp / CH deformation'),
-         ((1370, 1395), 'Lipids/NA', 'CH3 deformation / nucleic-acid bases'),
-         ((1574, 1590), 'Proteins', 'Phe C=C bending'),
-         ((1596, 1612), 'Proteins', 'Phe/Tyr ring C=C stretching'),
-         ((1616, 1632), 'Proteins', 'Tyr/Trp ring C=C stretching'),
-         ((1715, 1740), 'Lipids', 'C=O ester stretching'),
-         ((2920, 2945), 'Proteins/Lipids', 'CH3 / CH2 stretching')]
+# bands of Figure 1, per spectrum: (nominal cm-1, class, assignment)
+PEAKS = {
+    'EV': [(519, 'Si substrate', 'Si optical phonon'), (831, 'Protein/NA', 'Tyr Fermi doublet / O-P-O'),
+           (1001, 'Protein', 'Phe ring breathing'), (1031, 'Protein', 'Phe C-H in-plane bending'),
+           (1166, 'Protein', 'Tyr C-H in-plane bending'), (1355, 'Protein', 'Trp / CH deformation'),
+           (1582, 'Protein', 'Phe C=C bending'), (1604, 'Protein', 'Phe/Tyr ring C=C stretching'),
+           (1724, 'Lipid', 'C=O ester stretching'), (2929, 'Protein/Lipid', 'CH2/CH3 stretching')],
+    'NV': [(519, 'Si substrate', 'Si optical phonon'), (612, 'Protein', 'Phe C-C twisting'),
+           (797, 'Nucleic acid', 'O-P-O backbone stretching'),
+           (826, 'Protein/NA', 'Tyr Fermi doublet / O-P-O'), (921, 'Protein/Carb.', 'C-C proline / glucose'),
+           (1001, 'Protein', 'Phe ring breathing'), (1031, 'Protein', 'Phe C-H in-plane bending'),
+           (1240, 'Protein', 'Amide III'), (1386, 'Lipid/Protein', 'CH3 deformation / COO-'),
+           (1607, 'Protein', 'Phe/Tyr ring C=C stretching'), (1624, 'Protein', 'Trp/Tyr C=C, amide I side'),
+           (2936, 'Protein/Lipid', 'CH3 symmetric stretching')]}
+# label colour by class (as in Figure 1)
+CLASS_COL = {'Protein': '#1F6FB4', 'Protein/NA': '#6A3D9A', 'Nucleic acid': '#8E44AD',
+             'Protein/Carb.': '#1F6FB4', 'Lipid/Protein': '#D35400', 'Protein/Lipid': '#D35400',
+             'Lipid': '#C0392B', 'Si substrate': '#7F7F7F'}
 
 plt.rcParams.update({'font.family': 'sans-serif',
                      'font.sans-serif': ['Arial', 'Liberation Sans', 'DejaVu Sans'],
@@ -110,29 +106,22 @@ for kind, d in spec.items():
     x, yv = d[:, 0], d[:, 1]
     ys = savgol_filter(yv, 11, 3)              # only to locate the maxima
     noise = np.std(yv - ys)
-    for (lo, hi), cls, assign in BANDS:
-        k = np.flatnonzero((x >= lo) & (x <= hi))
-        if len(k) < 3:
-            continue
+    for nominal, cls, assign in PEAKS[kind]:
+        k = np.flatnonzero(np.abs(x - nominal) <= 12)
         pk, pr = find_peaks(ys[k], prominence=0)
-        if not len(pk):
-            rows.append([kind, f'{lo}-{hi}', '', '', cls, assign, 'no local maximum'])
-            continue
         j = int(np.argmax(pr['prominences']))
-        pos, snr = x[k[pk[j]]], pr['prominences'][j] / noise
-        ok = snr >= MIN_SNR
-        rows.append([kind, f'{lo}-{hi}', round(float(pos), 1), round(float(snr), 1), cls, assign,
-                     'labelled' if ok else f'not labelled (< {MIN_SNR:g} x noise)'])
-        if ok:
-            labels[kind].append((pos, cls))
-print('\nBAND POSITIONS (raw spectra)')
-print(f'{"Spectrum":8s} {"Window":10s} {"Position":>9s} {"Prom/noise":>10s}  {"Class":16s} Result')
+        pos = int(round(float(x[k[pk[j]]])))
+        snr = pr['prominences'][j] / noise
+        rows.append([kind, nominal, pos, round(float(snr), 1), cls, assign])
+        labels[kind].append((pos, cls))
+print('\nBAND POSITIONS (raw spectra, same method as Figure 1)')
+print(f'{"Spectrum":8s} {"Nominal":>7s} {"Measured":>8s} {"Prom/noise":>10s}  Class')
 for r in rows:
-    print(f'{r[0]:8s} {r[1]:10s} {str(r[2]):>9s} {str(r[3]):>10s}  {str(r[4]):16s} {r[6]}')
+    print(f'{r[0]:8s} {r[1]:7d} {r[2]:8d} {r[3]:10.1f}  {r[4]}')
 with open(DATA_DIR / 'EV_NV_RawComparison_peaks.csv', 'w', newline='') as fh:
     w = csv.writer(fh)
-    w.writerow(['Spectrum', 'Window (cm-1)', 'Position (cm-1)', 'Prominence / noise SD', 'Class',
-                'Assignment', 'Result'])
+    w.writerow(['Spectrum', 'Nominal (cm-1)', 'Measured (cm-1)', 'Prominence / noise SD', 'Class',
+                'Assignment'])
     w.writerows(rows)
 
 
@@ -150,16 +139,11 @@ OFFSET = int(np.ceil((ev_v.max() - nv_v.min() + 0.08 * np.ptp(ev_v)) / 10) * 10)
 
 
 def put_label(fig, ax, x, y0, cls, text):
-    """Vertical label: black number + coloured class, stacked upwards; returns top."""
-    yy = y0
-    yr = np.diff(ax.get_ylim())[0]
-    top = y0
-    for t, col in [(text + ('- ' if cls else ''), 'k')] + CLASS[cls]:
-        h = ax.text(x, yy, t, rotation=90, ha='center', va='bottom', fontsize=FS_LABEL, color=col)
-        fig.canvas.draw()
-        top = h.get_window_extent().transformed(ax.transData.inverted()).y1
-        yy = top - 0.004 * yr
-    return top
+    """Vertical label 'position  class' in the class colour (as in Figure 1); returns top."""
+    h = ax.text(x, y0, f'{text}  {cls}', rotation=90, ha='center', va='bottom', fontsize=FS_LABEL,
+                color=CLASS_COL[cls])
+    fig.canvas.draw()
+    return h.get_window_extent().transformed(ax.transData.inverted()).y1
 
 
 def draw(offset):
@@ -224,7 +208,7 @@ def draw(offset):
             for (p, cls), xlab in zip(sel, xl):
                 near = (d[:, 0] >= min(p, xlab) - wl) & (d[:, 0] <= max(p, xlab) + wl)
                 base = d[near, 1].max() + shift[kind] + 0.03 * span
-                text = f'{p:.1f}' if cls is None else f'{p:.0f}'
+                text = f'{p}'
                 top = put_label(fig, ax, xlab, base, cls, text)
                 y_peak = d[np.argmin(np.abs(d[:, 0] - p)), 1] + shift[kind]
                 ax.plot([p, xlab], [y_peak + 0.01 * span, base - 0.005 * span], ls=(0, (1, 2)),

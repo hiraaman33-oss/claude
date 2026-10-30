@@ -1,33 +1,23 @@
-Spectrum,Window (cm-1),Position (cm-1),Prominence / noise SD,Class,Assignment,Result
-EV,507-531,519.8,13.8,,Si substrate (optical phonon),labelled
-EV,790-812,807.7,1.1,Nucleic Acids,O-P-O backbone stretching,not labelled (< 3 x noise)
-EV,818-842,831.3,3.7,Proteins,Tyr Fermi doublet,labelled
-EV,848-862,858.5,1.7,Proteins,Tyr Fermi doublet,not labelled (< 3 x noise)
-EV,912-930,926.1,2.4,Proteins,C-C stretching (Pro) / glucose,not labelled (< 3 x noise)
-EV,993-1010,1002.1,7.6,Proteins,Phe ring breathing,labelled
-EV,1024-1042,1031.0,1.9,Proteins,Phe C-H in-plane bending,not labelled (< 3 x noise)
-EV,1155-1178,1166.0,6.4,Proteins,Tyr C-H bending,labelled
-EV,1230-1255,1242.6,1.8,Proteins,Amide III,not labelled (< 3 x noise)
-EV,1340-1365,1355.2,3.5,Proteins,Trp / CH deformation,labelled
-EV,1370-1395,1386.1,2.8,Lipids/NA,CH3 deformation / nucleic-acid bases,not labelled (< 3 x noise)
-EV,1574-1590,1583.0,4.6,Proteins,Phe C=C bending,labelled
-EV,1596-1612,1606.3,4.3,Proteins,Phe/Tyr ring C=C stretching,labelled
-EV,1616-1632,1627.3,2.4,Proteins,Tyr/Trp ring C=C stretching,not labelled (< 3 x noise)
-EV,1715-1740,1723.6,8.6,Lipids,C=O ester stretching,labelled
-EV,2920-2945,2927.1,2.2,Proteins/Lipids,CH3 / CH2 stretching,not labelled (< 3 x noise)
-NV,507-531,518.3,9.5,,Si substrate (optical phonon),labelled
-NV,790-812,802.5,1.6,Nucleic Acids,O-P-O backbone stretching,not labelled (< 3 x noise)
-NV,818-842,825.1,1.6,Proteins,Tyr Fermi doublet,not labelled (< 3 x noise)
-NV,848-862,851.9,2.3,Proteins,Tyr Fermi doublet,not labelled (< 3 x noise)
-NV,912-930,920.0,6.0,Proteins,C-C stretching (Pro) / glucose,labelled
-NV,993-1010,1002.1,2.3,Proteins,Phe ring breathing,not labelled (< 3 x noise)
-NV,1024-1042,1030.5,3.4,Proteins,Phe C-H in-plane bending,labelled
-NV,1155-1178,1165.9,1.9,Proteins,Tyr C-H bending,not labelled (< 3 x noise)
-NV,1230-1255,1240.8,4.0,Proteins,Amide III,labelled
-NV,1340-1365,1360.8,2.2,Proteins,Trp / CH deformation,not labelled (< 3 x noise)
-NV,1370-1395,1384.8,3.0,Lipids/NA,CH3 deformation / nucleic-acid bases,labelled
-NV,1574-1590,1587.2,1.8,Proteins,Phe C=C bending,not labelled (< 3 x noise)
-NV,1596-1612,1608.3,1.1,Proteins,Phe/Tyr ring C=C stretching,not labelled (< 3 x noise)
-NV,1616-1632,1623.9,4.3,Proteins,Tyr/Trp ring C=C stretching,labelled
-NV,1715-1740,1722.3,2.2,Lipids,C=O ester stretching,not labelled (< 3 x noise)
-NV,2920-2945,2934.3,2.6,Proteins/Lipids,CH3 / CH2 stretching,not labelled (< 3 x noise)
+Spectrum,Nominal (cm-1),Measured (cm-1),Prominence / noise SD,Class,Assignment
+EV,519,520,13.8,Si substrate,Si optical phonon
+EV,831,831,3.8,Protein/NA,Tyr Fermi doublet / O-P-O
+EV,1001,1002,8.4,Protein,Phe ring breathing
+EV,1031,1031,1.9,Protein,Phe C-H in-plane bending
+EV,1166,1166,6.6,Protein,Tyr C-H in-plane bending
+EV,1355,1355,3.7,Protein,Trp / CH deformation
+EV,1582,1583,6.4,Protein,Phe C=C bending
+EV,1604,1606,7.3,Protein,Phe/Tyr ring C=C stretching
+EV,1724,1724,6.2,Lipid,C=O ester stretching
+EV,2929,2927,2.2,Protein/Lipid,CH2/CH3 stretching
+NV,519,518,9.5,Si substrate,Si optical phonon
+NV,612,612,3.9,Protein,Phe C-C twisting
+NV,797,803,2.4,Nucleic acid,O-P-O backbone stretching
+NV,826,825,2.6,Protein/NA,Tyr Fermi doublet / O-P-O
+NV,921,920,6.2,Protein/Carb.,C-C proline / glucose
+NV,1001,1002,4.3,Protein,Phe ring breathing
+NV,1031,1030,3.8,Protein,Phe C-H in-plane bending
+NV,1240,1241,4.0,Protein,Amide III
+NV,1386,1385,4.5,Lipid/Protein,CH3 deformation / COO-
+NV,1607,1608,3.5,Protein,Phe/Tyr ring C=C stretching
+NV,1624,1624,4.3,Protein,"Trp/Tyr C=C, amide I side"
+NV,2936,2934,2.4,Protein/Lipid,CH3 symmetric stretching
