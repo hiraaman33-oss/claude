@@ -67,9 +67,15 @@ plt.rcParams.update({'font.family': 'sans-serif',
 # ----------------------------------------------------------------------------
 # 1. FILES
 # ----------------------------------------------------------------------------
+def simple(name):
+    """lower case, spaces -> '_', '%' removed: 'S2-EV Acacia-dropCaF2_..._10%' -> 's2-ev_acacia-dropcaf2_..._10'"""
+    return name.lower().replace(' ', '_').replace('%', '')
+
+
 spec = {}
 for key, prefix in FILES.items():
-    hits = [f for f in DATA_DIR.glob('*.txt') if f.name.lower().startswith(prefix)]
+    hits = [f for f in DATA_DIR.iterdir() if f.is_file() and f.suffix.lower() in ('.txt', '')
+            and simple(f.name).startswith(prefix)]
     if len(hits) != 1:
         sys.exit(f'Expected one file starting with "{prefix}" in {DATA_DIR}, found {len(hits)}')
     spec[key] = np.loadtxt(hits[0])

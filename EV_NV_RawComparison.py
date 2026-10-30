@@ -73,7 +73,7 @@ plt.rcParams.update({'font.family': 'sans-serif',
 # ----------------------------------------------------------------------------
 # 1. FILES
 # ----------------------------------------------------------------------------
-files = sorted(DATA_DIR.glob('*.txt'))
+files = sorted(f for f in DATA_DIR.iterdir() if f.is_file() and f.suffix.lower() in ('.txt', ''))
 print(f'Files in {DATA_DIR}:')
 groups = {'EV': [], 'NV': []}
 for f in files:

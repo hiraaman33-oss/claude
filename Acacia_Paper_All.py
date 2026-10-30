@@ -262,7 +262,9 @@ peak_table = []
 def find_single(prefix):
     if not SINGLE_DIR.exists():
         return None
-    hits = [f for f in SINGLE_DIR.glob('*.txt') if f.name.lower().startswith(prefix)]
+    simple = lambda n: n.lower().replace(' ', '_').replace('%', '')   # 'S2-EV Acacia ... 10%' -> 's2-ev_acacia ... 10'
+    hits = [f for f in SINGLE_DIR.iterdir() if f.is_file() and f.suffix.lower() in ('.txt', '')
+            and simple(f.name).startswith(prefix)]
     return hits[0] if len(hits) == 1 else None
 
 
