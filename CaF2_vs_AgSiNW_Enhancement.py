@@ -47,6 +47,7 @@ LOW, HIGH = (400, 1800), (2700, 3100)
 FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 12, 14, 17, 15, 18
 LABEL_TEXT = 'none'   # 'none': dotted line only; 'name': 'Protein'; 'position+name': '1002  Protein'
 MARK_LEN = 0.05      # length of the dotted peak marker when LABEL_TEXT = 'none' (fraction of plot height)
+PEAK_MARKERS = False  # True: dotted line above each peak (when LABEL_TEXT = 'none'); False: plain spectra
 GAP = 25              # counts between the top of the CaF2 trace and the bottom of the Ag trace
 
 PEAKS = {
@@ -169,8 +170,9 @@ for row, s in enumerate(['EV', 'NV']):
         if LABEL_TEXT == 'none':              # dotted marker above each peak, no text
             for p, _ in sel:
                 y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + shift[(s, 'Ag')]
-                ax.plot([p, p], [y_peak + 0.01 * span, y_peak + (0.01 + 2 * MARK_LEN) * span],  # half-height panels
-                        ls=(0, (1, 2)), lw=1.2, color='0.3')
+                if PEAK_MARKERS:
+                    ax.plot([p, p], [y_peak + 0.01 * span, y_peak + (0.01 + 2 * MARK_LEN) * span],  # half-height panels
+                            ls=(0, (1, 2)), lw=1.2, color='0.3')
             continue
         for (p, cls), xlab in zip(sel, xl):
             near = (ag[:, 0] >= min(p, xlab) - wl) & (ag[:, 0] <= max(p, xlab) + wl)
@@ -309,8 +311,9 @@ def draw_one(label_room):
             for (p, cls), xlab in zip(sel, xl):
                 if LABEL_TEXT == 'none':          # dotted marker above each peak, no text
                     y_peak = ag[np.argmin(np.abs(ag[:, 0] - p)), 1] + o
-                    y_top = y_peak + (0.005 + MARK_LEN) * span
-                    a.plot([p, p], [y_peak + 0.005 * span, y_top], ls=(0, (1, 2)), lw=1.2, color='0.3')
+                    y_top = y_peak + (0.005 + MARK_LEN) * span if PEAK_MARKERS else y_peak
+                    if PEAK_MARKERS:
+                        a.plot([p, p], [y_peak + 0.005 * span, y_top], ls=(0, (1, 2)), lw=1.2, color='0.3')
                     if s == 'EV':
                         nc = spec[('NV', 'CaF2')]
                         k = (nc[:, 0] >= p - wl) & (nc[:, 0] <= p + wl)
