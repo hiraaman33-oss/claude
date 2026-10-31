@@ -88,6 +88,9 @@ CLASS = {'Proteins': [('Proteins', PURPLE)],
          'Phenolics/Tyr': [('Phenolics/', GOLD), ('Tyr', PURPLE)],
          'Polysacch./Tyr': [('Polysacch./', GREEN), ('Tyr', PURPLE)],
          'C-COO-': [('C\u2013COO$^{-}$', GREEN)],
+         # general class names (LABEL_SET = 'general')
+         'Phenolics/Proteins': [('Phenolics/', GOLD), ('Proteins', PURPLE)],
+         'Polysacch./Proteins': [('Polysacch./', GREEN), ('Proteins', PURPLE)],
          None: []}
 
 # ----------------------------------------------------------------------------
@@ -142,7 +145,9 @@ if SHOW_EXTRA_PEAKS:
 #                absent at all 6 EV sites although the ~1160 cm-1 band is clear
 #   'revised'  = functional groups with carotenoids at 1001/1160 (manuscript v7 text)
 #   'original' = the first version (Proteins / Lipids / Lipids/NA / Nucleic Acids)
-LABEL_SET = 'acacia'
+#   'general'  = class names only (Proteins, Nucleic Acids, Lipids, Phenolics, Polysacch.)
+#                for an Acacia sample; vibrations and references in the band table (Word)
+LABEL_SET = 'general'
 REVISED = {('fingerprint', 797): 'O-P-O', ('fingerprint', 787): 'O-P-O',            # 809 / 799
            ('fingerprint', 989): 'Carotenoids/Phe',                                 # 1002 / 1001
            ('fingerprint', 1149): 'Carotenoids', ('fingerprint', 1157): 'Carotenoids',  # 1162 / 1169
@@ -162,8 +167,12 @@ ACACIA = {('fingerprint', 797): 'O-P-O', ('fingerprint', 787): 'O-P-O',         
           ('fingerprint', 1591): 'Phenolics', ('fingerprint', 1595): 'Phenolics',  # 1603 / 1607 (minor Phe)
           ('fingerprint', 1717): 'Ester C=O',                                      # 1728
           ('ch', 2923): 'CH3', ('ch', 2868): 'CH2 (lipids)'}                       # 2933/2937, 2874/2883
-if LABEL_SET in ('revised', 'acacia'):
-    NEW = REVISED if LABEL_SET == 'revised' else ACACIA
+GENERAL = {('fingerprint', 843): 'Polysacch./Proteins',                          # 855 (EV)
+           ('fingerprint', 1149): 'Phenolics/Proteins', ('fingerprint', 1157): 'Phenolics/Proteins',  # 1162 / 1169
+           ('fingerprint', 1361): 'Polysacch./Proteins', ('fingerprint', 1373): 'Polysacch./Proteins',  # 1373 / 1385
+           ('fingerprint', 1591): 'Phenolics', ('fingerprint', 1595): 'Phenolics'}  # 1603 / 1607 (minor proteins)
+if LABEL_SET in ('revised', 'acacia', 'general'):
+    NEW = {'revised': REVISED, 'acacia': ACACIA, 'general': GENERAL}[LABEL_SET]
     LABELS = [lab[:6] + (NEW.get((lab[0], lab[3]), lab[6]),) + lab[7:] for lab in LABELS]
 # grey shadows: bands compared between EVs and NVs (EV window, NV window, kind);
 # drawn only if the shift is consistent at all sites (site ranges do not overlap)
