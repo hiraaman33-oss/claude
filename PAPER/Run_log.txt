@@ -30,10 +30,13 @@
   saved FigS2_PeakFit_CH
   saved Fig2c_PeakFit_CH_GL
 
-4. FIGURE 3 - PCA and LDA
+4. FIGURE 3 - PCA and cross-validated LDA
   Fingerprint (250-1790 cm-1): PC1 16.8 %, PC2 8.9 %, PC1-5 41.0 %; LD1 site means p = 3.94e-08
+  Fingerprint (250-1790 cm-1): PC1 16.8 %, PC2 8.9 %; cross-validated LDA (PCA re-fitted per fold): wrong side of 0: 4 of 120 EVs, 5 of 120 NVs (LDA predictions: 4 EVs, 5 NVs misclassified)
   CH-stretching (2760-3095 cm-1): PC1 33.3 %, PC2 14.0 %, PC1-5 66.9 %; LD1 site means p = 2.25e-11
-  saved Fig3_PCA_LDA
+  CH-stretching (2760-3095 cm-1): PC1 33.3 %, PC2 14.0 %; cross-validated LDA (PCA re-fitted per fold): wrong side of 0: 7 of 120 EVs, 1 of 120 NVs (LDA predictions: 7 EVs, 1 NVs misclassified)
+  saved Fig3_PCA_LDA.png
+  saved Fig3_PCA_LDA.tiff
 
 5. FIGURE 4 - loadings and difference spectrum
   Fingerprint (250-1790 cm-1): PC1 > 0 = EVs; difference > 2 SE at 65 % of wavenumbers

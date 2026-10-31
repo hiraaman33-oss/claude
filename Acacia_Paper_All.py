@@ -1050,16 +1050,47 @@ plt.rcParams.update({'font.size': 10})
 
 
 # ============================================================================
-# 4. FIGURE 3 - PCA scores and LDA canonical variable
+# 4. FIGURE 3 - PCA scores and cross-validated LDA scores
 # ============================================================================
-# PCA: all 240 SNV spectra, labels NOT used. LDA: the 5 PC scores with labels,
-# fitted on all spectra (display of the separation; the classification result is
-# the cross-validation of section 6). p: Welch's t-test on the 6 + 6 site means.
-report('\n4. FIGURE 3 - PCA and LDA')
-plt.rcParams.update({'font.size': 16, 'axes.spines.top': False, 'axes.spines.right': False,
-                     'axes.linewidth': 1.2})
-fig, axs = plt.subplots(2, 2, figsize=(11, 10),
-                        gridspec_kw={'width_ratios': [1.35, 1], 'wspace': 0.32, 'hspace': 0.42})
+# (a, c) PCA: all 240 SNV spectra, labels NOT used; 2-SD ellipse per group and the
+#        6 site means per group (larger markers).
+# (b, d) Cross-validated LDA: StratifiedGroupKFold(5, shuffle, seed 0), groups = sites;
+#        in each fold PCA(5) + LDA are fitted on the training spectra only and the
+#        test spectra are projected on the LDA axis (out-of-fold scores). Each fold's
+#        axis is shifted so that 0 is that fold's LDA decision boundary and oriented
+#        so that NVs are positive; a spectrum below 0 is classified as EV.
+# The all-data LDA (canonical variable 1) is still computed for the score tables.
+report('\n4. FIGURE 3 - PCA and cross-validated LDA')
+F3_FS = {'label': 9, 'tick': 8, 'legend': 7.5, 'letter': 10, 'title': 8.5}
+F3_LW = 0.8
+RC_BEFORE_F3 = plt.rcParams.copy()
+plt.rcParams.update({'font.family': 'sans-serif', 'font.sans-serif': ['Arial', 'Liberation Sans', 'DejaVu Sans'],
+                     'font.size': F3_FS['tick'], 'axes.spines.top': False, 'axes.spines.right': False,
+                     'axes.linewidth': F3_LW, 'xtick.major.width': F3_LW, 'ytick.major.width': F3_LW,
+                     'lines.linewidth': F3_LW, 'axes.grid': False})
+
+
+def cv_lda_scores(X):
+    """Out-of-fold LDA scores (PCA(5) + LDA fitted on the training folds only).
+    Returns scores (0 = decision boundary, NVs positive) and the LDA predictions."""
+    folds_ = StratifiedGroupKFold(n_splits=N_FOLDS, shuffle=True, random_state=CV_SEED
+                                  ).split(np.zeros(len(y)), y, sites)
+    score, pred = np.empty(len(y)), np.empty(len(y), int)
+    for tr, te in folds_:
+        pf = PCA(n_components=N_COMP, svd_solver='full').fit(X[tr])
+        lda_ = LinearDiscriminantAnalysis().fit(pf.transform(X[tr]), y[tr])
+        z_tr = lda_.transform(pf.transform(X[tr])).ravel()
+        z_te = lda_.transform(pf.transform(X[te])).ravel()
+        # decision_function is a linear function of the LDA score: find where it is 0
+        a, b = np.polyfit(z_tr, lda_.decision_function(pf.transform(X[tr])), 1)
+        orient = 1.0 if np.mean(z_tr[y[tr] == 1]) > -b / a else -1.0   # NV training mean positive
+        score[te] = orient * (z_te + b / a)
+        pred[te] = lda_.predict(pf.transform(X[te]))
+    return score, pred
+
+
+fig, axs = plt.subplots(2, 2, figsize=(17 / 2.54, 14 / 2.54),
+                        gridspec_kw={'width_ratios': [1.6, 1], 'wspace': 0.30, 'hspace': 0.45})
 letters = iter('abcd')
 for row, w in enumerate(['fingerprint', 'ch']):
     X, g = data[w], WINDOWS[w]['g']
@@ -1086,47 +1117,85 @@ for row, w in enumerate(['fingerprint', 'ch']):
     scores['LD1'] = ld
     scores.to_csv(OUTPUT_DIR / f'Scores_{"fingerprint" if w == "fingerprint" else "CH"}.csv', index=False)
 
-    ax = axs[row, 0]                        # PCA scores, 2-SD ellipses
+
+    ax = axs[row, 0]                        # PCA scores, 2-SD ellipses, site means
     for c in (0, 1):
         P = T[y == c, :2]
-        ax.scatter(P[:, 0], P[:, 1], s=22, color=COLS[c], lw=0, alpha=0.85, label=GROUPS[c])
+        ax.scatter(P[:, 0], P[:, 1], s=8, color=COLS[c], lw=0, alpha=0.7, label=GROUPS[c], zorder=2)
         vals, vecs = np.linalg.eigh(np.cov(P.T))
         ang = np.degrees(np.arctan2(vecs[1, 1], vecs[0, 1]))
         ax.add_patch(Ellipse(P.mean(0), 4 * np.sqrt(vals[1]), 4 * np.sqrt(vals[0]), angle=ang,
-                             fc='none', ec=COLS[c], lw=1.8))
-    ax.axhline(0, color='k', lw=0.6)
-    ax.axvline(0, color='k', lw=0.6)
-    ax.set_xlabel(f'PC1 ({var[0]:.1f}%)')
-    ax.set_ylabel(f'PC2 ({var[1]:.1f}%)')
+                             fc='none', ec=COLS[c], lw=F3_LW, zorder=3))
+        site_xy = np.array([T[sites == s, :2].mean(0) for s in sorted(set(sites[y == c]))])
+        ax.scatter(site_xy[:, 0], site_xy[:, 1], s=40, marker='o' if c == 0 else 's', color=COLS[c],
+                   edgecolors='k', linewidths=F3_LW, zorder=4)
+    ax.axhline(0, color='k', lw=0.5, zorder=1)
+    ax.axvline(0, color='k', lw=0.5, zorder=1)
+    ax.set_xlabel(f'PC1 ({var[0]:.1f}%)', fontsize=F3_FS['label'])
+    ax.set_ylabel(f'PC2 ({var[1]:.1f}%)', fontsize=F3_FS['label'])
+    ax.tick_params(labelsize=F3_FS['tick'], width=F3_LW)
     ylo, yhi = ax.get_ylim()
-    ax.set_ylim(ylo, yhi + 0.28 * (yhi - ylo))
-    ax.legend(frameon=False, fontsize=15, loc='upper left', ncol=2, handletextpad=0.1,
-              columnspacing=1.0, markerscale=1.6)
-    ax.set_title(TITLES[w], fontsize=16, loc='left')
+    ax.set_ylim(ylo, yhi + 0.25 * (yhi - ylo))
+    handles = [plt.Line2D([], [], ls='', marker='o', ms=4, color=COLS[0], alpha=0.7, label=GROUPS[0]),
+               plt.Line2D([], [], ls='', marker='o', ms=4, color=COLS[1], alpha=0.7, label=GROUPS[1]),
+               plt.Line2D([], [], ls='', marker='o', ms=6, mfc='0.75', mec='k', mew=F3_LW,
+                          label='site means')]
+    ax.legend(handles=handles, frameon=True, facecolor='white', edgecolor='none', framealpha=1,
+              fontsize=F3_FS['legend'], loc='upper left', ncol=3,
+              handletextpad=0.2, columnspacing=0.9, borderaxespad=0.2)
+    ax.set_title(TITLES[w], fontsize=F3_FS['title'], loc='left', pad=3)
 
-    ax = axs[row, 1]                        # LD1 box plot
+    ax = axs[row, 1]                        # cross-validated LDA scores
+    cvs, cvp = cv_lda_scores(X)
+    wrong = {c: int(np.sum((cvs[y == c] > 0) != (c == 1))) for c in (0, 1)}
+    RES[w].update(cv_ld=cvs, cv_ld_wrong=wrong, cv_ld_median={c: np.median(cvs[y == c]) for c in (0, 1)},
+                  cv_ld_pred_errors={c: int(np.sum(cvp[y == c] != c)) for c in (0, 1)})
     rng = np.random.default_rng(0)
     for c in (0, 1):
-        v = ld[y == c]
-        ax.boxplot(v, positions=[c], widths=0.5, showfliers=False, patch_artist=True,
-                   boxprops=dict(fc=COLS[c], alpha=0.30, ec=COLS[c]),
-                   medianprops=dict(color=COLS[c], lw=1.6),
-                   whiskerprops=dict(color=COLS[c]), capprops=dict(color=COLS[c]))
-        ax.scatter(c + rng.uniform(-0.15, 0.15, len(v)), v, s=12, color=COLS[c], lw=0, alpha=0.8)
-    top = ld.max() + 0.08 * np.ptp(ld)
-    ax.plot([0, 1], [top, top], color='k', lw=0.8)
-    ax.text(0.5, top, stars(p), ha='center', va='bottom', fontsize=16)
+        v = cvs[y == c]
+        ax.boxplot(v, positions=[c], widths=0.5, whis=1.5, showfliers=False, patch_artist=True,
+                   boxprops=dict(fc=COLS[c], alpha=0.30, ec=COLS[c], lw=F3_LW),
+                   medianprops=dict(color=COLS[c], lw=1.2),
+                   whiskerprops=dict(color=COLS[c], lw=F3_LW), capprops=dict(color=COLS[c], lw=F3_LW))
+        ax.scatter(c + rng.uniform(-0.15, 0.15, len(v)), v, s=5, color=COLS[c], lw=0, alpha=0.7, zorder=3)
+    ax.axhline(0, color='k', ls='--', lw=F3_LW, zorder=1)
     ax.set_xticks([0, 1])
-    ax.set_xticklabels(['EVs', 'NVs'])
-    ax.set_ylabel('Canonical variable 1')
-    ax.set_ylim(ld.min() - 0.20 * np.ptp(ld), top + 0.15 * np.ptp(ld))
-    ax.text(0.5, 0.02, "Welch's t-test on site means\n(n = 6), " + stars(p) + f' p = {p:.1e}',
-            transform=ax.transAxes, ha='center', va='bottom', fontsize=12)
+    ax.set_xticklabels([GROUPS[0], GROUPS[1]], fontsize=F3_FS['label'])
+    ax.set_xlim(-0.6, 1.6)
+    ax.set_ylabel('Cross-validated LDA score', fontsize=F3_FS['label'])
+    ax.tick_params(labelsize=F3_FS['tick'], width=F3_LW)
+    report(f'  {PLAIN[w]}: PC1 {var[0]:.1f} %, PC2 {var[1]:.1f} %; cross-validated LDA (PCA re-fitted per '
+           f'fold): wrong side of 0: {wrong[0]} of {np.sum(y == 0)} EVs, {wrong[1]} of {np.sum(y == 1)} NVs '
+           f'(LDA predictions: {RES[w]["cv_ld_pred_errors"][0]} EVs, {RES[w]["cv_ld_pred_errors"][1]} NVs '
+           f'misclassified)')
     for a in axs[row]:
-        a.text(-0.27 if a is axs[row, 1] else -0.18, 1.08, f'({next(letters)})',
-               transform=a.transAxes, fontsize=18, va='bottom')
-fig.subplots_adjust(left=0.09, right=0.98, bottom=0.07, top=0.94)
-save_figure(fig, 'Fig3_PCA_LDA')
+        a.text(-0.30 if a is axs[row, 1] else -0.17, 1.10, f'({next(letters)})', transform=a.transAxes,
+               fontsize=F3_FS['letter'], fontweight='bold', va='bottom', ha='left')
+fig.subplots_adjust(left=0.085, right=0.985, bottom=0.085, top=0.93)
+
+
+def save_figure_rgb(fig_, name):
+    """PNG and LZW-compressed RGB TIFF, 600 dpi (new name if the old file is open)."""
+    import io
+    from PIL import Image
+    buf = io.BytesIO()
+    fig_.savefig(buf, dpi=600, format='png')
+    img = Image.open(buf).convert('RGB')
+    for ext, kw in [('png', {}), ('tiff', {'compression': 'tiff_lzw'})]:
+        target = OUTPUT_DIR / f'{name}.{ext}'
+        for k in range(1, 50):
+            try:
+                img.save(target, dpi=(600, 600), **kw)
+                break
+            except OSError:
+                target = OUTPUT_DIR / f'{name}_{k}.{ext}'
+        report(f'  saved {target.name}')
+
+
+save_figure_rgb(fig, 'Fig3_PCA_LDA')
+plt.rcParams.update(RC_BEFORE_F3)          # the later figures keep their own settings
+plt.rcParams.update({'font.size': 16, 'axes.spines.top': False, 'axes.spines.right': False,
+                     'axes.linewidth': 1.2})
 
 
 # ============================================================================
@@ -1473,8 +1542,9 @@ for w in ['fingerprint', 'ch']:
             f'Difference spectrum NV - EV (Fig 4): > 2 SE at {r["diff_sig_frac"]:.0f}% of the wavenumbers; '
             'largest: ' + ', '.join(f'{wn:.0f} ({"NVs" if val > 0 else "EVs"} higher)'
                                     for wn, val in r['diff_bands']) + '.',
-            f'Canonical variable 1 (Fig 3, display): median {r["ld_median"][0]:+.2f} (EVs) vs '
-            f'{r["ld_median"][1]:+.2f} (NVs); Welch on site means p = {r["p_ld1"]:.1e}.']
+            f'Cross-validated LDA score (Fig 3; PCA + LDA fitted on the training folds only): median '
+            f'{r["cv_ld_median"][0]:+.2f} (EVs) vs {r["cv_ld_median"][1]:+.2f} (NVs); on the wrong side of '
+            f'the decision boundary: {r["cv_ld_wrong"][0]} of 120 EVs and {r["cv_ld_wrong"][1]} of 120 NVs.']
     for model in ['PCA-LDA', 'PLS-DA']:
         c = r['cv'][model]
         line = (f'{model} (Fig 5, sites left out): accuracy {c["acc"]:.1f}% '
@@ -1492,8 +1562,9 @@ txt += ['--- LIMITATIONS TO STATE ---',
         '* If all EV spectra come from one preparation and all NV spectra from another, '
         'preparation or measurement-session effects cannot be separated from EV-vs-NV biology.',
         '* After SNV, intensities are relative (composition), not absolute amounts.',
-        '* Fig 3 b/d (LDA on all spectra) shows the separation; the classification performance is '
-        'the cross-validation (Fig 5, Table 1).']
+        '* Fig 3 b/d shows out-of-fold LDA scores with PCA re-fitted in each training fold (the stricter '
+        'check, Table S2); Fig 5 / Table 1 use PCA fitted once on all spectra (no labels), so their '
+        'error counts can differ by a few spectra.']
 (OUTPUT_DIR / 'RESULTS_for_manuscript.txt').write_text('\n'.join(txt) + '\n', encoding='utf-8')
 (OUTPUT_DIR / 'Run_log.txt').write_text('\n'.join(LOG) + '\n', encoding='utf-8')
 print('\n' + '\n'.join(md) + '\n\n' + '\n'.join(txt))
