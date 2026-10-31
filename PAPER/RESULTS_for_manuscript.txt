@@ -10,21 +10,21 @@ PCA (Fig 3): PC1 16.8%, PC2 8.9% (PC1-PC5 41.0%). EVs and NVs separate along PC1
 PC1 loading bands (Fig 4): 1033 (NVs higher), 1159 (EVs higher), 1353 (EVs higher), 1389 (NVs higher), 1499 (EVs higher), 1587 (EVs higher), 1609 (NVs higher), 1629 (NVs higher).
 Difference spectrum NV - EV (Fig 4): > 2 SE at 65% of the wavenumbers; largest: 1033 (NVs higher), 1161 (EVs higher), 1355 (EVs higher), 1391 (NVs higher), 1497 (EVs higher), 1589 (EVs higher), 1609 (NVs higher), 1629 (NVs higher).
 Cross-validated LDA score (Fig 3; PCA + LDA fitted on the training folds only): median -1.98 (EVs) vs +1.96 (NVs); on the wrong side of the decision boundary: 4 of 120 EVs and 5 of 120 NVs.
-PCA-LDA (Fig 5, sites left out): accuracy 95.4% (229/240), sensitivity 95.0%, specificity 95.8%; shuffled labels: median 50.4%, 95th percentile 78.3%, p = 0.0022.
+PCA-LDA (Fig 5, sites left out): accuracy 96.2% (231/240), sensitivity 95.8%, specificity 96.7%; shuffled labels: median 49.6%, 95th percentile 78.8%, p = 0.0022.
 PLS-DA (Fig 5, sites left out): accuracy 95.4% (229/240), sensitivity 95.0%, specificity 95.8%; shuffled labels: median 49.6%, 95th percentile 69.2%, p = 0.0022.
-PCA-LDA with PCA re-fitted per fold: 96.2%.
+PCA-LDA (Fig 5, Table 1) uses PCA fitted on the training folds only; with PCA fitted once on all spectra: 95.4%.
 
 --- CH-STRETCHING (2760-3095 CM-1) ---
 PCA (Fig 3): PC1 33.3%, PC2 14.0% (PC1-PC5 66.9%). EVs and NVs separate along PC1 (mean scores EVs -1.88, NVs +1.88) although the labels were not used.
 PC1 loading bands (Fig 4): 2887 (NVs higher), 2925 (EVs higher), 2963 (NVs higher), 3063 (EVs higher).
 Difference spectrum NV - EV (Fig 4): > 2 SE at 79% of the wavenumbers; largest: 2885 (NVs higher), 2925 (EVs higher), 2957 (NVs higher), 3067 (EVs higher).
 Cross-validated LDA score (Fig 3; PCA + LDA fitted on the training folds only): median -2.59 (EVs) vs +2.60 (NVs); on the wrong side of the decision boundary: 7 of 120 EVs and 1 of 120 NVs.
-PCA-LDA (Fig 5, sites left out): accuracy 97.1% (233/240), sensitivity 99.2%, specificity 95.0%; shuffled labels: median 53.5%, 95th percentile 80.4%, p = 0.0022.
+PCA-LDA (Fig 5, sites left out): accuracy 96.7% (232/240), sensitivity 99.2%, specificity 94.2%; shuffled labels: median 54.0%, 95th percentile 80.8%, p = 0.0022.
 PLS-DA (Fig 5, sites left out): accuracy 98.8% (237/240), sensitivity 99.2%, specificity 98.3%; shuffled labels: median 49.2%, 95th percentile 75.0%, p = 0.0022.
-PCA-LDA with PCA re-fitted per fold: 96.7%.
+PCA-LDA (Fig 5, Table 1) uses PCA fitted on the training folds only; with PCA fitted once on all spectra: 97.1%.
 
 --- LIMITATIONS TO STATE ---
 * Independent units are the 6 + 6 measurement sites, not the 240 spectra; the smallest possible permutation p is 2/924 = 0.0022.
 * If all EV spectra come from one preparation and all NV spectra from another, preparation or measurement-session effects cannot be separated from EV-vs-NV biology.
 * After SNV, intensities are relative (composition), not absolute amounts.
-* Fig 3 b/d shows out-of-fold LDA scores with PCA re-fitted in each training fold (the stricter check, Table S2); Fig 5 / Table 1 use PCA fitted once on all spectra (no labels), so their error counts can differ by a few spectra.
+* Fig 3 b/d shows the out-of-fold LDA scores of the PCA-LDA model (PCA + LDA fitted on the training folds); with PCA_PER_FOLD = True the spectra below 0 are exactly the errors in Fig 5 / Table 1.

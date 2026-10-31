@@ -14,7 +14,7 @@ PRE-PROCESSING (each spectrum, each window separately)
   analysis regions: 250-1790 cm-1 (770 points) and 2760-3095 cm-1 (168 points)
 
 PCA
-  5 components, exact SVD (svd_solver = "full"), mean-centred, all 240 spectra, labels not used. PC1 sign: loading positive at 1580 / 2960 cm-1.
+  5 components, exact SVD (svd_solver = "full"), mean-centred, labels not used. Figure 3 a/c: all 240 spectra. PCA-LDA classification: PCA fitted on the training folds only. PC1 sign: loading positive at 1580 / 2960 cm-1.
 
 PCA-LDA
   LDA (scikit-learn LinearDiscriminantAnalysis, default SVD solver, equal-covariance) on PC1-PC5; priors = class proportions (0.5/0.5).
@@ -31,7 +31,7 @@ VALIDATION
     fold 3: test = EVs-m5, NVs-m3 (40 spectra)
     fold 4: test = EVs-m4, NVs-m5 (40 spectra)
     fold 5: test = EVs-m3, NVs-m2 (40 spectra)
-  Stricter check: PCA re-fitted inside every training fold.
+  Comparison: PCA-LDA with PCA fitted once on all spectra.
   Permutation test: all 924 assignments of 6 of the 12 sites to "EV", full cross-validation repeated for each; p = labelings with accuracy >= real / 924.
   Sensitivity = NVs correctly classified; specificity = EVs correctly classified.
 
@@ -47,10 +47,10 @@ CH BAND FITTING (Figure S2, Table S6)
 
 RESULTS
   Fingerprint (250-1790 cm-1): explained variance PC1-PC5 = 16.8, 8.9, 5.8, 5.2, 4.3 % (sum 41.0 %)
-    PCA-LDA: accuracy 95.4 %, sensitivity 95.0 %, specificity 95.8 %, confusion [[115 5] [6 114]], permutation p = 0.0022
+    PCA-LDA: accuracy 96.2 %, sensitivity 95.8 %, specificity 96.7 %, confusion [[116 4] [5 115]], permutation p = 0.0022
     PLS-DA: accuracy 95.4 %, sensitivity 95.0 %, specificity 95.8 %, confusion [[115 5] [6 114]], permutation p = 0.0022
-    PCA-LDA with PCA re-fitted per fold: 96.2 %; LD1 site-mean Welch p = 3.94e-08
+    PCA-LDA with PCA fitted once on all spectra (comparison): 95.4 %; LD1 site-mean Welch p = 3.94e-08
   CH-stretching (2760-3095 cm-1): explained variance PC1-PC5 = 33.3, 14.0, 8.4, 5.9, 5.2 % (sum 66.9 %)
-    PCA-LDA: accuracy 97.1 %, sensitivity 99.2 %, specificity 95.0 %, confusion [[114 6] [1 119]], permutation p = 0.0022
+    PCA-LDA: accuracy 96.7 %, sensitivity 99.2 %, specificity 94.2 %, confusion [[113 7] [1 119]], permutation p = 0.0022
     PLS-DA: accuracy 98.8 %, sensitivity 99.2 %, specificity 98.3 %, confusion [[118 2] [1 119]], permutation p = 0.0022
-    PCA-LDA with PCA re-fitted per fold: 96.7 %; LD1 site-mean Welch p = 2.25e-11
+    PCA-LDA with PCA fitted once on all spectra (comparison): 97.1 %; LD1 site-mean Welch p = 2.25e-11
