@@ -1,7 +1,7 @@
 # =============================================================================
 # Acacia EVs and NVs: spectrum on CaF2 with long acquisition (100x, 100 % laser
 # power, 4 x 60 s) vs SERS spectrum on Ag/SiNWs (50x LWD, 10 % laser power,
-# 4 x 1 s). Raw spectra, same style as the paper figures.
+# 4 x 0.5 s). Raw spectra, same style as the paper figures.
 #
 # INPUT (DATA_DIR):
 #   EV on CaF2     : s1-EV_Acacia-dropCaF2_532nm_1800gr_100%_100x_BC50_60s_4a(.txt)
@@ -28,7 +28,7 @@ if len(sys.argv) > 1:
 COL = {'EV': '#0B5A7E', 'NV': '#B5541C'}
 CAF2_COL = {'EV': '#85ACBE', 'NV': '#DAA98D'}      # light shade of the sample colour
 NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
-COND = {'Ag': '50\u00d7, 10% laser power, 4 \u00d7 1 s', 'CaF2': '100\u00d7, 100% laser power, 4 \u00d7 60 s'}
+COND = {'Ag': '50\u00d7, 10% laser power, 4 \u00d7 0.5 s', 'CaF2': '100\u00d7, 100% laser power, 4 \u00d7 60 s'}
 SHOW_COUNTS = False                                 # True: counts scale bar next to each spectrum
 BAR = {'Ag': 50, 'CaF2': 500}                       # counts shown by the scale bars
 LOW, HIGH = (400, 1800), (2700, 3100)
