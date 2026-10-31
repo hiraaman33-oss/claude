@@ -21,7 +21,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import openpyxl
 
-DATA_DIR = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(r'C:\Users\Hira Aman\Downloads\comparison ev nv')
+DATA_DIR = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(r'C:\Users\Hira Aman\Downloads\CAF2 COMPARISON')
 if len(sys.argv) > 1:
     matplotlib.use('Agg')
 
