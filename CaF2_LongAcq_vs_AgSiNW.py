@@ -10,8 +10,8 @@
 # HOW TO RUN (PyCharm): pip install numpy matplotlib openpyxl, check DATA_DIR, Run.
 # OUTPUT (in DATA_DIR): CaF2_LongAcq_vs_AgSiNW.png / .tiff (600 dpi)
 #
-# The four spectra differ ~20-fold in counts, so each is drawn with the same height
-# and its own counts scale bar (right), so that the real intensities stay visible.
+# The four spectra differ ~20-fold in counts; each is drawn with the same height
+# (scaled to its own range). SHOW_COUNTS = True adds a counts scale bar to each.
 # =============================================================================
 import sys
 from pathlib import Path
@@ -29,6 +29,7 @@ COL = {'EV': '#0B5A7E', 'NV': '#B5541C'}
 CAF2_COL = {'EV': '#85ACBE', 'NV': '#DAA98D'}      # light shade of the sample colour
 NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
 COND = {'Ag': '50\u00d7, 10% laser power, 4 \u00d7 1 s', 'CaF2': '100\u00d7, 100% laser power, 4 \u00d7 60 s'}
+SHOW_COUNTS = False                                 # True: counts scale bar next to each spectrum
 BAR = {'Ag': 50, 'CaF2': 500}                       # counts shown by the scale bars
 LOW, HIGH = (400, 1800), (2700, 3100)
 HEIGHT, GAP = 1.0, 0.35                             # drawn height of each spectrum, gap between them
@@ -109,7 +110,7 @@ for row, s in enumerate(['EV', 'NV']):
         axL.text(415, y_top + 0.03, f'{NAME[s]} on {where}  ({COND[sub]})', color=COL[s],
                  fontsize=FS_NAME, ha='left', va='bottom')
     # counts scale bar of each spectrum, in the flat part of the CH window (2700-2800 cm-1)
-    for sub in ['CaF2', 'Ag']:
+    for sub in (['CaF2', 'Ag'] if SHOW_COUNTS else []):
         d = spec[(s, sub)]
         k = (d[:, 0] >= 2700) & (d[:, 0] <= 2800)
         h = BAR[sub] * scale[sub]
