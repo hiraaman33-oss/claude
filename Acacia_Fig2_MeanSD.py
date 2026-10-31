@@ -56,13 +56,14 @@ COLS = {0: '#0B5A7E', 1: '#B5541C'}
 NAME_LONG = {0: 'EV Acacia on Ag/SiNWs', 1: 'Nanovesicles Acacia on Ag/SiNWs'}
 WINDOWS = {'fingerprint': {'raw': (200, 1800), 'grid': (205, 1795)},
            'ch': {'raw': (2700, 3100), 'grid': (2705, 3095)}}
-OFFSET = {'fingerprint': 8.5, 'ch': 5.5}       # SNV units added to the NV spectrum
-TOP_ROOM = {'fingerprint': 4.3, 'ch': 4.4}     # space above the NV spectrum for labels
+OFFSET = {'fingerprint': 9.0, 'ch': 5.5}       # SNV units added to the NV spectrum
+TOP_ROOM = {'fingerprint': 4.8, 'ch': 4.4}     # space above the NV spectrum for labels
 # font sizes (pt): band labels, axis titles, tick numbers
 LABEL_FS, AXIS_FS, TICK_FS = 10, 13, 10
 
 # class colours of the label text
 PURPLE, BLUE, DARKBLUE = '#7030A0', '#2E75B6', '#1F3864'
+GOLD, GREEN, GREY = '#9C6500', '#3A7D22', '#404040'
 CLASS = {'Proteins': [('Proteins', PURPLE)],
          'Proteins (COO$^{-}$)': [('Proteins (COO$^{-}$)', PURPLE)],
          'Lipids': [('Lipids', BLUE)],
@@ -70,6 +71,16 @@ CLASS = {'Proteins': [('Proteins', PURPLE)],
          'Lipids/NA': [('Lipids/', BLUE), ('NA', 'k')],
          'Lipids/Proteins': [('Lipids/', BLUE), ('Proteins', PURPLE)],
          'Proteins/Lipids': [('Proteins/', PURPLE), ('Lipids', BLUE)],
+         # functional-group labels (LABEL_SET = 'revised')
+         'Carotenoids/Phe': [('Carotenoids/', GOLD), ('Phe', PURPLE)],
+         'Carotenoids': [('Carotenoids', GOLD)],
+         'COO- (sym.)': [('COO$^{-}$ (sym.)', GREEN)],
+         'Aromatic C=C': [('Arom. C=C', PURPLE)],
+         'Amide III': [('Amide III', PURPLE)],
+         'O-P-O': [('O\u2013P\u2013O', DARKBLUE)],
+         'Ester C=O': [('Ester C=O', BLUE)],
+         'CH2 (lipids)': [('CH$_2$ (lipids)', BLUE)],
+         'CH3': [('CH$_3$', GREY)],
          None: []}
 
 # ----------------------------------------------------------------------------
@@ -117,6 +128,20 @@ if SHOW_EXTRA_PEAKS:
                ('fingerprint', 1, 'peak', 655, 679, '{p}', 'Nucleic Acids', True),   # 667 G/T ring
                ('fingerprint', 1, 'peak', 1063, 1087, '{p}', 'Lipids', True),        # 1075 C-C / C-O
                ('fingerprint', 1, 'peak', 1275, 1299, '{p}', 'Proteins', True)]      # 1287 amide III
+# WHICH LABEL WORDS: 'revised' = functional groups, consistent with the text and
+# Table S1 (reviewer comment on band assignments); 'original' = the first version
+# (Proteins / Lipids / Lipids/NA / Nucleic Acids). Positions are the same in both.
+LABEL_SET = 'revised'
+REVISED = {('fingerprint', 797): 'O-P-O', ('fingerprint', 787): 'O-P-O',            # 809 / 799
+           ('fingerprint', 989): 'Carotenoids/Phe',                                 # 1002 / 1001
+           ('fingerprint', 1149): 'Carotenoids', ('fingerprint', 1157): 'Carotenoids',  # 1162 / 1169
+           ('fingerprint', 1237): 'Amide III', ('fingerprint', 1233): 'Amide III',  # 1249 / 1244
+           ('fingerprint', 1361): 'COO- (sym.)', ('fingerprint', 1373): 'COO- (sym.)',  # 1373 / 1385
+           ('fingerprint', 1591): 'Aromatic C=C', ('fingerprint', 1595): 'Aromatic C=C',  # 1603 / 1607
+           ('fingerprint', 1717): 'Ester C=O',                                      # 1728
+           ('ch', 2923): 'CH3', ('ch', 2868): 'CH2 (lipids)'}                       # 2933/2937, 2874/2883
+if LABEL_SET == 'revised':                 # 855/829, 932/927 and 1033 keep 'Proteins'
+    LABELS = [lab[:6] + (REVISED.get((lab[0], lab[3]), lab[6]),) + lab[7:] for lab in LABELS]
 # grey shadows: bands compared between EVs and NVs (EV window, NV window, kind);
 # drawn only if the shift is consistent at all sites (site ranges do not overlap)
 SHIFTS = {'fingerprint': [((507, 531), (507, 531), 'peak'), ((797, 821), (787, 811), 'peak'),
