@@ -81,6 +81,13 @@ CLASS = {'Proteins': [('Proteins', PURPLE)],
          'Ester C=O': [('Ester C=O', BLUE)],
          'CH2 (lipids)': [('CH$_2$ (lipids)', BLUE)],
          'CH3': [('CH$_3$', GREY)],
+         # Acacia labels (LABEL_SET = 'acacia')
+         'Phe': [('Phe', PURPLE)],
+         'Tyr': [('Tyr', PURPLE)],
+         'Phenolics': [('Phenolics', GOLD)],
+         'Phenolics/Tyr': [('Phenolics/', GOLD), ('Tyr', PURPLE)],
+         'Polysacch./Tyr': [('Polysacch./', GREEN), ('Tyr', PURPLE)],
+         'C-COO-': [('C\u2013COO$^{-}$', GREEN)],
          None: []}
 
 # ----------------------------------------------------------------------------
@@ -128,10 +135,14 @@ if SHOW_EXTRA_PEAKS:
                ('fingerprint', 1, 'peak', 655, 679, '{p}', 'Nucleic Acids', True),   # 667 G/T ring
                ('fingerprint', 1, 'peak', 1063, 1087, '{p}', 'Lipids', True),        # 1075 C-C / C-O
                ('fingerprint', 1, 'peak', 1275, 1299, '{p}', 'Proteins', True)]      # 1287 amide III
-# WHICH LABEL WORDS: 'revised' = functional groups, consistent with the text and
-# Table S1 (reviewer comment on band assignments); 'original' = the first version
-# (Proteins / Lipids / Lipids/NA / Nucleic Acids). Positions are the same in both.
-LABEL_SET = 'revised'
+# WHICH LABEL WORDS (positions are the same in all three):
+#   'acacia'   = assignments for an Acacia flower sample: phenolics/flavonoids, uronic-acid
+#                carboxylates and cell-wall polysaccharides besides proteins and lipids;
+#                no carotenoids, because the strongest carotenoid band (~1520 cm-1) is
+#                absent at all 6 EV sites although the ~1160 cm-1 band is clear
+#   'revised'  = functional groups with carotenoids at 1001/1160 (manuscript v7 text)
+#   'original' = the first version (Proteins / Lipids / Lipids/NA / Nucleic Acids)
+LABEL_SET = 'acacia'
 REVISED = {('fingerprint', 797): 'O-P-O', ('fingerprint', 787): 'O-P-O',            # 809 / 799
            ('fingerprint', 989): 'Carotenoids/Phe',                                 # 1002 / 1001
            ('fingerprint', 1149): 'Carotenoids', ('fingerprint', 1157): 'Carotenoids',  # 1162 / 1169
@@ -140,8 +151,20 @@ REVISED = {('fingerprint', 797): 'O-P-O', ('fingerprint', 787): 'O-P-O',        
            ('fingerprint', 1591): 'Aromatic C=C', ('fingerprint', 1595): 'Aromatic C=C',  # 1603 / 1607
            ('fingerprint', 1717): 'Ester C=O',                                      # 1728
            ('ch', 2923): 'CH3', ('ch', 2868): 'CH2 (lipids)'}                       # 2933/2937, 2874/2883
-if LABEL_SET == 'revised':                 # 855/829, 932/927 and 1033 keep 'Proteins'
-    LABELS = [lab[:6] + (REVISED.get((lab[0], lab[3]), lab[6]),) + lab[7:] for lab in LABELS]
+ACACIA = {('fingerprint', 797): 'O-P-O', ('fingerprint', 787): 'O-P-O',           # 809 / 799
+          ('fingerprint', 843): 'Polysacch./Tyr',                                  # 855 (EV)
+          ('fingerprint', 817): 'Tyr',                                             # 829 (NV)
+          ('fingerprint', 919): 'C-COO-', ('fingerprint', 915): 'C-COO-',          # 932 / 927
+          ('fingerprint', 989): 'Phe', ('fingerprint', 1021): 'Phe',               # 1002/1001, 1033
+          ('fingerprint', 1149): 'Phenolics/Tyr', ('fingerprint', 1157): 'Phenolics/Tyr',  # 1162 / 1169
+          ('fingerprint', 1237): 'Amide III', ('fingerprint', 1233): 'Amide III',  # 1249 / 1244
+          ('fingerprint', 1361): 'COO- (sym.)', ('fingerprint', 1373): 'COO- (sym.)',  # 1373 / 1385
+          ('fingerprint', 1591): 'Phenolics', ('fingerprint', 1595): 'Phenolics',  # 1603 / 1607 (minor Phe)
+          ('fingerprint', 1717): 'Ester C=O',                                      # 1728
+          ('ch', 2923): 'CH3', ('ch', 2868): 'CH2 (lipids)'}                       # 2933/2937, 2874/2883
+if LABEL_SET in ('revised', 'acacia'):
+    NEW = REVISED if LABEL_SET == 'revised' else ACACIA
+    LABELS = [lab[:6] + (NEW.get((lab[0], lab[3]), lab[6]),) + lab[7:] for lab in LABELS]
 # grey shadows: bands compared between EVs and NVs (EV window, NV window, kind);
 # drawn only if the shift is consistent at all sites (site ranges do not overlap)
 SHIFTS = {'fingerprint': [((507, 531), (507, 531), 'peak'), ((797, 821), (787, 811), 'peak'),
