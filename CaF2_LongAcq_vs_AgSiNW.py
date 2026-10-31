@@ -29,6 +29,7 @@ COL = {'EV': '#0B5A7E', 'NV': '#B5541C'}
 CAF2_COL = {'EV': '#85ACBE', 'NV': '#DAA98D'}      # light shade of the sample colour
 NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
 COND = {'Ag': '50\u00d7, 10% laser power, 4 \u00d7 0.5 s', 'CaF2': '100\u00d7, 100% laser power, 4 \u00d7 60 s'}
+SHOW_CONDITIONS = False                             # True: acquisition conditions after each name
 SHOW_COUNTS = False                                 # True: counts scale bar next to each spectrum
 BAR = {'Ag': 50, 'CaF2': 500}                       # counts shown by the scale bars
 LOW, HIGH = (400, 1800), (2700, 3100)
@@ -107,7 +108,8 @@ for row, s in enumerate(['EV', 'NV']):
     for i, sub in enumerate(['CaF2', 'Ag']):
         y_top = i * (HEIGHT + GAP) + HEIGHT
         where = 'CaF$_2$' if sub == 'CaF2' else 'Ag/SiNWs'
-        axL.text(415, y_top + 0.03, f'{NAME[s]} on {where}  ({COND[sub]})', color=COL[s],
+        label = f'{NAME[s]} on {where}' + (f'  ({COND[sub]})' if SHOW_CONDITIONS else '')
+        axL.text(415, y_top + 0.03, label, color=COL[s],
                  fontsize=FS_NAME, ha='left', va='bottom')
     # counts scale bar of each spectrum, in the flat part of the CH window (2700-2800 cm-1)
     for sub in (['CaF2', 'Ag'] if SHOW_COUNTS else []):
