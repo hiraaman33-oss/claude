@@ -42,7 +42,7 @@ if len(sys.argv) > 1:
 FILES = {('EV', 'CaF2'): 's2-ev_acacia-dropcaf2', ('EV', 'Ag'): 's2-ev_acacia-agsinw',
          ('NV', 'CaF2'): 's1-ev_nano_acacia-dropcaf2', ('NV', 'Ag'): 's4a-ev_nano_acacia-20ng-agsinw'}
 COL = {'EV': '#0B5A7E', 'NV': '#B5541C', 'CaF2': '#555555'}
-CAF2_COL = {'EV': '#85ACBE', 'NV': '#DAA98D'}   # CaF2 traces: light shade of the sample colour (50 % white)
+CAF2_COL = {'EV': '#000000', 'NV': '#000000'}   # CaF2 traces: black for both samples
 #           (use {'EV': COL['CaF2'], 'NV': COL['CaF2']} for grey CaF2 traces)
 NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
 LOW, HIGH = (400, 1800), (2700, 3100)
