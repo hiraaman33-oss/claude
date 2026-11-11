@@ -42,6 +42,7 @@
   Fingerprint (250-1790 cm-1): PC1 > 0 = EVs; difference > 2 SE at 65 % of wavenumbers
   CH-stretching (2760-3095 cm-1): PC1 > 0 = NVs; difference > 2 SE at 79 % of wavenumbers
   saved Fig4_Loadings_Difference
+  saved FigS_PC2_Loadings
 
 6. FIGURE 5 - cross-validation (PCA-LDA: PCA fitted on the training folds only)
   fold 1: test sites EVs-m2, EVs-m6, NVs-m1

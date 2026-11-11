@@ -17,8 +17,9 @@
 #   Fig1a_EV_CaF2_vs_AgSiNW, Fig1b_NV_CaF2_vs_AgSiNW   raw single spectra
 #   Fig2a_MeanSD_Fingerprint, Fig2b_MeanSD_CH          mean +/- SD, band labels
 #   Fig2_label_positions.csv    every Fig 2 label position (from the data)
-#   Fig3_PCA_LDA                PCA scores + LDA canonical variable (a-d)
-#   Fig4_Loadings_Difference    PC1/PC2 loadings (a, b), NV - EV difference (c, d)
+#   Fig3_PCA_LDA                PCA scores + cross-validated LDA scores (a-d)
+#   Fig4_Loadings_Difference    PC1 loadings (a, b), NV - EV difference (c, d)
+#   FigS_PC2_Loadings           PC2 loadings (supplementary)
 #   Fig5_ConfusionMatrices      cross-validated, PCA-LDA and PLS-DA (a-d)
 #   FigS1_Permutation           exact label-shuffling test (a-d)
 #   Fig2c_PeakFit_CH_GL         CH-region band fitting, EV and NV, Gaussian-Lorentzian sum
@@ -1220,6 +1221,27 @@ def main_bands(g, curve, n, min_gap=20):
 
 
 N_BANDS = {'fingerprint': 8, 'ch': 4}
+
+
+def label_bands(ax, g, bands, span, dy):
+    """Write band positions (rotated) at the extrema; labels on the same side closer
+    than one label width are moved sideways so they do not overlap."""
+    width = 0.030 * (g[-1] - g[0])
+    for sign in (1, -1):
+        sel = sorted([(wn, v) for wn, v in bands if np.sign(v) == sign])
+        xs = [wn for wn, _ in sel]
+        for _ in range(50):
+            moved = False
+            for i in range(1, len(xs)):
+                if xs[i] - xs[i - 1] < width:
+                    mid = (xs[i] + xs[i - 1]) / 2
+                    xs[i - 1], xs[i] = mid - width / 2, mid + width / 2
+                    moved = True
+            if not moved:
+                break
+        for (wn, v), x in zip(sel, xs):
+            ax.text(x, v + sign * dy * span, f'{wn:.0f}', ha='center', va='bottom' if sign > 0 else 'top',
+                    fontsize=13, rotation=90)
 report('\n5. FIGURE 4 - loadings and difference spectrum')
 band_rows = []
 fig, axs = plt.subplots(2, 2, figsize=(14, 10.5), gridspec_kw={'width_ratios': [3, 1.3]})
@@ -1227,25 +1249,21 @@ for col, w in enumerate(['fingerprint', 'ch']):
     g, L, var = WINDOWS[w]['g'], RES[w]['loadings'], RES[w]['var']
     hi_g = GROUPS[0] if RES[w]['pc1_mean'][0] > 0 else GROUPS[1]
     lo_g = GROUPS[1] if hi_g == GROUPS[0] else GROUPS[0]
-    ax = axs[0, col]
-    ax.axhline(0, color='k', lw=0.6)
-    ax.plot(g, L[0], color='#0B5A7E', lw=1.6, label=f'PC1 ({var[0]:.1f}%)')
-    ax.plot(g, L[1], color='#B5541C', lw=1.4, alpha=0.8, label=f'PC2 ({var[1]:.1f}%)')
+    ax = axs[0, col]                        # PC1 loading only, in black (PC2: Figure S, below)
+    ax.axhline(0, color='0.5', lw=0.6)
+    ax.plot(g, L[0], color='k', lw=1.4)
     bands = main_bands(g, L[0], N_BANDS[w])
     RES[w]['load_bands'] = [(wn, v, hi_g if v > 0 else lo_g) for wn, v in bands]
-    span = np.ptp(L[:2])
+    span = np.ptp(L[0])
+    label_bands(ax, g, bands, span, 0.03)
     for wn, v in bands:
-        ax.text(wn, v + (0.03 if v > 0 else -0.03) * span, f'{wn:.0f}', ha='center',
-                va='bottom' if v > 0 else 'top', fontsize=13, rotation=90)
         band_rows.append({'Source': 'PC1 loading', 'Region': w, 'Band (cm-1)': round(wn),
                           'Value': round(v, 4), 'Relatively stronger in': hi_g if v > 0 else lo_g})
     ax.set_xlim(g[0], g[-1])
-    ax.set_ylim(L[:2].min() - 0.18 * span, L[:2].max() + (0.22 if w == 'fingerprint' else 0.55) * span)
+    ax.set_ylim(L[0].min() - 0.22 * span, L[0].max() + 0.25 * span)
     ax.set_xlabel('Raman shift (cm$^{-1}$)')
-    ax.set_ylabel('Loading (a.u.)')
-    ax.set_title(f'{TITLES[w]}\nPC1 > 0: {hi_g} side', fontsize=15, loc='left')
-    ax.legend(frameon=False, fontsize=14 if w == 'fingerprint' else 12,
-              loc='lower left' if w == 'fingerprint' else 'upper right')
+    ax.set_ylabel('PC1 loading (a.u.)')
+    ax.set_title(f'{TITLES[w]}\nPC1 ({var[0]:.1f}%), positive = {hi_g} side', fontsize=15, loc='left')
 
     X = data[w]
     S = {c: np.array([X[sites == s].mean(0) for s in sorted(set(sites[y == c]))]) for c in (0, 1)}
@@ -1260,9 +1278,8 @@ for col, w in enumerate(['fingerprint', 'ch']):
     RES[w]['diff_bands'] = bands
     RES[w]['diff_sig_frac'] = sig.mean() * 100
     span = np.ptp(np.r_[d - 2 * se, d + 2 * se])
+    label_bands(ax, g, bands, span, 0.04)
     for wn, v in bands:
-        ax.text(wn, v + (0.04 if v > 0 else -0.04) * span, f'{wn:.0f}', ha='center',
-                va='bottom' if v > 0 else 'top', fontsize=13, rotation=90)
         band_rows.append({'Source': 'NV - EV difference', 'Region': w, 'Band (cm-1)': round(wn),
                           'Value': round(v, 3), 'Relatively stronger in': GROUPS[1] if v > 0 else GROUPS[0]})
     ax.set_xlim(g[0], g[-1])
@@ -1279,6 +1296,25 @@ for a, letter in zip([axs[0, 0], axs[0, 1], axs[1, 0], axs[1, 1]], 'abcd'):
            transform=a.transAxes, fontsize=18, va='bottom')
 fig.tight_layout()
 save_figure(fig, 'Fig4_Loadings_Difference')
+
+# Supplementary: PC2 loadings (not discussed in the main text), black as PC1
+fig, axs = plt.subplots(1, 2, figsize=(14, 5.2), gridspec_kw={'width_ratios': [3, 1.3]})
+for col, w in enumerate(['fingerprint', 'ch']):
+    g, L, var = WINDOWS[w]['g'], RES[w]['loadings'], RES[w]['var']
+    ax = axs[col]
+    ax.axhline(0, color='0.5', lw=0.6)
+    ax.plot(g, L[1], color='k', lw=1.4)
+    span = np.ptp(L[1])
+    label_bands(ax, g, main_bands(g, L[1], N_BANDS[w]), span, 0.03)
+    ax.set_xlim(g[0], g[-1])
+    ax.set_ylim(L[1].min() - 0.25 * span, L[1].max() + 0.28 * span)
+    ax.set_xlabel('Raman shift (cm$^{-1}$)')
+    ax.set_ylabel('PC2 loading (a.u.)')
+    ax.set_title(f'{TITLES[w]}\nPC2 ({var[1]:.1f}%)', fontsize=15, loc='left')
+    ax.text(-0.10 if col == 0 else -0.25, 1.10, f'({"ab"[col]})', transform=ax.transAxes,
+            fontsize=18, va='bottom')
+fig.tight_layout()
+save_figure(fig, 'FigS_PC2_Loadings')
 
 
 # ============================================================================
