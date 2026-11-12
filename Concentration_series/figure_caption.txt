@@ -1,0 +1,9 @@
+Figure X. Raman spectra of 20 nm polystyrene (PS) nanoparticles. Top: 1 mg/mL PS drop-cast on CaF2 (reference).
+Below: mean SERS spectra of PS on AgSiNW at 1 mg/mL (2.3 x 10^14 NP/mL; 1 uL drop; mean of 7 of 25 map spectra),
+100 ug/mL (2.3 x 10^13 NP/mL; 3 uL; mean of 15/25) and 10 ug/mL (2.3 x 10^12 NP/mL; 3 uL; mean of 13/25).
+Map spectra were selected by matching the 1001 cm-1 band (position, width, significance) and the 985-1045 cm-1
+band shape to the CaF2 reference. The bands at ~1002 (1), ~1190 (2), ~1600 (3), ~2930 (4) and ~3060 (5) cm-1
+were used to identify PS; numbers are shown only where the band is resolved from the substrate background.
+The band at 519 cm-1 is the Si phonon of the nanowire substrate. Spectra were acquired at 532 nm with an
+1800 l/mm grating, 50x LWD objective, 1 s x 2 accumulations; baseline-corrected (asymmetric least squares).
+Particle numbers assume 20 nm spheres with PS density 1.05 g/cm3.
