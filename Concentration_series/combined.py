@@ -3,14 +3,16 @@ from scipy.signal import savgol_filter, find_peaks
 exec(open('load_generic.py').read())
 U='/root/.claude/uploads/a2c2f359-63aa-5c06-a173-74003b657340/'
 ref=np.loadtxt(U+'adb56f59-s9-PolyS-1ml-dropCaF2-EDGE-532nm-1800gr-100-100x-BC50-5s-3a.txt')
-_,x1,I1,_=load_l6m(U+'05982966-m1-1MGML_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_4a_10_1ul_drop-center.l6m')
+_,x1,I1a,_=load_l6m(U+'e2075235-m1-1MGML_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_2a_10_1ul_drop-center.l6m')
+_,x1b,I1b,_=load_l6m(U+'05982966-m1-1MGML_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_4a_10_1ul_drop-center.l6m')
 _,x2,I2,_=load_l6m(U+'9a8bbf9a-m1-D2_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_2a_10_3ul_drop-center.l6m')
 _,x3,I3,_=load_l6m(U+'dc31b301-m1-D3_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_2a_10_3ul_drop-center.l6m')
-_m=lambda f: pd.read_pickle(f).query("match=='MATCH'").sort_values('pixel').pixel.tolist(); s1,s2,s3=_m('S1_final.pkl'),_m('S2_final.pkl'),_m('S3_final.pkl')
+_m=lambda f: pd.read_pickle(f).query("match=='MATCH'").sort_values('pixel').pixel.tolist(); s1a,s1b,s2,s3=_m('S0_final.pkl'),_m('S1_final.pkl'),_m('S2_final.pkl'),_m('S3_final.pkl')
+I1=np.vstack([I1a[s1a]]+[np.interp(x1,x1b,I1b[i]) for i in s1b]); s1=list(range(len(I1)))
 PM=11
 traces=[  # label, x, y, color, prominence, forced peaks
  ('1 mg/mL PS on CaF$_2$ (reference)',ref[:,0],ref[:,1],'#1f2a44',9,()),
- (f'1 mg/mL PS on AgSiNW ({len(s1)} spectrum)' if len(s1)==1 else f'1 mg/mL PS on AgSiNW (mean of {len(s1)})',x1,I1[s1].mean(0),'#e07030',14,(1002,)),
+ (f'1 mg/mL PS on AgSiNW ({len(s1)} spectrum)' if len(s1)==1 else f'1 mg/mL PS on AgSiNW (mean of {len(s1)})',x1,I1[s1].mean(0),'#e07030',7,(1002,3060)),
  (f'100 µg/mL PS on AgSiNW – D2 (mean of {len(s2)})',x2,I2[s2].mean(0),'#2a9d8f',5,(1002,3060)),
  (f'10 µg/mL PS on AgSiNW – D3 (mean of {len(s3)})',x3,I3[s3].mean(0),'#8e44ad',5,(1002,3060)),
 ]
@@ -54,5 +56,5 @@ aL.legend([Line2D([],[],color=t[3],lw=2) for t in traces],[t[0] for t in traces]
 aL.set_ylabel('Intensity (counts, offset for clarity)',fontsize=12)
 OUT='/home/user/claude/Concentration_series'; os.makedirs(OUT,exist_ok=True)
 fig.savefig(f'{OUT}/PS_concentration_series.png',dpi=200,bbox_inches='tight',facecolor='#fafaf7')
-pd.to_pickle((traces,offs,rows,s1,s2,s3),'combined.pkl')
+pd.to_pickle((traces,offs,rows,s1,s2,s3),'combined.pkl'); pd.to_pickle((s1a,s1b),'s1_pool.pkl')
 for r in rows: print(r)

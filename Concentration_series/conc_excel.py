@@ -3,7 +3,8 @@ from openpyxl import load_workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import Font, PatternFill, Alignment
 traces,offs,rows,s1,s2,s3=pd.read_pickle('combined.pkl')
-ranks={k:pd.read_pickle(f) for k,f in [('1 mg/mL','S1_final.pkl'),('100 ug/mL','S2_final.pkl'),('10 ug/mL','S3_final.pkl')]}
+s1a,s1b=pd.read_pickle('s1_pool.pkl')
+ranks={k:pd.read_pickle(f) for k,f in [('1 mgmL map A (2 acc)','S0_final.pkl'),('1 mgmL map B (4 acc)','S1_final.pkl'),('100 ug/mL','S2_final.pkl'),('10 ug/mL','S3_final.pkl')]}
 D='/home/user/claude/Concentration_series/'; OUT=D+'PS_concentration_series.xlsx'
 names=['CaF2 reference (1 mg/mL)','1 mg/mL AgSiNW','100 ug/mL AgSiNW','10 ug/mL AgSiNW']
 labs=[t[0].replace('$_2$','2') for t in traces]; pk={n:[] for n in names}
@@ -16,13 +17,13 @@ for k,(nm,sel) in enumerate(zip(names[1:],[s1,s2,s3]),start=1):
 sp['CaF2 reference']=np.interp(x,traces[0][1],traces[0][2])
 info=pd.DataFrame({'Sample':names,'ug/mL':[1000,1000,100,10],'Particles/mL (20 nm PS)':['2.3e14','2.3e14','2.3e13','2.3e12'],
  'Molar (particles)':['380 nM','380 nM','38 nM','3.8 nM'],
- 'Spectra averaged':['1 (reference)',f'{len(s1)} of 25',f'{len(s2)} of 25',f'{len(s3)} of 25'],
- 'Pixels used (1-based)':['-',', '.join(str(i+1) for i in s1),', '.join(str(i+1) for i in s2),', '.join(str(i+1) for i in s3)],
- 'Strict matches in whole map':['-',f"{(ranks['1 mg/mL'].match=='MATCH').sum()}/25",f"{(ranks['100 ug/mL'].match=='MATCH').sum()}/25",f"{(ranks['10 ug/mL'].match=='MATCH').sum()}/25"]})
+ 'Spectra averaged':['1 (reference)',f'{len(s1)} of 50 (2 maps)',f'{len(s2)} of 25',f'{len(s3)} of 25'],
+ 'Pixels used (1-based)':['-','map A (2 acc): '+', '.join(str(i+1) for i in s1a)+'; map B (4 acc): '+', '.join(str(i+1) for i in s1b),', '.join(str(i+1) for i in s2),', '.join(str(i+1) for i in s3)],
+ 'Strict matches in whole map':['-',f"{len(s1a)}/25 + {len(s1b)}/25",f"{(ranks['100 ug/mL'].match=='MATCH').sum()}/25",f"{(ranks['10 ug/mL'].match=='MATCH').sum()}/25"]})
 method=pd.DataFrame({'Step':['Pre-processing','Match criteria','Mean','Robustness check'],'Description':[
  'Cosmic-ray spikes removed (median-filter test); reference interpolated onto each map axis.',
  'For every one of the 25 spectra per map: 1001 cm-1 band centre 1000.4-1003.4 cm-1, FWHM 3-9 cm-1, F-test p<0.001, and 985-1045 cm-1 shape match to the CaF2 reference with z >= 2. Same criteria for all maps.',
- 'Mean of all spectra that pass, per map (raw counts).',
+ 'Mean of all spectra that pass, per concentration (raw counts). 1 mg/mL pools two maps of the same sample (2 and 4 accumulations); map B interpolated onto map A axis.',
  'Matches were identical with and without spike removal.']})
 with pd.ExcelWriter(OUT,engine='openpyxl') as w:
     info.to_excel(w,sheet_name='Samples',index=False); method.to_excel(w,sheet_name='Method',index=False)
