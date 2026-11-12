@@ -11,9 +11,9 @@ def proc_seg(xx,y):
 BLUE='#3b82c4'; RED='#c0262d'
 bands=[(1,1002,8),(2,1190,25),(3,1600,15),(4,2930,30),(5,3060,20)]
 panels=[('CaF$_2$\nreference','1 mg/mL PS',traces[0],[1,2,3,4,5]),
-        ('1 mg/mL','2.3×10$^{14}$ NP/mL\n(3 µL; 1 of 25 spectra)',traces[1],[1]),
-        ('100 µg/mL','2.3×10$^{13}$ NP/mL\n(3 µL; mean of 15/25)',traces[2],[1,3,4,5]),
-        ('10 µg/mL','2.3×10$^{12}$ NP/mL\n(3 µL; mean of 13/25)',traces[3],[1,3,4,5])]
+        ('1 mg/mL','2.3×10$^{14}$ NP/mL\n(3 µL; mean of 4/25)',traces[1],[1,3]),
+        ('100 µg/mL','2.3×10$^{13}$ NP/mL\n(3 µL; mean of 4/25)',traces[2],[1,3,4,5]),
+        ('10 µg/mL','2.3×10$^{12}$ NP/mL\n(3 µL; mean of 4/25)',traces[3],[1,3,4,5])]
 fig,axs=plt.subplots(4,2,figsize=(12,11),gridspec_kw=dict(width_ratios=[1400,500],wspace=0.04,hspace=0.18))
 for r,(tag,sub,(lab,xx,y,c,_,_),show) in enumerate(panels):
     yc,g=proc_seg(xx,y); xp=np.insert(xx,g,np.nan); yp=np.insert(yc,g,np.nan)

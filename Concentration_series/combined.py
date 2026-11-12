@@ -6,12 +6,13 @@ ref=np.loadtxt(U+'adb56f59-s9-PolyS-1ml-dropCaF2-EDGE-532nm-1800gr-100-100x-BC50
 _,x1,I1,_=load_l6m(U+'05982966-m1-1MGML_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_4a_10_1ul_drop-center.l6m')
 _,x2,I2,_=load_l6m(U+'9a8bbf9a-m1-D2_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_2a_10_3ul_drop-center.l6m')
 _,x3,I3,_=load_l6m(U+'dc31b301-m1-D3_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_2a_10_3ul_drop-center.l6m')
-s1=pd.read_pickle('N1_final.pkl').query("match=='MATCH'").pixel.tolist(); s2=pd.read_pickle('D2_res.pkl')[1]; s3=pd.read_pickle('D3_res.pkl')[1]
+_e=pd.read_pickle('equal_sel.pkl'); s1,s2,s3=_e['1'],_e['2'],_e['3']
+PM=11
 traces=[  # label, x, y, color, prominence, forced peaks
  ('1 mg/mL PS on CaF$_2$ (reference)',ref[:,0],ref[:,1],'#1f2a44',9,()),
- (f'1 mg/mL PS on AgSiNW ({len(s1)} spectrum)' if len(s1)==1 else f'1 mg/mL PS on AgSiNW (mean of {len(s1)})',x1,I1[s1].mean(0),'#e07030',14,(1002,)),
- (f'100 µg/mL PS on AgSiNW – D2 (mean of {len(s2)})',x2,I2[s2].mean(0),'#2a9d8f',5,(1002,3060)),
- (f'10 µg/mL PS on AgSiNW – D3 (mean of {len(s3)})',x3,I3[s3].mean(0),'#8e44ad',5,(1002,3060)),
+ (f'1 mg/mL PS on AgSiNW ({len(s1)} spectrum)' if len(s1)==1 else f'1 mg/mL PS on AgSiNW (mean of {len(s1)})',x1,I1[s1].mean(0),'#e07030',PM,(1002,3060)),
+ (f'100 µg/mL PS on AgSiNW (mean of {len(s2)})',x2,I2[s2].mean(0),'#2a9d8f',PM,(1002,3060)),
+ (f'10 µg/mL PS on AgSiNW (mean of {len(s3)})',x3,I3[s3].mean(0),'#8e44ad',PM,(1002,3060)),
 ]
 SHORT=['CaF$_2$ ref.','1 mg/mL','100 µg/mL','10 µg/mL']
 def inwin(v): return 410<=v<=1790 or 2660<=v<=3170
