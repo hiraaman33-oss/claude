@@ -15,7 +15,7 @@ for k,(nm,sel) in enumerate(zip(names[1:],[s1,s2,s3]),start=1):
     sp[nm+f' mean of {len(sel)}']=np.interp(x,xx,traces[k][2])
 sp['CaF2 reference']=np.interp(x,traces[0][1],traces[0][2])
 info=pd.DataFrame({'Sample':names,'ug/mL':[1000,1000,100,10],'Particles/mL (20 nm PS)':['2.3e14','2.3e14','2.3e13','2.3e12'],
- 'Molar (particles)':['380 nM','380 nM','38 nM','3.8 nM'],'Drop / particles deposited':['-','3 uL / 6.8e11','3 uL / 6.8e10','3 uL / 6.8e9'],
+ 'Molar (particles)':['380 nM','380 nM','38 nM','3.8 nM'],
  'Spectra averaged':['1 (reference)',f'{len(s1)} of 25',f'{len(s2)} of 25',f'{len(s3)} of 25'],
  'Pixels used (1-based)':['-',', '.join(str(i+1) for i in s1),', '.join(str(i+1) for i in s2),', '.join(str(i+1) for i in s3)],
  'Strict matches in whole map':['-',f"{(ranks['1 mg/mL'].match=='MATCH').sum()}/25",f"{(ranks['100 ug/mL'].match=='MATCH').sum()}/25",f"{(ranks['10 ug/mL'].match=='MATCH').sum()}/25"]})
