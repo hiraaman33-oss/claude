@@ -4,7 +4,7 @@ from openpyxl.drawing.image import Image
 from openpyxl.styles import Font, PatternFill, Alignment
 traces,offs,rows,s1,s2,s3,s4,s5=pd.read_pickle('combined6.pkl')
 D='/home/user/claude/Concentration_series_D1-D6/'; OUT=D+'PS_D1-D6_concentration_series.xlsx'
-names=['CaF2 reference (1 mg/mL)','D1 1 mg/mL','D2 100 ug/mL','D3 10 ug/mL','D4 1 ug/mL','D5 0.5 ug/mL','D6 0.1 ug/mL']
+names=['CaF2 reference (1000 µg/mL)','D1 1000 µg/mL','D2 100 ug/mL','D3 10 ug/mL','D4 1 ug/mL','D5 0.5 ug/mL','D6 0.1 ug/mL']
 labs=[t[0].replace('$_2$','2') for t in traces]; pk={n:[] for n in names}
 for lab,p in rows: pk[names[labs.index(lab)]].append(round(float(p),1))
 L=max(map(len,pk.values())); peaks=pd.DataFrame({n:v+['']*(L-len(v)) for n,v in pk.items()})

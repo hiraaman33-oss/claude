@@ -10,8 +10,8 @@ def proc_seg(xx,y):
     return out,g
 BLUE='#3b82c4'; RED='#c0262d'
 bands=[(1,1002,8),(2,1190,25),(3,1600,15),(4,2930,30),(5,3060,20)]
-panels=[('CaF$_2$\nreference','1 mg/mL PS',traces[0],[1,2,3,4,5]),
-        ('D1\n1 mg/mL','2.3×10$^{14}$ NP/mL',traces[1],[1,3,4,5]),
+panels=[('CaF$_2$\nreference','1000 µg/mL PS',traces[0],[1,2,3,4,5]),
+        ('D1\n1000 µg/mL','2.3×10$^{14}$ NP/mL',traces[1],[1,3,4,5]),
         ('D2\n100 µg/mL','2.3×10$^{13}$ NP/mL',traces[2],[1,3,4,5]),
         ('D3\n10 µg/mL','2.3×10$^{12}$ NP/mL',traces[3],[1,3,4,5]),
         ('D4\n1 µg/mL','2.3×10$^{11}$ NP/mL',traces[4],[1,3,4]),

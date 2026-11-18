@@ -14,15 +14,15 @@ I1,I2,I3,I4,I5=[np.array([despike(v)[0] for v in A]) for A in (I1,I2,I3,I4,I5)]
 x6=np.load('d6_s1.npy')[0]; Y6=np.vstack([np.load('d6_s1.npy')[1],np.load('d6_s2.npy')[1]])
 PM=11
 traces=[  # label, x, y, color, prominence, forced peaks
- ('1 mg/mL PS on CaF$_2$ (reference)',ref[:,0],ref[:,1],'#1f2a44',9,()),
- (f'D1 · 1 mg/mL PS on AgSiNW',x1,I1[s1].mean(0),'#e07030',7,(1002,3060)),
+ ('1000 µg/mL PS on CaF$_2$ (reference)',ref[:,0],ref[:,1],'#1f2a44',9,()),
+ (f'D1 · 1000 µg/mL PS on AgSiNW',x1,I1[s1].mean(0),'#e07030',7,(1002,3060)),
  (f'D2 · 100 µg/mL PS on AgSiNW',x2,I2[s2].mean(0),'#2a9d8f',5,(1002,3060)),
  (f'D3 · 10 µg/mL PS on AgSiNW',x3,I3[s3].mean(0),'#8e44ad',5,(1002,3060)),
  (f'D4 · 1 µg/mL PS on AgSiNW',x4,I4[s4].mean(0),'#c0392b',16,(1002,3060)),
  (f'D5 · 0.5 µg/mL PS on AgSiNW',x5,I5[s5].mean(0),'#5b6b7a',7,(1002,3060)),
  (f'D6 · 0.1 µg/mL PS on AgSiNW (no PS detected)',x6,Y6.mean(0),'#9aa5b1',22,()),
 ]
-SHORT=['CaF$_2$ ref.','D1 · 1 mg/mL','D2 · 100 µg/mL','D3 · 10 µg/mL','D4 · 1 µg/mL','D5 · 0.5 µg/mL','D6 · 0.1 µg/mL']
+SHORT=['CaF$_2$ ref.','D1 · 1000 µg/mL','D2 · 100 µg/mL','D3 · 10 µg/mL','D4 · 1 µg/mL','D5 · 0.5 µg/mL','D6 · 0.1 µg/mL']
 def inwin(v): return 410<=v<=1770 or 2660<=v<=3170
 def peaks(xx,y,prom,forced):
     s=savgol_filter(y,15,2); g=int(np.argmax(np.diff(xx)))+1; out=[]
@@ -55,7 +55,7 @@ for k,(lab,xx,y,c,prom,forced) in enumerate(traces):
         a.text(tx,yy[max(i-4,0):i+5].max()+3,f'{pos:.0f}',rotation=90,ha='center',va='bottom',color=c,fontsize=8.5,fontweight='bold')
         rows.append((lab.replace('$_2$','2'),round(pos,1)))
     m=(xx>2660)&(xx<2800)
-    aR.text(2665,np.median(yy[m])+14,SHORT[k],color=c,fontsize=11,fontweight='bold',va='bottom')
+    aR.text(2662,np.median(yy[m])+14,SHORT[k],color=c,fontsize=9.5,fontweight='bold',va='bottom')
 for a in (aL,aR): a.axvspan(997,1006,color='#e07030',alpha=.12,lw=0)
 aL.set_xlim(400,1800); aR.set_xlim(2650,3180); aL.set_xticks(range(400,1801,200)); aR.set_xticks(range(2700,3101,100))
 aL.set_ylim(None,cur-GAPC+330)
