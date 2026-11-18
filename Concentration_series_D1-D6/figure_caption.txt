@@ -1,7 +1,7 @@
 Figure X. Raman spectra of 20 nm polystyrene (PS) nanoparticles. Top: 1 mg/mL PS on CaF2 (reference).
 Below: SERS spectra of PS on AgSiNW at D1 = 1 mg/mL (2.3 x 10^14 NP/mL; mean of 11 of 25 map spectra),
 D2 = 100 ug/mL (2.3 x 10^13 NP/mL; mean of 15/25), D3 = 10 ug/mL (2.3 x 10^12 NP/mL; mean of 13/25),
-D4 = 1 ug/mL (2.3 x 10^11 NP/mL; mean of 2/25) D5 = 0.5 ug/mL (1.1 x 10^11 NP/mL; mean of 7/20)
+D4 = 1 ug/mL (2.3 x 10^11 NP/mL; mean of 2/25), D5 = 0.5 ug/mL (1.1 x 10^11 NP/mL; mean of 7/20)
 and D6 (mean of 2 point spectra; no PS detected - only the Si band at 519 cm-1).
 Spectra were selected from each map by matching the 1001 cm-1 ring-breathing band (position, width,
 significance) and the 985-1045 cm-1 band shape to the CaF2 reference, after cosmic-ray removal.
