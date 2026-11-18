@@ -3,7 +3,7 @@ from scipy.signal import savgol_filter
 from scipy.optimize import curve_fit
 traces,offs,rows,s1,s2,s3,s4,s5=pd.read_pickle('combined6.pkl')
 LO,HI=985,1050
-names=['CaF$_2$ reference · 1 mg/mL','D1 · 1 mg/mL','D2 · 100 µg/mL','D3 · 10 µg/mL','D4 · 1 µg/mL','D5 · 0.5 µg/mL','D6 · not detected']
+names=['CaF$_2$ reference · 1 mg/mL','D1 · 1 mg/mL','D2 · 100 µg/mL','D3 · 10 µg/mL','D4 · 1 µg/mL','D5 · 0.5 µg/mL','D6 · 0.1 µg/mL (not detected)']
 ns=['',f'n = {len(s1)}',f'n = {len(s2)}',f'n = {len(s3)}',f'n = {len(s4)}',f'n = {len(s5)}','n = 2']
 SCALE=[0.25,1,1,1,1,1,1]
 def g(x,a,c,w,b0,b1): return a*np.exp(-4*np.log(2)*(x-c)**2/w**2)+b0+b1*(x-1002)
@@ -27,7 +27,7 @@ for k in range(len(traces)-1,-1,-1):
     base=off-np.percentile(Y,3)
     ax.plot(X,Y+base,color=c,lw=1.4)
     lab=names[k]+(f'  (×{SCALE[k]:g})' if SCALE[k]!=1 else '')
-    full=lab+(f'  ({ns[k]})' if ns[k] else '')
+    full=lab
     ax.text(HI-0.5,base+Y[X>1012].max()+1.0,full,color=c,fontsize=10.5,fontweight='bold',ha='right',va='bottom')
     if det:
         i=np.argmin(abs(X-p[1])); top=Y[max(i-3,0):i+4].max()+base

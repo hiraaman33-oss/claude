@@ -11,12 +11,12 @@ def proc_seg(xx,y):
 BLUE='#3b82c4'; RED='#c0262d'
 bands=[(1,1002,8),(2,1190,25),(3,1600,15),(4,2930,30),(5,3060,20)]
 panels=[('CaF$_2$\nreference','1 mg/mL PS',traces[0],[1,2,3,4,5]),
-        ('D1\n1 mg/mL','2.3×10$^{14}$ NP/mL\n(mean of %d)'%len(s1),traces[1],[1,3,4,5]),
-        ('D2\n100 µg/mL','2.3×10$^{13}$ NP/mL\n(mean of %d)'%len(s2),traces[2],[1,3,4,5]),
-        ('D3\n10 µg/mL','2.3×10$^{12}$ NP/mL\n(mean of %d)'%len(s3),traces[3],[1,3,4,5]),
-        ('D4\n1 µg/mL','2.3×10$^{11}$ NP/mL\n(mean of %d)'%len(s4),traces[4],[1,3,4]),
-        ('D5\n0.5 µg/mL','1.1×10$^{11}$ NP/mL\n(mean of %d)'%len(s5),traces[5],[1,3,4]),
-        ('D6','no PS detected\n(mean of 2 spectra)',traces[6],[])]
+        ('D1\n1 mg/mL','2.3×10$^{14}$ NP/mL',traces[1],[1,3,4,5]),
+        ('D2\n100 µg/mL','2.3×10$^{13}$ NP/mL',traces[2],[1,3,4,5]),
+        ('D3\n10 µg/mL','2.3×10$^{12}$ NP/mL',traces[3],[1,3,4,5]),
+        ('D4\n1 µg/mL','2.3×10$^{11}$ NP/mL',traces[4],[1,3,4]),
+        ('D5\n0.5 µg/mL','1.1×10$^{11}$ NP/mL',traces[5],[1,3,4]),
+        ('D6\n0.1 µg/mL','2.3×10$^{10}$ NP/mL\nno PS detected',traces[6],[])]
 fig,axs=plt.subplots(7,2,figsize=(12,17.5),gridspec_kw=dict(width_ratios=[1400,500],wspace=0.04,hspace=0.18))
 for r,(tag,sub,(lab,xx,y,c,_,_),show) in enumerate(panels):
     yc,g=proc_seg(xx,y); xp=np.insert(xx,g,np.nan); yp=np.insert(yc,g,np.nan)

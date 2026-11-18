@@ -15,14 +15,14 @@ x6=np.load('d6_s1.npy')[0]; Y6=np.vstack([np.load('d6_s1.npy')[1],np.load('d6_s2
 PM=11
 traces=[  # label, x, y, color, prominence, forced peaks
  ('1 mg/mL PS on CaF$_2$ (reference)',ref[:,0],ref[:,1],'#1f2a44',9,()),
- (f'D1 · 1 mg/mL PS on AgSiNW (mean of {len(s1)})',x1,I1[s1].mean(0),'#e07030',7,(1002,3060)),
- (f'D2 · 100 µg/mL PS on AgSiNW (mean of {len(s2)})',x2,I2[s2].mean(0),'#2a9d8f',5,(1002,3060)),
- (f'D3 · 10 µg/mL PS on AgSiNW (mean of {len(s3)})',x3,I3[s3].mean(0),'#8e44ad',5,(1002,3060)),
- (f'D4 · 1 µg/mL PS on AgSiNW (mean of {len(s4)})',x4,I4[s4].mean(0),'#c0392b',16,(1002,3060)),
- (f'D5 · 0.5 µg/mL PS on AgSiNW (mean of {len(s5)})',x5,I5[s5].mean(0),'#5b6b7a',7,(1002,3060)),
- (f'D6 · PS on AgSiNW (2 spectra, no PS detected)',x6,Y6.mean(0),'#9aa5b1',22,()),
+ (f'D1 · 1 mg/mL PS on AgSiNW',x1,I1[s1].mean(0),'#e07030',7,(1002,3060)),
+ (f'D2 · 100 µg/mL PS on AgSiNW',x2,I2[s2].mean(0),'#2a9d8f',5,(1002,3060)),
+ (f'D3 · 10 µg/mL PS on AgSiNW',x3,I3[s3].mean(0),'#8e44ad',5,(1002,3060)),
+ (f'D4 · 1 µg/mL PS on AgSiNW',x4,I4[s4].mean(0),'#c0392b',16,(1002,3060)),
+ (f'D5 · 0.5 µg/mL PS on AgSiNW',x5,I5[s5].mean(0),'#5b6b7a',7,(1002,3060)),
+ (f'D6 · 0.1 µg/mL PS on AgSiNW (no PS detected)',x6,Y6.mean(0),'#9aa5b1',22,()),
 ]
-SHORT=['CaF$_2$ ref.','D1 · 1 mg/mL','D2 · 100 µg/mL','D3 · 10 µg/mL','D4 · 1 µg/mL','D5 · 0.5 µg/mL','D6 · not detected']
+SHORT=['CaF$_2$ ref.','D1 · 1 mg/mL','D2 · 100 µg/mL','D3 · 10 µg/mL','D4 · 1 µg/mL','D5 · 0.5 µg/mL','D6 · 0.1 µg/mL']
 def inwin(v): return 410<=v<=1770 or 2660<=v<=3170
 def peaks(xx,y,prom,forced):
     s=savgol_filter(y,15,2); g=int(np.argmax(np.diff(xx)))+1; out=[]
