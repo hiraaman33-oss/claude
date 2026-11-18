@@ -7,10 +7,10 @@ _,x1,I1,_=load_l6m(U+'47aecae3-map1_d1_10_1s_2a_3uL_1800gr_532nm.l6m')
 _,x2,I2,_=load_l6m(U+'9a8bbf9a-m1-D2_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_2a_10_3ul_drop-center.l6m')
 _,x3,I3,_=load_l6m(U+'dc31b301-m1-D3_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_2a_10_3ul_drop-center.l6m')
 _,x4,I4,_=load_l6m(U+'14fec9cd-m1-D4_PS-AgSiNW_532nm_1800gr_BC200_50XLF_1s_2a_10_3ul_drop-center.l6m')
-_m=lambda f: pd.read_pickle(f).query("match=='MATCH'").sort_values('pixel').pixel.tolist(); s1,s2,s3,s4=_m('S5_final.pkl'),_m('S2_final.pkl'),_m('S3_final.pkl'),_m('S4_final.pkl')
+_,x5,I5,_=load_l6m(U+'2fde409f-MAP_1_D5.l6m')
+_m=lambda f: pd.read_pickle(f).query("match=='MATCH'").sort_values('pixel').pixel.tolist(); s1,s2,s3,s4,s5=_m('S5_final.pkl'),_m('S2_final.pkl'),_m('S3_final.pkl'),_m('S4_final.pkl'),_m('S6_final.pkl')
 exec(open('despike.py').read())
-I1,I2,I3,I4=[np.array([despike(v)[0] for v in A]) for A in (I1,I2,I3,I4)]
-x5,y5=np.load('d5.npy')
+I1,I2,I3,I4,I5=[np.array([despike(v)[0] for v in A]) for A in (I1,I2,I3,I4,I5)]
 PM=11
 traces=[  # label, x, y, color, prominence, forced peaks
  ('1 mg/mL PS on CaF$_2$ (reference)',ref[:,0],ref[:,1],'#1f2a44',9,()),
@@ -18,17 +18,22 @@ traces=[  # label, x, y, color, prominence, forced peaks
  (f'D2 · 100 µg/mL PS on AgSiNW (mean of {len(s2)})',x2,I2[s2].mean(0),'#2a9d8f',5,(1002,3060)),
  (f'D3 · 10 µg/mL PS on AgSiNW (mean of {len(s3)})',x3,I3[s3].mean(0),'#8e44ad',5,(1002,3060)),
  (f'D4 · 1 µg/mL PS on AgSiNW (mean of {len(s4)})',x4,I4[s4].mean(0),'#c0392b',16,(1002,3060)),
- (f'D5 · 0.1 µg/mL PS on AgSiNW (1 spectrum, no CaF$_2$ match)',x5,y5,'#7f8c8d',22,()),
+ (f'D5 · 0.5 µg/mL PS on AgSiNW (mean of {len(s5)})',x5,I5[s5].mean(0),'#5b6b7a',7,(1002,3060)),
 ]
-SHORT=['CaF$_2$ ref.','D1 · 1 mg/mL','D2 · 100 µg/mL','D3 · 10 µg/mL','D4 · 1 µg/mL','D5 · 0.1 µg/mL']
-def inwin(v): return 410<=v<=1790 or 2660<=v<=3170
+SHORT=['CaF$_2$ ref.','D1 · 1 mg/mL','D2 · 100 µg/mL','D3 · 10 µg/mL','D4 · 1 µg/mL','D5 · 0.5 µg/mL']
+def inwin(v): return 410<=v<=1770 or 2660<=v<=3170
 def peaks(xx,y,prom,forced):
     s=savgol_filter(y,15,2); g=int(np.argmax(np.diff(xx)))+1; out=[]
     for a,b in [(0,g),(g,len(xx))]:
         p,_=find_peaks(s[a:b],prominence=prom,distance=12); out+=[a+i for i in p]
     for f in forced:
         m=np.where(abs(xx-f)<4)[0]; out.append(m[np.argmax(s[m])])
-    return sorted(set(i for i in out if inwin(xx[i])))
+    out=sorted(set(i for i in out if inwin(xx[i]))); ded=[]
+    for i in out:
+        if ded and abs(xx[i]-xx[ded[-1]])<5:
+            if s[i]>s[ded[-1]]: ded[-1]=i
+        else: ded.append(i)
+    return ded
 # stack: bottom = lowest concentration
 order=[5,4,3,2,1,0]; GAPC=40; cur=0; offs={}
 for k in order:
@@ -60,5 +65,5 @@ aL.legend([Line2D([],[],color=t[3],lw=2) for t in traces],[t[0] for t in traces]
 aL.set_ylabel('Intensity (counts, offset for clarity)',fontsize=12)
 OUT='/home/user/claude/Concentration_series_D1-D5'; os.makedirs(OUT,exist_ok=True)
 fig.savefig(f'{OUT}/PS_D1-D5_concentration_series.png',dpi=200,bbox_inches='tight',facecolor='#fafaf7')
-pd.to_pickle((traces,offs,rows,s1,s2,s3,s4),'combined5.pkl')
+pd.to_pickle((traces,offs,rows,s1,s2,s3,s4,s5),'combined5.pkl')
 for r in rows: print(r)
