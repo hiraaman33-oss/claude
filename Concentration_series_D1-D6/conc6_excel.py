@@ -36,6 +36,7 @@ with pd.ExcelWriter(OUT,engine='openpyxl') as w:
     peaks.to_excel(w,sheet_name='Peak_positions',index=False); pd.DataFrame(sp).to_excel(w,sheet_name='Mean_spectra',index=False)
     for k,d in scores.items(): d.to_excel(w,sheet_name='Scores '+k,index=False)
     d6.to_excel(w,sheet_name='Scores D6',index=False)
+    zr=pd.read_pickle('zoom_rows.pkl'); zr.columns=['Sample','Spectra averaged','1002 band centre (cm-1)','Height (counts)','FWHM (cm-1)','S/N','PS detected']; zr.to_excel(w,sheet_name='1002_band',index=False)
 wb=load_workbook(OUT)
 for ws in wb:
     for c in ws[1]: c.font=Font(bold=True,color='FFFFFF'); c.fill=PatternFill('solid',fgColor='305496'); c.alignment=Alignment(wrap_text=True)
@@ -48,6 +49,6 @@ for n in wb.sheetnames:
             if r[1].value=='MATCH':
                 for c in r: c.fill=g
 ws=wb.create_sheet('Figures')
-for f,cell in [('PS_D1-D6_concentration_series.png','A1'),('PS_D1-D6_paper_style.png','N1')]:
+for f,cell in [('PS_D1-D6_concentration_series.png','A1'),('PS_D1-D6_paper_style.png','N1'),('PS_D1-D6_1001_zoom.png','AB1')]:
     im=Image(D+f); im.width,im.height=im.width*.33,im.height*.33; ws.add_image(im,cell)
 wb.save(OUT); print(info.to_string()); print(peaks.to_string())
