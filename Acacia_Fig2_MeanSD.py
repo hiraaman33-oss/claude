@@ -53,7 +53,7 @@ if len(sys.argv) > 1:
 SITES = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6']
 GROUPS = {0: 'EVs', 1: 'NVs'}
 COLS = {0: '#0B5A7E', 1: '#B5541C'}
-NAME_LONG = {0: 'EV Acacia on Ag/SiNWs', 1: 'Nanovesicles Acacia on Ag/SiNWs'}
+NAME_LONG = {0: 'EVs on Ag/SiNWs', 1: 'NVs on Ag/SiNWs'}
 WINDOWS = {'fingerprint': {'raw': (200, 1800), 'grid': (205, 1795)},
            'ch': {'raw': (2700, 3100), 'grid': (2705, 3095)}}
 OFFSET = {'fingerprint': 9.0, 'ch': 5.5}       # SNV units added to the NV spectrum
@@ -488,6 +488,23 @@ def make_figure(region, xlim, figsize, legend_fs, name):
     for ext, kw in [('png', {}), ('tiff', {'pil_kwargs': {'compression': 'tiff_lzw'}})]:
         fig.savefig(OUTPUT_DIR / f'{name}.{ext}', dpi=600, **kw)
     print(f'saved {name}.png / .tiff')
+    check_figure_files(fig, [OUTPUT_DIR / f'{name}.png', OUTPUT_DIR / f'{name}.tiff'])
+
+
+def check_figure_files(fig, paths):
+    """Check that the word 'Acacia' is in no figure text and in no saved file; print size and dpi."""
+    from PIL import Image
+    texts = [t.get_text() for t in fig.findobj(matplotlib.text.Text) if t.get_text().strip()]
+    bad = [t for t in texts if 'acacia' in t.lower()]
+    print('  figure text: ' + ' | '.join(sorted(set(texts))))
+    print('  "Acacia" in figure text: ' + (f'YES -> {bad}' if bad else 'no'))
+    for p in paths:
+        with Image.open(p) as im:
+            dpi = im.info.get('dpi', (0, 0))
+            size = im.size
+        found = b'acacia' in Path(p).read_bytes().lower()
+        print(f'  {Path(p).name}: {size[0]} x {size[1]} px, {float(dpi[0]):.0f} dpi, '
+              f'"Acacia" in file: {"YES" if found else "no"}')
 
 
 print()

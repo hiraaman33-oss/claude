@@ -27,7 +27,7 @@ if len(sys.argv) > 1:
 
 COL = {'EV': '#0B5A7E', 'NV': '#B5541C'}
 CAF2_COL = {'EV': '#85ACBE', 'NV': '#DAA98D'}      # light shade of the sample colour
-NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
+NAME = {'EV': 'EVs', 'NV': 'NVs'}
 COND = {'Ag': '50\u00d7, 10% laser power, 4 \u00d7 0.5 s', 'CaF2': '100\u00d7, 100% laser power, 4 \u00d7 60 s'}
 SHOW_CONDITIONS = False                             # True: acquisition conditions after each name
 SHOW_COUNTS = False                                 # True: counts scale bar next to each spectrum

@@ -44,7 +44,7 @@ FILES = {('EV', 'CaF2'): 's2-ev_acacia-dropcaf2', ('EV', 'Ag'): 's2-ev_acacia-ag
 COL = {'EV': '#0B5A7E', 'NV': '#B5541C', 'CaF2': '#555555'}
 CAF2_COL = {'EV': '#000000', 'NV': '#000000'}   # CaF2 traces: black for both samples
 #           (use {'EV': COL['CaF2'], 'NV': COL['CaF2']} for grey CaF2 traces)
-NAME = {'EV': 'EV Acacia', 'NV': 'Nanovesicles Acacia'}
+NAME = {'EV': 'EVs', 'NV': 'NVs'}
 LOW, HIGH = (400, 1800), (2700, 3100)
 FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 10, 10, 13, 10, 13   # same as Fig 2a/2b
 LABEL_TEXT = 'none'   # 'none': dotted line only; 'name': 'Protein'; 'position+name': '1002  Protein'
@@ -351,6 +351,22 @@ def draw_one(label_room):
     return fig, need, off
 
 
+def check_figure_files(fig, paths):
+    """Check that the word 'Acacia' is in no figure text and in no saved file; print size and dpi."""
+    from PIL import Image
+    texts = [t.get_text() for t in fig.findobj(matplotlib.text.Text) if t.get_text().strip()]
+    bad = [t for t in texts if 'acacia' in t.lower()]
+    print('  figure text: ' + ' | '.join(sorted(set(texts))))
+    print('  "Acacia" in figure text: ' + (f'YES -> {bad}' if bad else 'no'))
+    for p in paths:
+        with Image.open(p) as im:
+            dpi = im.info.get('dpi', (0, 0))
+            size = im.size
+        found = b'acacia' in Path(p).read_bytes().lower()
+        print(f'  {Path(p).name}: {size[0]} x {size[1]} px, {float(dpi[0]):.0f} dpi, '
+              f'"Acacia" in file: {"YES" if found else "no"}')
+
+
 room = 80.0 if LABEL_TEXT != 'none' else float(GAP)
 for _ in range(10):                            # enlarge the space for the EV labels until they fit
     fig, need, off_one = draw_one(room)
@@ -360,6 +376,8 @@ for _ in range(10):                            # enlarge the space for the EV la
     room += need * 1.1 + 5
 fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_OneGraph.png', dpi=600)
 fig.savefig(DATA_DIR / 'CaF2_vs_AgSiNW_OneGraph.tiff', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
+print('Figure 2 (one graph):')
+check_figure_files(fig, [DATA_DIR / 'CaF2_vs_AgSiNW_OneGraph.png', DATA_DIR / 'CaF2_vs_AgSiNW_OneGraph.tiff'])
 print('One-graph version: vertical shifts (display only): ' +
       ', '.join(f'{s} on {"CaF2" if sub == "CaF2" else "Ag/SiNWs"} +{off_one[(s, sub)]:.0f}'
                 for s, sub in ORDER))
