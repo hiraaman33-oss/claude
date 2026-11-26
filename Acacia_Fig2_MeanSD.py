@@ -53,7 +53,7 @@ if len(sys.argv) > 1:
 SITES = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6']
 GROUPS = {0: 'EVs', 1: 'NVs'}
 COLS = {0: '#0B5A7E', 1: '#B5541C'}
-NAME_LONG = {0: 'EVs on Ag/SiNWs', 1: 'NVs on Ag/SiNWs'}
+NAME_LONG = {0: 'RP-EVs on Ag/SiNWs', 1: 'RP-NVs on Ag/SiNWs'}   # names as in Figure 1 (NTA, TEM)
 WINDOWS = {'fingerprint': {'raw': (200, 1800), 'grid': (205, 1795)},
            'ch': {'raw': (2700, 3100), 'grid': (2705, 3095)}}
 OFFSET = {'fingerprint': 9.0, 'ch': 5.5}       # SNV units added to the NV spectrum

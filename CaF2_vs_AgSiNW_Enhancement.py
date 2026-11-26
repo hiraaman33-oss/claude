@@ -44,7 +44,7 @@ FILES = {('EV', 'CaF2'): 's2-ev_acacia-dropcaf2', ('EV', 'Ag'): 's2-ev_acacia-ag
 COL = {'EV': '#0B5A7E', 'NV': '#B5541C', 'CaF2': '#555555'}
 CAF2_COL = {'EV': '#000000', 'NV': '#000000'}   # CaF2 traces: black for both samples
 #           (use {'EV': COL['CaF2'], 'NV': COL['CaF2']} for grey CaF2 traces)
-NAME = {'EV': 'EVs', 'NV': 'NVs'}
+NAME = {'EV': 'RP-EVs', 'NV': 'RP-NVs'}   # names as in Figure 1 (NTA, TEM)
 LOW, HIGH = (400, 1800), (2700, 3100)
 FS_LABEL, FS_NAME, FS_AXIS, FS_TICK, FS_PANEL = 10, 10, 13, 10, 13   # same as Fig 2a/2b
 LABEL_TEXT = 'none'   # 'none': dotted line only; 'name': 'Protein'; 'position+name': '1002  Protein'
