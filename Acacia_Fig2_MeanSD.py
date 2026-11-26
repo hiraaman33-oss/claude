@@ -147,7 +147,7 @@ if SHOW_EXTRA_PEAKS:
 #   'original' = the first version (Proteins / Lipids / Lipids/NA / Nucleic Acids)
 #   'general'  = class names only (Proteins, Nucleic Acids, Lipids, Phenolics, Polysacch.)
 #                for an Acacia sample; vibrations and references in the band table (Word)
-LABEL_SET = 'general'
+LABEL_SET = 'original'   # labels as in the manuscript figures (v13)
 REVISED = {('fingerprint', 797): 'O-P-O', ('fingerprint', 787): 'O-P-O',            # 809 / 799
            ('fingerprint', 989): 'Carotenoids/Phe',                                 # 1002 / 1001
            ('fingerprint', 1149): 'Carotenoids', ('fingerprint', 1157): 'Carotenoids',  # 1162 / 1169
