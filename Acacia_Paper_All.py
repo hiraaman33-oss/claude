@@ -241,7 +241,7 @@ RES = {w: {} for w in WINDOWS}              # every result, used for the tables 
 # local maximum within +/-12 cm-1 of the nominal band on a lightly smoothed copy
 SINGLE_FILES = {'EV': ('s2-ev_acacia-dropcaf2', 's2-ev_acacia-agsinw'),
                 'NV': ('s1-ev_nano_acacia-dropcaf2', 's4a-ev_nano_acacia-20ng-agsinw')}
-SINGLE_NAME = {'EV': 'RP-EVs', 'NV': 'RP-NVs'}   # names as in Figure 1 (NTA, TEM)
+SINGLE_NAME = {'EV': 'EVs', 'NV': 'NVs'}
 SINGLE_OFFSET = {'EV': 110, 'NV': 0}        # counts added to the Ag/SiNW trace (display only)
 SINGLE_PEAKS = {
     'EV': [(519, 'Si substrate', 'Si optical phonon'), (831, 'Protein/NA', 'Tyr Fermi doublet / O-P-O'),
@@ -394,7 +394,7 @@ CH_BANDS = [(2853, 10, 'sh', 'Lipids', 'CH2 symmetric stretching'),
 # is found in both groups (2nd derivative, mean spectrum and all 6 sites of each
 # group): weaker in EVs (~2874 cm-1), stronger and shifted in NVs (~2883 cm-1)
 CH_SHOW = {0: [2880, 2935], 1: [2880, 2935]}
-NAME_LONG = {0: 'RP-EVs on Ag/SiNWs', 1: 'RP-NVs on Ag/SiNWs'}   # names as in Figure 1 (NTA, TEM)
+NAME_LONG = {0: 'EVs on Ag/SiNWs', 1: 'NVs on Ag/SiNWs'}
 shift_table = []
 
 
