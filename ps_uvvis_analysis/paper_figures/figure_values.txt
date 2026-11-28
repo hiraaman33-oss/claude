@@ -1,0 +1,11 @@
+Tauc direct: Eg = 5.48 eV (R2 = 0.998, fit 218-225 nm)
+Tauc indirect: Eg = 5.28 eV (R2 = 0.998, fit 221-228 nm)
+log-log slope 280–400 nm, 10 µg/mL: -1.09
+log-log slope 280–400 nm, 0.5 µg/mL: -0.49
+log-log slope 280–400 nm, 1 ng/mL: -0.51
+220 nm, 0.001 ug/mL: dA = 0.0000 ± 0.0010 (LOD 3σ = 0.0030)
+220 nm, 0.5 ug/mL: dA = -0.0032 ± 0.0000 (LOD 3σ = 0.0030)
+220 nm, 10 ug/mL: dA = 0.9126 ± 0.0000 (LOD 3σ = 0.0030)
+262 nm, 0.001 ug/mL: dA = 0.0000 ± 0.0009 (LOD 3σ = 0.0027)
+262 nm, 0.5 ug/mL: dA = -0.0009 ± 0.0000 (LOD 3σ = 0.0027)
+262 nm, 10 ug/mL: dA = 0.0496 ± 0.0000 (LOD 3σ = 0.0027)
