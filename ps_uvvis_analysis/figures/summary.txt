@@ -1,0 +1,19 @@
+Offset-corrected ΔA (A_λ - mean A_380-400)
+  262 nm  0.001 ug/mL : 0.0119 ± 0.0009
+  262 nm  0.5 ug/mL : 0.0118 ± 0.0000
+  262 nm  10 ug/mL : 0.0594 ± 0.0000
+  225 nm  0.001 ug/mL : 0.0366 ± 0.0010
+  225 nm  0.5 ug/mL : 0.0366 ± 0.0000
+  225 nm  10 ug/mL : 0.4583 ± 0.0000
+  220 nm  0.001 ug/mL : 0.0560 ± 0.0010
+  220 nm  0.5 ug/mL : 0.0537 ± 0.0000
+  220 nm  10 ug/mL : 0.9666 ± 0.0000
+
+Difference vs 1 ng/mL mean:
+  10 ug/mL : dA262 = 0.0496, dA220 = 0.9126
+  0.5 ug/mL : dA262 = -0.0009, dA220 = -0.0032
+
+1 ng/mL replicate SD: 262 nm 0.0009, 220 nm 0.0010
+3*SD (approx. detection threshold in A): 262 nm 0.0027, 220 nm 0.0030
+
+log-log slopes (280-400 nm): 10 ug/mL: -1.09, 0.5 ug/mL: -0.49, 0.001 ug/mL: -0.51
